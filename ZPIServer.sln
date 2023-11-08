@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.7.34202.233
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZPIServer", "server\src\ZPIServer.csproj", "{F4BC848B-FBE3-49EE-8E63-7CCFF0ECCEFA}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZPIServerTests", "server\test\ZPIServerTests.csproj", "{89D26B38-FEA6-42EB-AA4A-7B4FB2122FD6}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Elementy rozwiązania", "Elementy rozwiązania", "{A672E510-4C3D-4FD2-8EAA-5277B0A443DF}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+		.gitignore = .gitignore
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F4BC848B-FBE3-49EE-8E63-7CCFF0ECCEFA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F4BC848B-FBE3-49EE-8E63-7CCFF0ECCEFA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F4BC848B-FBE3-49EE-8E63-7CCFF0ECCEFA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F4BC848B-FBE3-49EE-8E63-7CCFF0ECCEFA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{89D26B38-FEA6-42EB-AA4A-7B4FB2122FD6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{89D26B38-FEA6-42EB-AA4A-7B4FB2122FD6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{89D26B38-FEA6-42EB-AA4A-7B4FB2122FD6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{89D26B38-FEA6-42EB-AA4A-7B4FB2122FD6}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E968EEE4-15C0-441D-9AC1-70AA0DF346A5}
+	EndGlobalSection
+EndGlobal
