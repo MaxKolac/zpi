@@ -25,7 +25,7 @@ public static class TcpHandler
     /// <summary>
     /// Wydarzenie, które jest inwokowane gdy <see cref="TcpHandler"/> otrzyma pełny ciąg bajtów z nasłuchiwanego portu.
     /// </summary>
-    public static event EventHandler<TcpListenerEventArgs> OnSignalReceived;
+    public static event EventHandler<TcpHandlerEventArgs> OnSignalReceived;
 
     /// <summary>
     /// Pobiera obecną wartość <see cref="Settings.TcpListeningPorts"/> i rozpoczyna nasłuch na podanych portach.

@@ -3,7 +3,7 @@
 using System;
 using System.Net;
 
-public class TcpListenerEventArgs : EventArgs
+public class TcpHandlerEventArgs : EventArgs
 {
     /// <summary>
     /// Adres IP urządzenia, od którego otrzymano dane.
@@ -21,7 +21,7 @@ public class TcpListenerEventArgs : EventArgs
     ///<summary></summary>
     /// <param name="senderIp">Adres IP urządzenia, od którego otrzymano dane.</param>
     /// <param name="data">Otrzymany surowy ciąg bajtów.</param>
-    public TcpListenerEventArgs(IPAddress senderIp, int senderPort, byte[] data) : base()
+    public TcpHandlerEventArgs(IPAddress senderIp, int senderPort, byte[] data) : base()
     {
         SenderIp = senderIp;
         SenderPort = senderPort;
