@@ -12,7 +12,7 @@ namespace ZPIServer
             StartServer();
             while (true)
             {
-                //
+                //server lifetime loop
             }
         }
 

@@ -44,7 +44,7 @@ public class TcpHandler
 
         try
         {
-            Console.WriteLine("TcpHandler is starting up.");
+            Console.WriteLine($"{nameof(TcpHandler)} is starting up.");
             IsListening = true;
             listeningTask = new Task(async () =>
             {
@@ -67,7 +67,7 @@ public class TcpHandler
         if (!IsListening)
             return;
 
-        Console.WriteLine("Shutting down TcpHandler.");
+        Console.WriteLine($"Shutting down {nameof(TcpHandler)}.");
         if (listeningTask is not null)
         {
             cancellationToken.Cancel();
