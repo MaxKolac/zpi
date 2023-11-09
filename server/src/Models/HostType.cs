@@ -6,17 +6,17 @@
 public enum HostType
 {
     /// <summary>
-    /// Host jest nieznany.
+    /// HostDevice jest nieznany.
     /// </summary>
     Unknown = 0,
 
     /// <summary>
-    /// Host to symulator kamery stworzony do testów.
+    /// HostDevice to symulator kamery stworzony do testów.
     /// </summary>
     CameraSimulator = 1,
 
     /// <summary>
-    /// Host to jeden z użytkowników korzystający z aplikacji desktopowej.
+    /// HostDevice to jeden z użytkowników korzystający z aplikacji desktopowej.
     /// </summary>
     User = 2,
 }

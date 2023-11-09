@@ -1,4 +1,6 @@
-﻿using ZPIServer.EventArgs;
+﻿using ZPIServer.API.CameraLibraries;
+using ZPIServer.EventArgs;
+using ZPIServer.Models;
 
 namespace ZPIServer.API;
 
@@ -20,19 +22,9 @@ public class SignalTranslator
         if (IsTranslating)
             return;
 
-        try
-        {
-            IsTranslating = true;
-            TcpHandler.OnSignalReceived += HandleReceivedSignal;
-
-            //
-        }
-        catch 
-        {
-
-            TcpHandler.OnSignalReceived -= HandleReceivedSignal;
-            IsTranslating = false;
-        }
+        IsTranslating = true;
+        TcpHandler.OnSignalReceived += HandleReceivedSignal;
+        Console.WriteLine($"{nameof(SignalTranslator)} is starting up.");
     }
 
     /// <summary>
@@ -43,24 +35,36 @@ public class SignalTranslator
         if (!IsTranslating)
             return;
 
-        try
-        {
-            //
-
-            TcpHandler.OnSignalReceived -= HandleReceivedSignal;
-            IsTranslating = false;
-        }
-        catch
-        {
-
-            TcpHandler.OnSignalReceived += HandleReceivedSignal;
-            IsTranslating = true;
-        }
-
+        Console.WriteLine($"Shutting down {nameof(SignalTranslator)}");
+        TcpHandler.OnSignalReceived -= HandleReceivedSignal;
+        IsTranslating = false;
     }
 
     void HandleReceivedSignal(object? sender, TcpHandlerEventArgs e)
     {
-        
+        //Query the DB for the proper record based on received IP
+        var datasender = new HostDevice() 
+        { 
+            Address = e.SenderIp 
+        };
+        datasender ??= new HostDevice()
+        {
+            Address = e.SenderIp,
+            Type = HostType.Unknown
+        };
+
+        Console.Write($"Received {e.Data.Length} bytes of data from {datasender.Type} device. Address = {e.SenderIp}:{e.SenderPort}. ");
+        switch (datasender.Type)
+        {
+            case HostType.Unknown:
+                Console.WriteLine("Ignoring...");
+                break;
+            case HostType.CameraSimulator:
+                Console.WriteLine($"Forwarding to {nameof(CameraSimulatorAPI)}.");
+                break;
+            case HostType.User:
+                Console.WriteLine($"User recognized: {datasender.Name}.");
+                break;
+        }
     }
 }
