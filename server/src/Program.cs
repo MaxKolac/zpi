@@ -4,21 +4,30 @@ namespace ZPIServer
 {
     public class Program
     {
+        static TcpHandler? tcpHandler;
+        static SignalTranslator? signalTranslator;
+
         static void Main(string[] args)
         {
             StartServer();
+            while (true)
+            {
+                //
+            }
         }
 
         static void StartServer()
         {
-            Task.Run(TcpHandler.BeginListening);
-            Task.Run(SignalTranslator.BeginTranslating);
+            tcpHandler = new TcpHandler(Settings.ServerAddress, Settings.TcpListeningPort);
+            tcpHandler.BeginListening();
+            signalTranslator = new SignalTranslator();
+            signalTranslator.BeginTranslating();
         }
 
         static void StopServer()
         {
-            Task.Run(SignalTranslator.StopTranslating);
-            Task.Run(TcpHandler.StopListening);
+            signalTranslator?.StopTranslating();
+            tcpHandler?.StopListening();
         }
     }
 }

@@ -5,17 +5,17 @@ namespace ZPIServer.API;
 /// <summary>
 /// Klasa, która subskrybuje wydarzenie <see cref="TcpHandler.OnSignalReceived"/> i odpowiednio reaguje na jej inwokacje.
 /// </summary>
-public static class SignalTranslator
+public class SignalTranslator
 {
     /// <summary>
     /// Wskazuje czy <see cref="SignalTranslator"/> został uruchomiony i obsługuje inwokacje wydarzenia <see cref="TcpHandler.OnSignalReceived"/>.
     /// </summary>
-    public static bool IsTranslating { get; private set; } = false;
+    public bool IsTranslating { get; private set; } = false;
 
     /// <summary>
     /// Rozpoczyna pracę <see cref="SignalTranslator"/>.
     /// </summary>
-    public static void BeginTranslating()
+    public void BeginTranslating()
     {
         if (IsTranslating)
             return;
@@ -38,7 +38,7 @@ public static class SignalTranslator
     /// <summary>
     /// Kończy pracę <see cref="SignalTranslator"/>.
     /// </summary>
-    public static void StopTranslating()
+    public void StopTranslating()
     {
         if (!IsTranslating)
             return;
@@ -59,7 +59,7 @@ public static class SignalTranslator
 
     }
 
-    static void HandleReceivedSignal(object? sender, TcpListenerEventArgs e)
+    void HandleReceivedSignal(object? sender, TcpHandlerEventArgs e)
     {
         
     }
