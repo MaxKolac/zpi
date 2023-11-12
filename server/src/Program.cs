@@ -7,14 +7,17 @@ namespace ZPIServer
 {
     public static class Program
     {
+        static readonly CancellationTokenSource token = new();
+
         static TcpHandler? tcpHandler;
         static SignalTranslator? signalTranslator;
 
+        public static event EventHandler<CommandEventArgs>? OnCommandExecuted;
 
         public static int Main(string[] args)
         {
             StartServer();
-            while (true)
+            while (!token.IsCancellationRequested)
             {
                 //server lifetime loop
                 Console.Write(">> ");
@@ -23,6 +26,11 @@ namespace ZPIServer
             }
             StopServer();
             return 0;
+        }
+
+        private static void OnCommandExecutionInvoke(object? sender, CommandEventArgs e)
+        {
+
         }
 
         private static void StartServer()
@@ -39,7 +47,36 @@ namespace ZPIServer
             Console.WriteLine($"Done! Server took {stopwatch.Elapsed.TotalMilliseconds} milliseconds to start up.");
         }
 
-        static void StopServer()
+        private static void HandleCommand(string? line)
+        {
+            //Sanitize input line
+            if (line is null)
+            {
+                Console.WriteLine("Command was null.");
+                return;
+            }
+            List<string> words = line.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+            if (words.Count == 0)
+            {
+                Console.WriteLine("Command was empty.");
+                return;
+            }
+
+            //Recognize command
+            Command? command = words[0] switch
+            {
+                Command.HelpCommand => new HelpCommand(),
+                Command.ShutdownCommand => new ShutdownCommand(),
+                _ => null
+            };
+
+            if (command is null)
+            {
+                command = new HelpCommand();
+                Console.WriteLine($"Command {words[0]} unrecognized.");
+            }
+            words.RemoveAt(0);
+            command.SetArguments(words.ToArray());
             command.Execute();
         }
 
@@ -47,6 +84,8 @@ namespace ZPIServer
         {
             signalTranslator?.StopTranslating();
             tcpHandler?.StopListening();
+
+            OnCommandExecuted -= OnCommandExecutionInvoke;
         }
     }
 }
