@@ -12,8 +12,6 @@ namespace ZPIServer
         static TcpHandler? tcpHandler;
         static SignalTranslator? signalTranslator;
 
-        public static event EventHandler<CommandEventArgs>? OnCommandExecuted;
-
         public static int Main(string[] args)
         {
             StartServer();
@@ -27,8 +25,7 @@ namespace ZPIServer
             StopServer();
             return 0;
         }
-
-        private static void OnCommandExecutionInvoke(object? sender, CommandEventArgs e)
+        private static void OnCommandExecuted(object? sender, System.EventArgs e)
         {
 
         }
@@ -40,10 +37,10 @@ namespace ZPIServer
             tcpHandler.BeginListening();
             signalTranslator = new SignalTranslator();
             signalTranslator.BeginTranslating();
+
+            Command.OnExecuted += OnCommandExecuted;
+
             stopwatch.Stop();
-
-            OnCommandExecuted += OnCommandExecutionInvoke;
-
             Console.WriteLine($"Done! Server took {stopwatch.Elapsed.TotalMilliseconds} milliseconds to start up.");
         }
 
@@ -73,19 +70,22 @@ namespace ZPIServer
             if (command is null)
             {
                 command = new HelpCommand();
-                Console.WriteLine($"Command {words[0]} unrecognized.");
+                Console.WriteLine($"Command '{words[0]}' unrecognized.");
             }
             words.RemoveAt(0);
+
+            //Execute command
             command.SetArguments(words.ToArray());
             command.Execute();
         }
 
         private static void StopServer()
         {
+            Console.WriteLine("Shutting the server down.");
             signalTranslator?.StopTranslating();
             tcpHandler?.StopListening();
 
-            OnCommandExecuted -= OnCommandExecutionInvoke;
+            Command.OnExecuted -= OnCommandExecuted;
         }
     }
 }

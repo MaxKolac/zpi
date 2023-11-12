@@ -1,10 +1,12 @@
-﻿namespace ZPIServer.Commands;
+﻿using ZPIServer.EventArgs;
+
+namespace ZPIServer.Commands;
 
 public class ShutdownCommand : Command
 {
     public override void Execute()
     {
-        throw new NotImplementedException();
+        Invoke(this, new CommandEventArgs(this));
     }
 
     public override string GetHelp()
@@ -14,6 +16,6 @@ public class ShutdownCommand : Command
 
     public override void SetArguments(params string[]? arguments)
     {
-        throw new NotImplementedException();
+        //TODO
     }
 }
