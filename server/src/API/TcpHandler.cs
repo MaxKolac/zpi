@@ -6,17 +6,19 @@ namespace ZPIServer.API;
 
 /// <summary>
 /// Pierwsza warstwa komunikacji serwera z jego klientami, w tym kamerami i użytkownikami.<br/>
-/// Nasłuchuje na porty ustawione w <see cref="Settings.TcpListeningPorts"/> i przekazuje wszelkie odebrane dane jako surowe ciągi bitów.<br/>
-/// W przypadku odebrania takiego ciągu, inwokuje wydarznie <see cref="OnSignalReceived"/>. Nasłuch włącza metoda <see cref="BeginListening"/>, a kończy <see cref="StopListening"/>.<br/>
+/// Nasłuchuje na porty ustawione w <see cref="Settings.TcpListeningPorts"/> i przekazuje wszelkie odebrane dane jako surowe ciągi bitów. W przypadku odebrania takiego ciągu, inwokuje wydarznie <see cref="OnSignalReceived"/>. Nasłuch włącza metoda <see cref="BeginListening"/>, a kończy <see cref="StopListening"/>.<br/>
 /// <br/>
 /// <see cref="TcpHandler"/> pobiera zestaw portów do nasłuchiwania tylko w momencie gdy rozpoczyna nasłuch. Aby wszelkie zmiany w <see cref="Settings.TcpListeningPorts"/> były uwzględnione w już działającym <see cref="TcpHandler"/>, należy go najpierw zatrzymać i uruchomić ponownie.
+/// <para>
+/// Użyteczne linki:
+/// <see href="https://www.youtube.com/watch?v=TAGoid4u6PY">Mastering TCPListener in C#: Building Network Applications from Scratch</see>, 
+/// <see href="https://www.youtube.com/watch?v=qtZTf1L5v0E"> Building a TCP Client in C#</see>
+/// </para>
 /// </summary>
 public class TcpHandler
 {
-    private readonly CancellationTokenSource cancellationToken = new();
-    private Task? listeningTask;
-    private readonly IPAddress address;
-    private readonly int port;
+    private readonly CancellationTokenSource _token;
+    private readonly TcpListener _listener;
 
     /// <summary>
     /// Wskazuje czy <see cref="TcpHandler"/> został uruchomiony i nasłuchuje przychodzących połączeń.
@@ -26,12 +28,12 @@ public class TcpHandler
     /// <summary>
     /// Wydarzenie, które jest inwokowane gdy <see cref="TcpHandler"/> otrzyma pełny ciąg bajtów z nasłuchiwanego portu.
     /// </summary>
-    public static event EventHandler<TcpHandlerEventArgs> OnSignalReceived;
+    public static event EventHandler<TcpHandlerEventArgs>? OnSignalReceived;
 
-    public TcpHandler(IPAddress listenAddress, int listenPort)
+    public TcpHandler(IPAddress address, int listenPort)
     {
-        address = listenAddress; 
-        port = listenPort;
+        _token = new CancellationTokenSource();
+        _listener = new TcpListener(address, listenPort);
     }
 
     /// <summary>
@@ -46,11 +48,14 @@ public class TcpHandler
         {
             Console.WriteLine($"{nameof(TcpHandler)} is starting up.");
             IsListening = true;
-            listeningTask = new Task(async () =>
+            _listener.Start();
+            Task.Run(() =>
             {
-                await WaitForConnectionAsync(new TcpListener(address, port), cancellationToken.Token);
+                while (!_token.IsCancellationRequested)
+                {
+                    HandleConnecitonAsync();
+                }
             });
-            listeningTask.Start();
         }
         catch (Exception ex)
         {
@@ -60,7 +65,7 @@ public class TcpHandler
     }
 
     /// <summary>
-    /// Kończy nasłuch na wszystkich portach i je zwalnia.
+    /// Kończy nasłuch na zajętych portach.
     /// </summary>
     public void StopListening()
     {
@@ -68,63 +73,37 @@ public class TcpHandler
             return;
 
         Console.WriteLine($"Shutting down {nameof(TcpHandler)}.");
-        if (listeningTask is not null)
-        {
-            cancellationToken.Cancel();
-            listeningTask.Wait();
-            listeningTask = null;
-        }
+        _listener.Stop();
+        _token.Cancel();
         IsListening = false;
     }
 
-    async Task WaitForConnectionAsync(TcpListener listener, CancellationToken token)
+    private void HandleConnecitonAsync()
     {
-        listener.Start();
-        while (true)
+        using (TcpClient incomingClient = _listener.AcceptTcpClient())
         {
-            try
+            IPEndPoint clientEndPoint = (IPEndPoint)incomingClient.Client.RemoteEndPoint!;
+            IPAddress clientAddress = clientEndPoint.Address;
+            int clientPort = clientEndPoint.Port;
+            Console.WriteLine($"Accepted connection from {clientAddress}:{clientPort}.");
+
+            using (var stream = incomingClient.GetStream())
             {
-                Console.WriteLine($"Listener {listener.LocalEndpoint} ready to accept connections.");
-                TcpClient client = await listener.AcceptTcpClientAsync(token);
-                await HandleIncomingConnectionAsync(client, token);
-                client.Dispose();
-            }
-            catch (OperationCanceledException)
-            {
-                Console.WriteLine($"Listener {listener.LocalEndpoint} requested to close by cancellation token.");
-                listener.Stop();
-                return;
+                int receivedBytesCount;
+                byte[] buffer = new byte[2048];
+                while ((receivedBytesCount = stream.Read(buffer, 0, buffer.Length)) != 0)
+                {
+                    Console.WriteLine($"Received {receivedBytesCount} bytes from {clientAddress}:{clientPort} on port {((IPEndPoint)_listener.LocalEndpoint).Port}.");
+                    OnSignalReceived?.Invoke(this, new TcpHandlerEventArgs(clientAddress, clientPort, buffer));
+                }
+                Console.WriteLine($"Closed the connection from {clientAddress}:{clientEndPoint.Port}.");
             }
         }
-    }
 
-    async Task HandleIncomingConnectionAsync(TcpClient client, CancellationToken token)
-    {
-        IPEndPoint clientEndPoint = (IPEndPoint)client.Client.RemoteEndPoint!;
-        IPAddress clientAddress = clientEndPoint.Address;
-        Console.WriteLine($"Accepted connection from {clientAddress}:{clientEndPoint.Port}.");
-
-        using (NetworkStream stream = client.GetStream())
+        if (_token.IsCancellationRequested)
         {
-            byte[] bytes = new byte[4096];
-            while (true)
-            {
-                int bytesCount = await stream.ReadAsync(bytes, token);
-                if (token.IsCancellationRequested || bytesCount == 0) 
-                    break;
-                Console.WriteLine($"Received {bytesCount} bytes from {clientAddress}:{clientEndPoint.Port}.");
-                OnSignalReceived?.Invoke(null, new TcpHandlerEventArgs(clientAddress, clientEndPoint.Port, bytes));
-            }
-        }
-        client.Close();
-        if (token.IsCancellationRequested)
-        {
-            Console.WriteLine($"Closed the connection from {clientAddress}:{clientEndPoint.Port} due to cancellation token.");
+            Console.WriteLine($"Cancelling connection handling due to cancellation token.");
             throw new TaskCanceledException();
-        }
-        else
-        {
-            Console.WriteLine($"Closed the connection from {clientAddress}:{clientEndPoint.Port}.");
         }
     }
 }
