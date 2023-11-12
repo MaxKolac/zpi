@@ -7,12 +7,16 @@ public class HostDevice
     /// <summary>
     /// Status urządzenia kamery. Numery zaczynające się od 100 oznaczają ostrzeżenia, a od 200 oznaczają błędy krytyczne. Uzytkownicy mają zawsze status 0.
     /// </summary>
-    public enum CameraStatus
+    public enum DeviceStatus
     {
         /// <summary>
-        /// Urządzenie jest w pełni sprawna.
+        /// Obecny stan urządzenia jest nieznany lub urządzenia nie rozpoznano
         /// </summary>
-        OK = 0,
+        Unknown = 0,
+        /// <summary>
+        /// Urządzenie jest w pełni sprawne.
+        /// </summary>
+        OK = 1,
 
         /// <summary>
         /// Urządzenie ostrzega o braku zasilania/niskim poziomie naładowania.
@@ -24,20 +28,21 @@ public class HostDevice
         /// </summary>
         Disconnected = 200,
         /// <summary>
-        /// Urzadzenie jest widoczna z poziomu połączenia sieciowego, ale nie odpowiada na żadne żądania.
+        /// Urzadzenie jest widoczne z poziomu połączenia sieciowego, ale nie odpowiedziało na ostatnie żądanie.
         /// </summary>
         Unresponsive = 201,
     }
 
     //TODO: Integrate into EF Core
+    //Fields for both Users and Cameras
     public int Id { get; set; }
     public string Name { get; set; }
     public HostType Type { get; set; }
     public IPAddress Address { get; set; }
 
-    //HostDevice specific fields
+    //Camera specific fields
     public int SectorId { get; set; }
-    public CameraStatus LastKnownStatus { get; set; }
+    public DeviceStatus LastKnownStatus { get; set; }
     public decimal LastHighestTemperature { get; set; }
     public string ExactLocation { get; set; }
 }
