@@ -29,7 +29,7 @@ public class TcpHandlerTests
         handler.BeginListening();
         int timesInvoked = 0;
         byte[] receivedBytes = new byte[1024];
-        IPAddress senderIp = null;
+        IPAddress? senderIp = null;
         string messageToSend = "Hello World!";
         int senderPort = 0;
         int localClientPort = -1;
@@ -37,7 +37,7 @@ public class TcpHandlerTests
         using (var clientMock = new TcpClient())
         {
             clientMock.Connect(IPAddress.Parse("127.0.0.1"), 25565);
-            localClientPort = ((IPEndPoint)clientMock.Client.LocalEndPoint).Port;
+            localClientPort = ((IPEndPoint)clientMock.Client.LocalEndPoint!).Port;
             EventHandler<TcpHandlerEventArgs> eventHandler = (sender, e) =>
             {
                 receivedBytes = e.Data;
