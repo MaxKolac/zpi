@@ -42,15 +42,17 @@ public class SignalTranslator
 
     void HandleReceivedSignal(object? sender, TcpHandlerEventArgs e)
     {
-        //Query the DB for the proper record based on received IP
+        //TODO: Query the DB for the proper record based on received IP
         var datasender = new HostDevice() 
         { 
-            Address = e.SenderIp 
+            Address = e.SenderIp,
+            LastKnownStatus = HostDevice.DeviceStatus.OK
         };
         datasender ??= new HostDevice()
         {
             Address = e.SenderIp,
-            Type = HostType.Unknown
+            Type = HostType.Unknown,
+            LastKnownStatus = HostDevice.DeviceStatus.Unknown
         };
 
         Console.Write($"Received {e.Data.Length} bytes of data from {datasender.Type} device. Address = {e.SenderIp}:{e.SenderPort}. ");
