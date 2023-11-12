@@ -7,7 +7,7 @@ namespace ZPIServer
 {
     public static class Program
     {
-        static readonly CancellationTokenSource token = new();
+        static readonly CancellationTokenSource serverLifetimeToken = new();
 
         static TcpHandler? tcpHandler;
         static SignalTranslator? signalTranslator;
@@ -15,7 +15,7 @@ namespace ZPIServer
         public static int Main(string[] args)
         {
             StartServer();
-            while (!token.IsCancellationRequested)
+            while (!serverLifetimeToken.IsCancellationRequested)
             {
                 //server lifetime loop
                 Console.Write(">> ");
@@ -27,7 +27,8 @@ namespace ZPIServer
         }
         private static void OnCommandExecuted(object? sender, System.EventArgs e)
         {
-
+            if (sender is not null && sender is ShutdownCommand)
+                serverLifetimeToken.Cancel();
         }
 
         private static void StartServer()
