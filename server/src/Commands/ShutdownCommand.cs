@@ -1,4 +1,5 @@
-﻿using ZPIServer.EventArgs;
+﻿using System.Text;
+using ZPIServer.EventArgs;
 
 namespace ZPIServer.Commands;
 
@@ -11,11 +12,14 @@ public class ShutdownCommand : Command
 
     public override string GetHelp()
     {
-        throw new NotImplementedException();
+        var builder = new StringBuilder();
+        builder.AppendLine("Stops the server execution.");
+        builder.AppendLine("Example:");
+        builder.Append("\tshutdown");
+        return builder.ToString();
     }
 
     public override void SetArguments(params string[]? arguments)
     {
-        //TODO
     }
 }

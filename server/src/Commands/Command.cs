@@ -7,7 +7,7 @@ public abstract class Command
     public const string HelpCommand = "help";
     public const string ShutdownCommand = "shutdown";
 
-    public static event EventHandler? OnExecuted;
+    public static event EventHandler<CommandEventArgs>? OnExecuted;
 
     public abstract void Execute();
 

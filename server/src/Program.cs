@@ -25,7 +25,7 @@ namespace ZPIServer
             StopServer();
             return 0;
         }
-        private static void OnCommandExecuted(object? sender, System.EventArgs e)
+        private static void OnCommandExecuted(object? sender, CommandEventArgs e)
         {
             if (sender is not null && sender is ShutdownCommand)
                 serverLifetimeToken.Cancel();
@@ -49,16 +49,11 @@ namespace ZPIServer
         {
             //Sanitize input line
             if (line is null)
-            {
-                Console.WriteLine("Command was null.");
                 return;
-            }
+            
             List<string> words = line.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
             if (words.Count == 0)
-            {
-                Console.WriteLine("Command was empty.");
                 return;
-            }
 
             //Recognize command
             Command? command = words[0] switch
