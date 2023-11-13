@@ -80,6 +80,7 @@ public class TcpHandler
 
     private void HandleConnecitonAsync()
     {
+        Console.WriteLine($"{nameof(TcpHandler)} ready to accept connection on port {((IPEndPoint)_listener.LocalEndpoint).Port}.");
         using (TcpClient incomingClient = _listener.AcceptTcpClient())
         {
             IPEndPoint clientEndPoint = (IPEndPoint)incomingClient.Client.RemoteEndPoint!;
@@ -87,17 +88,15 @@ public class TcpHandler
             int clientPort = clientEndPoint.Port;
             Console.WriteLine($"Accepted connection from {clientAddress}:{clientPort}.");
 
-            using (var stream = incomingClient.GetStream())
+            using var stream = incomingClient.GetStream();
+            int receivedBytesCount;
+            byte[] buffer = new byte[2048];
+            while ((receivedBytesCount = stream.Read(buffer, 0, buffer.Length)) != 0)
             {
-                int receivedBytesCount;
-                byte[] buffer = new byte[2048];
-                while ((receivedBytesCount = stream.Read(buffer, 0, buffer.Length)) != 0)
-                {
-                    Console.WriteLine($"Received {receivedBytesCount} bytes from {clientAddress}:{clientPort} on port {((IPEndPoint)_listener.LocalEndpoint).Port}.");
-                    OnSignalReceived?.Invoke(this, new TcpHandlerEventArgs(clientAddress, clientPort, buffer));
-                }
-                Console.WriteLine($"Closed the connection from {clientAddress}:{clientEndPoint.Port}.");
+                Console.WriteLine($"Received {receivedBytesCount} bytes from {clientAddress}:{clientPort} on port {((IPEndPoint)_listener.LocalEndpoint).Port}.");
+                OnSignalReceived?.Invoke(this, new TcpHandlerEventArgs(clientAddress, clientPort, buffer));
             }
+            Console.WriteLine($"Closed the connection from {clientAddress}:{clientEndPoint.Port}.");
         }
 
         if (_token.IsCancellationRequested)
