@@ -19,6 +19,7 @@ public class TcpHandler
 {
     private readonly CancellationTokenSource _token;
     private readonly TcpListener _listener;
+    private readonly Task _listenerTask;
 
     /// <summary>
     /// Wskazuje czy <see cref="TcpHandler"/> został uruchomiony i nasłuchuje przychodzących połączeń.
@@ -34,6 +35,13 @@ public class TcpHandler
     {
         _token = new CancellationTokenSource();
         _listener = new TcpListener(address, listenPort);
+        _listenerTask = new Task(async () =>
+        {
+            while (!_token.IsCancellationRequested)
+            {
+                await HandleConnectionAsync();
+            }
+        });
     }
 
     /// <summary>
@@ -49,13 +57,7 @@ public class TcpHandler
             Console.WriteLine($"{nameof(TcpHandler)} is starting up.");
             IsListening = true;
             _listener.Start();
-            Task.Run(() =>
-            {
-                while (!_token.IsCancellationRequested)
-                {
-                    HandleConnecitonAsync();
-                }
-            });
+            _listenerTask.Start();
         }
         catch (Exception ex)
         {
@@ -73,16 +75,18 @@ public class TcpHandler
             return;
 
         Console.WriteLine($"Shutting down {nameof(TcpHandler)}.");
-        _listener.Stop();
         _token.Cancel();
+        _listenerTask.Wait();
+        _listener.Stop();
         IsListening = false;
     }
 
-    private void HandleConnecitonAsync()
+    private async Task HandleConnectionAsync()
     {
         Console.WriteLine($"{nameof(TcpHandler)} ready to accept connection on port {((IPEndPoint)_listener.LocalEndpoint).Port}.");
-        using (TcpClient incomingClient = _listener.AcceptTcpClient())
+        try
         {
+            using TcpClient incomingClient = await _listener.AcceptTcpClientAsync(_token.Token);
             IPEndPoint clientEndPoint = (IPEndPoint)incomingClient.Client.RemoteEndPoint!;
             IPAddress clientAddress = clientEndPoint.Address;
             int clientPort = clientEndPoint.Port;
@@ -98,11 +102,29 @@ public class TcpHandler
             }
             Console.WriteLine($"Closed the connection from {clientAddress}:{clientEndPoint.Port}.");
         }
-
-        if (_token.IsCancellationRequested)
+        catch (OperationCanceledException)
         {
-            Console.WriteLine($"Cancelling connection handling due to cancellation token.");
-            throw new TaskCanceledException();
+            if (_token.IsCancellationRequested)
+            {
+                Console.WriteLine($"Cancelling connection handling due to cancellation token.");
+                return;
+            }
+            else
+            {
+                throw;
+            }
+        }
+        catch (SocketException)
+        {
+            if (_token.IsCancellationRequested)
+            {
+                Console.WriteLine($"Cancelling connection handling due to cancellation token.");
+                return;
+            }
+            else
+            {
+                throw;
+            }
         }
     }
 }
