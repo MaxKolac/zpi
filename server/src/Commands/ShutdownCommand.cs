@@ -5,6 +5,10 @@ namespace ZPIServer.Commands;
 
 public class ShutdownCommand : Command
 {
+    public ShutdownCommand(Logger logger) : base(logger) 
+    {
+    }
+
     public override void Execute()
     {
         Invoke(this, new CommandEventArgs());
