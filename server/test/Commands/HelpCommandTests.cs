@@ -47,7 +47,7 @@ public class HelpCommandTests
 
     [Theory]
     [MemberData(nameof(GetInvalidArguments), MemberType = typeof(HelpCommandTests))]
-    static void CheckExecutionWithInvalidArguments(string?[] arguments)
+    static void CheckExecutionWithInvalidArguments(string?[]? arguments)
     {
         object? sendingCommand = null;
         EventHandler<CommandEventArgs> handler = (sender, e) =>
