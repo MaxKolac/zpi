@@ -9,11 +9,9 @@ public class ShutdownCommandTests
     static void CheckExecutionWithNoArguments()
     {
         object? sendingCommand = null;
-        Command? handledCommand = null;
         EventHandler<CommandEventArgs> handler = (sender, e) =>
         {
             sendingCommand = sender;
-            handledCommand = e.Command;
         };
         Command.OnExecuted += handler;
 
@@ -21,7 +19,6 @@ public class ShutdownCommandTests
         command.Execute();
 
         Assert.Equal(command, sendingCommand);
-        Assert.Equal(command, handledCommand);
         
         Command.OnExecuted -= handler;
     }

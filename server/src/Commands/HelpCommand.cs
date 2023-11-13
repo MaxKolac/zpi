@@ -30,7 +30,7 @@ public class HelpCommand : Command
         {
             Console.WriteLine(GetAvailableCommands());
         }
-        Invoke(this, new CommandEventArgs(this));
+        Invoke(this, new CommandEventArgs());
     }
 
     public override string GetHelp()
@@ -43,7 +43,7 @@ public class HelpCommand : Command
         return builder.ToString();
     }
 
-    public override void SetArguments(params string[]? arguments)
+    public override void SetArguments(params string?[]? arguments)
     {
         if (arguments is null)
             return;

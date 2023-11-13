@@ -9,11 +9,9 @@ public class HelpCommandTests
     static void CheckExecutionWithNoArguments()
     {
         object? sendingCommand = null;
-        Command? handledCommand = null;
         EventHandler<CommandEventArgs> handler = (sender, e) =>
         {
             sendingCommand = sender;
-            handledCommand = e.Command;
         };
         Command.OnExecuted += handler;
 
@@ -21,7 +19,6 @@ public class HelpCommandTests
         command.Execute();
 
         Assert.Equal(command, sendingCommand);
-        Assert.Equal(command, handledCommand);
 
         Command.OnExecuted -= handler;
     }
@@ -31,11 +28,9 @@ public class HelpCommandTests
     [InlineData(Command.ShutdownCommand)]
     static void CheckExecutionWithArguments(string argument)
     {
-        Command? handledCommand = null;
         object? sendingCommand = null;
         EventHandler<CommandEventArgs> handler = (sender, e) =>
         {
-            handledCommand = e.Command;
             sendingCommand = sender;
         };
 
@@ -45,7 +40,6 @@ public class HelpCommandTests
         command.Execute();
 
         Assert.Equal(command, sendingCommand);
-        Assert.Equal(command, handledCommand);
         Assert.Equal(argument, command.CommandIdentifier);
 
         Command.OnExecuted -= handler;
@@ -55,11 +49,9 @@ public class HelpCommandTests
     [MemberData(nameof(GetInvalidArguments), MemberType = typeof(HelpCommandTests))]
     static void CheckExecutionWithInvalidArguments(string?[] arguments)
     {
-        Command? handledCommand = null;
         object? sendingCommand = null;
         EventHandler<CommandEventArgs> handler = (sender, e) =>
         {
-            handledCommand = e.Command;
             sendingCommand = sender;
         };
 
@@ -69,7 +61,6 @@ public class HelpCommandTests
         command.Execute();
 
         Assert.Equal(command, sendingCommand);
-        Assert.Equal(command, handledCommand);
         Assert.Null(command.CommandIdentifier);
 
         Command.OnExecuted -= handler;

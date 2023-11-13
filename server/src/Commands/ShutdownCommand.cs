@@ -7,7 +7,7 @@ public class ShutdownCommand : Command
 {
     public override void Execute()
     {
-        Invoke(this, new CommandEventArgs(this));
+        Invoke(this, new CommandEventArgs());
     }
 
     public override string GetHelp()
