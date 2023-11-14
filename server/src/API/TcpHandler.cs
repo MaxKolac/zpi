@@ -97,13 +97,39 @@ public class TcpHandler
 
             using var stream = incomingClient.GetStream();
             int receivedBytesCount;
-            byte[] buffer = new byte[2048];
-            while ((receivedBytesCount = stream.Read(buffer, 0, buffer.Length)) != 0)
+            const int bufferLength = 2048;
+            List<byte> fullMessage = new();
+            byte[] buffer = new byte[bufferLength];
+
+            //NewtorkStream.Read populates the buffer with received raw bytes and returns their amount
+            //If that amount reaches 0, it means the connection was closed
+            while ((receivedBytesCount = stream.Read(buffer, 0, bufferLength)) != 0)
             {
-                _logger.WriteLine($"Received {receivedBytesCount} bytes from {clientAddress}:{clientPort} on port {((IPEndPoint)_listener.LocalEndpoint).Port}.", nameof(TcpHandler));
-                OnSignalReceived?.Invoke(this, new TcpHandlerEventArgs(clientAddress, clientPort, buffer));
+                //Trim excessive unfilled buffer bites
+                int i = bufferLength - 1;
+                List<byte> sanitizedBuffer = buffer.ToList();
+                while (i >= 0 && buffer[i] == 0)
+                {
+                    sanitizedBuffer.RemoveAt(i);
+                    i--;
+                }
+
+                //Add trimmed buffer to the full message
+                fullMessage.AddRange(sanitizedBuffer);
+
+                //Clear buffer so no duplicated bytes make it through
+                buffer = new byte[bufferLength];
+
+                //Log that shit
+                _logger?.WriteLine($"Received {sanitizedBuffer.Count} bytes from {clientAddress}:{clientPort} on port {((IPEndPoint)_listener.LocalEndpoint).Port}.", nameof(TcpHandler));
             }
             _logger?.WriteLine($"Closed the connection from {clientAddress}:{clientEndPoint.Port}.", nameof(TcpHandler));
+            OnSignalReceived?.Invoke(this, new TcpHandlerEventArgs(clientAddress, clientPort, fullMessage.ToArray()));
+        }
+        catch (IOException ex)
+        {
+            //Usually thrown when the other end abruptly closes the connection
+            _logger?.WriteLine($"{ex.Message}.", nameof(TcpHandler));
         }
         catch (OperationCanceledException)
         {
