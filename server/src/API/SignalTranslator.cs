@@ -1,4 +1,7 @@
-﻿using ZPIServer.API.CameraLibraries;
+﻿using System.Net;
+using System.Text;
+using ZPIServer.API.CameraLibraries;
+using ZPIServer.Commands;
 using ZPIServer.EventArgs;
 using ZPIServer.Models;
 
@@ -9,10 +12,17 @@ namespace ZPIServer.API;
 /// </summary>
 public class SignalTranslator
 {
+    private readonly Logger? _logger;
+
     /// <summary>
     /// Wskazuje czy <see cref="SignalTranslator"/> został uruchomiony i obsługuje inwokacje wydarzenia <see cref="TcpHandler.OnSignalReceived"/>.
     /// </summary>
     public bool IsTranslating { get; private set; } = false;
+
+    public SignalTranslator(Logger? logger = null)
+    {
+        _logger = logger;
+    }
 
     /// <summary>
     /// Rozpoczyna pracę <see cref="SignalTranslator"/>.
@@ -24,7 +34,7 @@ public class SignalTranslator
 
         IsTranslating = true;
         TcpHandler.OnSignalReceived += HandleReceivedSignal;
-        Console.WriteLine($"{nameof(SignalTranslator)} is starting up.");
+        _logger?.WriteLine("Starting up.", nameof(SignalTranslator));
     }
 
     /// <summary>
@@ -35,7 +45,7 @@ public class SignalTranslator
         if (!IsTranslating)
             return;
 
-        Console.WriteLine($"Shutting down {nameof(SignalTranslator)}");
+        _logger?.WriteLine("Shutting down.", nameof(SignalTranslator));
         TcpHandler.OnSignalReceived -= HandleReceivedSignal;
         IsTranslating = false;
     }
@@ -46,6 +56,7 @@ public class SignalTranslator
         var datasender = new HostDevice() 
         { 
             Address = e.SenderIp,
+            Type = e.SenderIp.Equals(IPAddress.Parse("127.0.0.1")) ? HostType.PuTTYClient : HostType.CameraSimulator,
             LastKnownStatus = HostDevice.DeviceStatus.OK
         };
         datasender ??= new HostDevice()
@@ -55,17 +66,25 @@ public class SignalTranslator
             LastKnownStatus = HostDevice.DeviceStatus.Unknown
         };
 
-        Console.Write($"Received {e.Data.Length} bytes of data from {datasender.Type} device. Address = {e.SenderIp}:{e.SenderPort}. ");
+        string message = $"Received {e.Data.Length} bytes of data from {datasender.Type} device. Address = {e.SenderIp}:{e.SenderPort}. ";
         switch (datasender.Type)
         {
             case HostType.Unknown:
-                Console.WriteLine("Ignoring...");
+                _logger?.WriteLine(message + "Ignoring...", nameof(SignalTranslator));
                 break;
             case HostType.CameraSimulator:
-                Console.WriteLine($"Forwarding to {nameof(CameraSimulatorAPI)}.");
+                _logger?.WriteLine(message + $"Forwarding to {nameof(CameraSimulatorAPI)}.", nameof(SignalTranslator));
+                break;
+            case HostType.PuTTYClient:
+                string rawData = string.Empty;
+                foreach (var dataByte in e.Data)
+                    rawData += dataByte;
+                string decodedData = Encoding.UTF8.GetString(e.Data);
+
+                _logger?.WriteLine(message + $"Recognized PuTTY client. Raw = '{rawData}', Decoded = '{decodedData}'.", nameof(SignalTranslator));
                 break;
             case HostType.User:
-                Console.WriteLine($"User recognized: {datasender.Name}.");
+                _logger?.WriteLine(message + $"User recognized: {datasender.Name}.", nameof(SignalTranslator));
                 break;
         }
     }

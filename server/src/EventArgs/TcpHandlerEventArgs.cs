@@ -1,9 +1,8 @@
-﻿namespace ZPIServer.EventArgs;
+﻿using System.Net;
 
-using System;
-using System.Net;
+namespace ZPIServer.EventArgs;
 
-public class TcpHandlerEventArgs : EventArgs
+public class TcpHandlerEventArgs : System.EventArgs
 {
     /// <summary>
     /// Adres IP urządzenia, od którego otrzymano dane.

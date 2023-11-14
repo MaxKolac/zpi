@@ -36,13 +36,13 @@ public class HostDevice
     //TODO: Integrate into EF Core
     //Fields for both Users and Cameras
     public int Id { get; set; }
-    public string Name { get; set; }
+    public string? Name { get; set; }
     public HostType Type { get; set; }
-    public IPAddress Address { get; set; }
+    public IPAddress? Address { get; set; }
 
     //Camera specific fields
     public int SectorId { get; set; }
     public DeviceStatus LastKnownStatus { get; set; }
     public decimal LastHighestTemperature { get; set; }
-    public string ExactLocation { get; set; }
+    public string? ExactLocation { get; set; }
 }
