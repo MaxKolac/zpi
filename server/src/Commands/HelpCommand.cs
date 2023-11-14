@@ -17,11 +17,14 @@ public class HelpCommand : Command
         {
             switch (CommandIdentifier)
             {
-                case Command.HelpCommand:
+                case Help:
                     _logger?.WriteLine(GetHelp(), null);
                     break;
-                case Command.ShutdownCommand:
+                case Shutdown:
                     _logger?.WriteLine(new ShutdownCommand(_logger).GetHelp(), null);
+                    break;
+                case Status:
+                    _logger?.WriteLine(new StatusCommand(_logger).GetHelp(), null);
                     break;
                 default:
                     CommandIdentifier = null;
@@ -43,7 +46,7 @@ public class HelpCommand : Command
         builder.AppendLine("Shows all available commands.");
         builder.AppendLine("If entered with the name of a command as argument, it shows the syntax of that command.");
         builder.AppendLine("Example:");
-        builder.Append("\thelp shutdown");
+        builder.AppendLine("\thelp shutdown");
         return builder.ToString();
     }
 
@@ -65,8 +68,9 @@ public class HelpCommand : Command
     private static string GetAvailableCommands()
     { 
         var builder = new StringBuilder();
-        builder.AppendLine(Command.HelpCommand + " [command]");
-        builder.Append(Command.ShutdownCommand);
+        builder.AppendLine(Help + " [command]");
+        builder.AppendLine(Shutdown);
+        builder.AppendLine(Status + $" [{StatusCommand.TcpHandlerArgument}/{StatusCommand.TcpHandlerArgument}]");
         return builder.ToString();
     }
 }

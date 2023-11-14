@@ -22,6 +22,8 @@ public class TcpHandler
     private readonly Logger? _logger;
     private readonly TcpListener _listener;
     private readonly Task _listenerTask;
+    private int _connectionsInitialized = 0;
+    private int _connectionsHandled = 0;
 
     /// <summary>
     /// Wskazuje czy <see cref="TcpHandler"/> został uruchomiony i nasłuchuje przychodzących połączeń.
@@ -45,6 +47,12 @@ public class TcpHandler
                 await HandleConnectionAsync();
             }
         });
+        Command.OnExecuted += ShowStatus;
+    }
+
+    ~TcpHandler()
+    {
+        Command.OnExecuted -= ShowStatus;
     }
 
     /// <summary>
@@ -94,6 +102,7 @@ public class TcpHandler
             IPAddress clientAddress = clientEndPoint.Address;
             int clientPort = clientEndPoint.Port;
             _logger?.WriteLine($"Accepted connection from {clientAddress}:{clientPort}.", nameof(TcpHandler));
+            _connectionsInitialized++;
 
             using var stream = incomingClient.GetStream();
             int receivedBytesCount;
@@ -125,6 +134,7 @@ public class TcpHandler
             }
             _logger?.WriteLine($"Closed the connection from {clientAddress}:{clientEndPoint.Port}.", nameof(TcpHandler));
             OnSignalReceived?.Invoke(this, new TcpHandlerEventArgs(clientAddress, clientPort, fullMessage.ToArray()));
+            _connectionsHandled++;
         }
         catch (IOException ex)
         {
@@ -154,6 +164,21 @@ public class TcpHandler
             {
                 throw;
             }
+        }
+    }
+
+    private void ShowStatus(object? sender, CommandEventArgs e)
+    {
+        if (sender is StatusCommand command && command.ClassArgument == StatusCommand.SignalTranslatorArgument)
+        {
+            var endPoint = (IPEndPoint)_listener.LocalEndpoint;
+            _logger?.WriteLine($"Running: {IsListening}", null);
+            _logger?.WriteLine($"Logging: {_logger is not null}", null);
+            _logger?.WriteLine($"Listening on: {endPoint.Address}", null);
+            _logger?.WriteLine($"\t{endPoint.Port}", null);
+            _logger?.WriteLine($"ListenerTask: {_listenerTask.Status}", null);
+            _logger?.WriteLine($"Connections initialized: {_connectionsInitialized}", null);
+            _logger?.WriteLine($"Connections fully handled: {_connectionsHandled}", null);
         }
     }
 }

@@ -35,13 +35,14 @@ public class Logger
         //Recognize command
         Command? command = words[0] switch
         {
-            Command.HelpCommand => new HelpCommand(this),
-            Command.ShutdownCommand => new ShutdownCommand(this),
+            Command.Help => new HelpCommand(this),
+            Command.Shutdown => new ShutdownCommand(this),
+            Command.Status => new StatusCommand(this),
             _ => null
         };
         if (command is null)
         {
-            WriteLine($"Command '{words[0]}' unrecognized. Type '{Command.HelpCommand}' to get all available commands.", null);
+            WriteLine($"Command '{words[0]}' unrecognized. Type '{Command.Help}' to get all available commands.", null);
         }
         words.RemoveAt(0);
 
@@ -61,7 +62,7 @@ public class Logger
     /// <param name="callingClass">Nazwa klasy wywołującej metodę. Pojawi się jako prefiks w nawiasach kwadratowych. Podanie wartości <c>null</c> pominie dodawanie prefiksu i wyświetli jedynie <paramref name="message"/>.</param>
     public void WriteLine(string? message, string? callingClass)
     {
-        //Remember where the cursor so its position can be restored later
+        //Remember where the cursor is so its position can be restored later
         int cursorOffset = Console.GetCursorPosition().Left;
         //Create a new empty line to copy currently entered user input into
         Console.WriteLine();

@@ -19,7 +19,7 @@ public class ShutdownCommand : Command
         var builder = new StringBuilder();
         builder.AppendLine("Stops the server execution.");
         builder.AppendLine("Example:");
-        builder.Append("\tshutdown");
+        builder.AppendLine("\tshutdown");
         return builder.ToString();
     }
 

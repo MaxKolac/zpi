@@ -13,6 +13,7 @@ namespace ZPIServer.API;
 public class SignalTranslator
 {
     private readonly Logger? _logger;
+    private int _invocations = 0;
 
     /// <summary>
     /// Wskazuje czy <see cref="SignalTranslator"/> został uruchomiony i obsługuje inwokacje wydarzenia <see cref="TcpHandler.OnSignalReceived"/>.
@@ -22,6 +23,12 @@ public class SignalTranslator
     public SignalTranslator(Logger? logger = null)
     {
         _logger = logger;
+        Command.OnExecuted += ShowStatus;
+    }
+
+    ~SignalTranslator()
+    {
+        Command.OnExecuted -= ShowStatus;
     }
 
     /// <summary>
@@ -52,6 +59,7 @@ public class SignalTranslator
 
     void HandleReceivedSignal(object? sender, TcpHandlerEventArgs e)
     {
+        _invocations++;
         //TODO: Query the DB for the proper record based on received IP
         var datasender = new HostDevice() 
         { 
@@ -86,6 +94,16 @@ public class SignalTranslator
             case HostType.User:
                 _logger?.WriteLine(message + $"User recognized: {datasender.Name}.", nameof(SignalTranslator));
                 break;
+        }
+    }
+
+    private void ShowStatus(object? sender, CommandEventArgs e)
+    {
+        if (sender is StatusCommand command && command.ClassArgument == StatusCommand.SignalTranslatorArgument)
+        {
+            _logger?.WriteLine($"Running: {IsTranslating}", null);
+            _logger?.WriteLine($"Logging: {_logger is not null}", null);
+            _logger?.WriteLine($"Signals translated: {_invocations}", null);
         }
     }
 }

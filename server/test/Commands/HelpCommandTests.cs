@@ -24,8 +24,8 @@ public class HelpCommandTests
     }
 
     [Theory]
-    [InlineData(Command.HelpCommand)]
-    [InlineData(Command.ShutdownCommand)]
+    [InlineData(Command.Help)]
+    [InlineData(Command.Shutdown)]
     static void CheckExecutionWithArguments(string argument)
     {
         object? sendingCommand = null;
