@@ -7,7 +7,7 @@ public class HelpCommand : Command
 {
     public string? CommandIdentifier { get; private set; }
 
-    public HelpCommand(Logger logger) : base(logger) 
+    public HelpCommand(Logger? logger = null) : base(logger) 
     { 
     }
 
@@ -18,21 +18,21 @@ public class HelpCommand : Command
             switch (CommandIdentifier)
             {
                 case Command.HelpCommand:
-                    _logger.WriteLine(GetHelp(), null);
+                    _logger?.WriteLine(GetHelp(), null);
                     break;
                 case Command.ShutdownCommand:
-                    _logger.WriteLine(new ShutdownCommand(_logger).GetHelp(), null);
+                    _logger?.WriteLine(new ShutdownCommand(_logger).GetHelp(), null);
                     break;
                 default:
                     CommandIdentifier = null;
-                    _logger.WriteLine("Unrecognized command.", null);
-                    _logger.WriteLine(GetAvailableCommands(), null);
+                    _logger?.WriteLine("Unrecognized command.", null);
+                    _logger?.WriteLine(GetAvailableCommands(), null);
                     break;
             }
         }
         else
         {
-            _logger.WriteLine(GetAvailableCommands(), null);
+            _logger?.WriteLine(GetAvailableCommands(), null);
         }
         Invoke(this, new CommandEventArgs());
     }
@@ -58,7 +58,7 @@ public class HelpCommand : Command
         }
         else if (arguments.Length > 1)
         {
-            _logger.WriteLine("Too many arguments.", null);
+            _logger?.WriteLine("Too many arguments.", null);
         }
     }
 

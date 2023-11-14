@@ -5,7 +5,7 @@ namespace ZPIServer.Commands;
 
 public class ShutdownCommand : Command
 {
-    public ShutdownCommand(Logger logger) : base(logger) 
+    public ShutdownCommand(Logger? logger = null) : base(logger) 
     {
     }
 

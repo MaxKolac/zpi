@@ -19,7 +19,7 @@ namespace ZPIServer.API;
 public class TcpHandler
 {
     private readonly CancellationTokenSource _token;
-    private readonly Logger _logger;
+    private readonly Logger? _logger;
     private readonly TcpListener _listener;
     private readonly Task _listenerTask;
 
@@ -33,7 +33,7 @@ public class TcpHandler
     /// </summary>
     public static event EventHandler<TcpHandlerEventArgs>? OnSignalReceived;
 
-    public TcpHandler(IPAddress address, int listenPort, Logger logger)
+    public TcpHandler(IPAddress address, int listenPort, Logger? logger = null)
     {
         _token = new CancellationTokenSource();
         _logger = logger;
@@ -57,7 +57,7 @@ public class TcpHandler
 
         try
         {
-            _logger.WriteLine("Starting up.", nameof(TcpHandler));
+            _logger?.WriteLine("Starting up.", nameof(TcpHandler));
             IsListening = true;
             _listener.Start();
             _listenerTask.Start();
@@ -65,7 +65,7 @@ public class TcpHandler
         catch (Exception ex)
         {
             StopListening();
-            _logger.WriteLine(ex.ToString(), nameof(TcpHandler));
+            _logger?.WriteLine(ex.ToString(), nameof(TcpHandler));
         }
     }
 
@@ -77,7 +77,7 @@ public class TcpHandler
         if (!IsListening)
             return;
 
-        _logger.WriteLine("Shutting down.", nameof(TcpHandler));
+        _logger?.WriteLine("Shutting down.", nameof(TcpHandler));
         _token.Cancel();
         _listenerTask.Wait();
         _listener.Stop();
@@ -86,14 +86,14 @@ public class TcpHandler
 
     private async Task HandleConnectionAsync()
     {
-        _logger.WriteLine($"Ready to accept connection on port {((IPEndPoint)_listener.LocalEndpoint).Port}.", nameof(TcpHandler));
+        _logger?.WriteLine($"Ready to accept connection on port {((IPEndPoint)_listener.LocalEndpoint).Port}.", nameof(TcpHandler));
         try
         {
             using TcpClient incomingClient = await _listener.AcceptTcpClientAsync(_token.Token);
             IPEndPoint clientEndPoint = (IPEndPoint)incomingClient.Client.RemoteEndPoint!;
             IPAddress clientAddress = clientEndPoint.Address;
             int clientPort = clientEndPoint.Port;
-            _logger.WriteLine($"Accepted connection from {clientAddress}:{clientPort}.", nameof(TcpHandler));
+            _logger?.WriteLine($"Accepted connection from {clientAddress}:{clientPort}.", nameof(TcpHandler));
 
             using var stream = incomingClient.GetStream();
             int receivedBytesCount;
@@ -103,13 +103,13 @@ public class TcpHandler
                 _logger.WriteLine($"Received {receivedBytesCount} bytes from {clientAddress}:{clientPort} on port {((IPEndPoint)_listener.LocalEndpoint).Port}.", nameof(TcpHandler));
                 OnSignalReceived?.Invoke(this, new TcpHandlerEventArgs(clientAddress, clientPort, buffer));
             }
-            _logger.WriteLine($"Closed the connection from {clientAddress}:{clientEndPoint.Port}.", nameof(TcpHandler));
+            _logger?.WriteLine($"Closed the connection from {clientAddress}:{clientEndPoint.Port}.", nameof(TcpHandler));
         }
         catch (OperationCanceledException)
         {
             if (_token.IsCancellationRequested)
             {
-                _logger.WriteLine($"Cancelling connection handling due to cancellation token.", nameof(TcpHandler));
+                _logger?.WriteLine($"Cancelling connection handling due to cancellation token.", nameof(TcpHandler));
                 return;
             }
             else
@@ -121,7 +121,7 @@ public class TcpHandler
         {
             if (_token.IsCancellationRequested)
             {
-                _logger.WriteLine($"Cancelling connection handling due to cancellation token.", nameof(TcpHandler));
+                _logger?.WriteLine($"Cancelling connection handling due to cancellation token.", nameof(TcpHandler));
                 return;
             }
             else
