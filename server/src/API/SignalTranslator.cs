@@ -75,6 +75,14 @@ public class SignalTranslator
             case HostType.CameraSimulator:
                 _logger?.WriteLine(message + $"Forwarding to {nameof(CameraSimulatorAPI)}.", nameof(SignalTranslator));
                 break;
+            case HostType.PuTTYClient:
+                string rawData = string.Empty;
+                foreach (var dataByte in e.Data)
+                    rawData += dataByte;
+                string decodedData = Encoding.UTF8.GetString(e.Data);
+
+                _logger?.WriteLine(message + $"Recognized PuTTY client. Raw = '{rawData}', Decoded = '{decodedData}'.", nameof(SignalTranslator));
+                break;
             case HostType.User:
                 _logger?.WriteLine(message + $"User recognized: {datasender.Name}.", nameof(SignalTranslator));
                 break;

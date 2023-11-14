@@ -16,7 +16,12 @@ public enum HostType
     CameraSimulator = 1,
 
     /// <summary>
+    /// HostDevice to lokalny klient PuTTY.
+    /// </summary>
+    PuTTYClient = 2,
+
+    /// <summary>
     /// HostDevice to jeden z użytkowników korzystający z aplikacji desktopowej.
     /// </summary>
-    User = 2,
+    User = 3,
 }
