@@ -8,19 +8,11 @@ public class HelpCommandTests
     [Fact]
     static void CheckExecutionWithNoArguments()
     {
-        object? sendingCommand = null;
-        EventHandler<CommandEventArgs> handler = (sender, e) =>
-        {
-            sendingCommand = sender;
-        };
-        Command.OnExecuted += handler;
+        var commandToExecute = new HelpCommand();
+        HelpCommand? receivedCommand = PerformExecution(commandToExecute, null);
 
-        var command = new HelpCommand();
-        command.Execute();
-
-        Assert.Equal(command, sendingCommand);
-
-        Command.OnExecuted -= handler;
+        Assert.Equal(commandToExecute, receivedCommand);
+        Assert.Null(receivedCommand?.CommandIdentifier);
     }
 
     [Theory]
@@ -28,42 +20,39 @@ public class HelpCommandTests
     [InlineData(Command.Shutdown)]
     static void CheckExecutionWithArguments(string argument)
     {
-        object? sendingCommand = null;
-        EventHandler<CommandEventArgs> handler = (sender, e) =>
-        {
-            sendingCommand = sender;
-        };
+        var commandToExecute = new HelpCommand();
+        HelpCommand? receivedCommand = PerformExecution(commandToExecute, new string[] { argument });
 
-        Command.OnExecuted += handler;
-        var command = new HelpCommand();
-        command.SetArguments(argument);
-        command.Execute();
-
-        Assert.Equal(command, sendingCommand);
-        Assert.Equal(argument, command.CommandIdentifier);
-
-        Command.OnExecuted -= handler;
+        Assert.Equal(commandToExecute, receivedCommand);
+        Assert.Equal(argument, receivedCommand?.CommandIdentifier);
     }
 
     [Theory]
     [MemberData(nameof(GetInvalidArguments), MemberType = typeof(HelpCommandTests))]
-    static void CheckExecutionWithInvalidArguments(string?[]? arguments)
+    static void CheckExecutionWithInvalidArguments(string[]? arguments)
     {
-        object? sendingCommand = null;
+        var commandToExecute = new HelpCommand();
+        HelpCommand? receivedCommand = PerformExecution(commandToExecute, arguments);
+
+        Assert.Equal(commandToExecute, receivedCommand);
+        Assert.Null(receivedCommand?.CommandIdentifier);
+    }
+
+    private static HelpCommand? PerformExecution(HelpCommand commandToExecute, string[]? arguments)
+    {
+        HelpCommand? receivedCommand = null;
         EventHandler<CommandEventArgs> handler = (sender, e) =>
         {
-            sendingCommand = sender;
+            receivedCommand = sender as HelpCommand;
         };
 
         Command.OnExecuted += handler;
-        var command = new HelpCommand();
-        command.SetArguments(arguments);
-        command.Execute();
-
-        Assert.Equal(command, sendingCommand);
-        Assert.Null(command.CommandIdentifier);
-
+        if (arguments is not null)
+            commandToExecute.SetArguments(arguments);
+        commandToExecute.Execute();
         Command.OnExecuted -= handler;
+
+        return receivedCommand;
     }
 
     public static IEnumerable<object?[]> GetInvalidArguments()
