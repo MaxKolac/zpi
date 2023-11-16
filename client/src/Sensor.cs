@@ -12,7 +12,8 @@ internal class Sensor
         Active,
         Inactive,
         Alert,
-        Fire
+        Fire,
+        Null
     }
 
     private int sensorX, sensorY;
@@ -84,21 +85,54 @@ internal class Sensor
         this.sensorDetails = sensorDetails;
         this.sensorLastUpdate = 0;
     }
+    public void Update(string sensorState, int sensorTemperature, string sensorDetails)
+    {
+        this.sensorState = StringToState(sensorState);
+        this.sensorTemperature = sensorTemperature;
+        this.sensorDetails = sensorDetails;
+        this.sensorLastUpdate = 0;
+    }
     #endregion
     #region GetInfo
     public (int, int) SensorGetCoordinates()
     {
         return (sensorX, sensorY);
     }
-    public (string, SensorState, string) SensorGetInfo()
+    public (string, string, string) SensorGetInfo()
     {
-        return (sensorName, sensorState, sensorSector);
+        return (sensorName, sensorLocation, sensorSector);
     }
 
-    public (string, int, string, int) SensorGetDetails()
+    public (SensorState, int, string) SensorGetDetails()
     {
-        return (sensorLocation, sensorTemperature, sensorDetails, sensorLastUpdate);
+        return (sensorState, sensorTemperature, sensorDetails);
     }
 
+    public int SensorGetLastUpdate()
+    {
+        return this.sensorLastUpdate;
+    }
+    #endregion
+    #region Utilities
+    private SensorState StringToState(string inputType)
+    {
+        switch (inputType)
+        {
+            case "Active":
+                return SensorState.Active;
+
+            case "Incative":
+                return SensorState.Inactive;
+
+            case "Alert":
+                return SensorState.Alert;
+
+            case "Fire":
+                return SensorState.Fire;
+
+            default:
+                return SensorState.Null;
+        }
+    }
     #endregion
 }

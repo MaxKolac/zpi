@@ -1,0 +1,24 @@
+[
+  {
+	"X": 0,
+	"Y": 0,
+    "Nazwa": "Czujnik 1",
+    "Stan": "Aktywny",
+    "Segment": "Segment A1",
+    "Lokalizacja": "Przykładowa Lokalizacja 1",
+    "Temperatura": 25.5,
+    "Ostatnia Aktualizacja": 0,
+    "Numer Zdjęcia": "C1.jpg"
+  },
+  {
+  	"X": 0,
+	"Y": 0,
+    "Nazwa": "Czujnik 2",
+    "Stan": "Aktywny",
+    "Segment": "Segment B1",
+    "Lokalizacja": "Przykładowa Lokalizacja 2",
+    "Temperatura": 20.0,
+    "Ostatnia Aktualizacja": 0,
+    "Numer Zdjęcia": "C2.jpg"
+  }
+]
