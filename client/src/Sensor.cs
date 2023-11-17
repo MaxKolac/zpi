@@ -116,5 +116,26 @@ internal class Sensor
                 return SensorState.Null;
         }
     }
+    
+    public string getSensorStateAsString()
+    {
+        switch (currentSensorState)
+        {
+            case SensorState.Active:
+                return "Active";
+
+            case SensorState.Inactive:
+                return "Inactive";
+
+            case SensorState.Alert:
+                return "Alert";
+
+            case SensorState.Fire:
+                return "Fire";
+
+            default:
+                return "Null";
+        }
+    }
     #endregion
 }

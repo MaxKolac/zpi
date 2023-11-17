@@ -63,6 +63,7 @@
             // 
             // panelDisplay
             // 
+            panelDisplay.AutoScroll = true;
             panelDisplay.BackColor = SystemColors.Control;
             panelDisplay.BorderStyle = BorderStyle.FixedSingle;
             panelDisplay.Location = new Point(0, 0);
