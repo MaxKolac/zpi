@@ -29,19 +29,15 @@
         private void InitializeComponent()
         {
             panelDisplay = new Panel();
-            pictureBoxDisplay = new PictureBox();
             panelNavigation = new Panel();
             buttonOverview = new Button();
             buttonMenu = new Button();
             buttonSwitch = new Button();
             panelInfo = new Panel();
-            panelTimer = new Panel();
-            labelTimer = new Label();
-            tableLayoutPanel = new TableLayoutPanel();
-            panelSensorName = new Panel();
-            panelCamera = new Panel();
             buttonFire = new Button();
+            panelCamera = new Panel();
             pictureBoxCamera = new PictureBox();
+            tableLayoutPanel = new TableLayoutPanel();
             labelState = new Label();
             labelStateInfo = new Label();
             labelSegment = new Label();
@@ -52,35 +48,27 @@
             labelTemperatureInfo = new Label();
             labelLastUpdate = new Label();
             labelLastUpdateInfo = new Label();
+            panelSensorName = new Panel();
             labelSensorName = new Label();
-            panelDisplay.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)pictureBoxDisplay).BeginInit();
+            panelTimer = new Panel();
+            labelTimer = new Label();
             panelNavigation.SuspendLayout();
             panelInfo.SuspendLayout();
-            panelTimer.SuspendLayout();
-            tableLayoutPanel.SuspendLayout();
-            panelSensorName.SuspendLayout();
             panelCamera.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBoxCamera).BeginInit();
+            tableLayoutPanel.SuspendLayout();
+            panelSensorName.SuspendLayout();
+            panelTimer.SuspendLayout();
             SuspendLayout();
             // 
             // panelDisplay
             // 
+            panelDisplay.BackColor = SystemColors.Control;
             panelDisplay.BorderStyle = BorderStyle.FixedSingle;
-            panelDisplay.Controls.Add(pictureBoxDisplay);
             panelDisplay.Location = new Point(0, 0);
             panelDisplay.Name = "panelDisplay";
             panelDisplay.Size = new Size(1018, 652);
             panelDisplay.TabIndex = 0;
-            // 
-            // pictureBoxDisplay
-            // 
-            pictureBoxDisplay.BackColor = SystemColors.ControlDark;
-            pictureBoxDisplay.Location = new Point(3, 3);
-            pictureBoxDisplay.Name = "pictureBoxDisplay";
-            pictureBoxDisplay.Size = new Size(1010, 643);
-            pictureBoxDisplay.TabIndex = 4;
-            pictureBoxDisplay.TabStop = false;
             // 
             // panelNavigation
             // 
@@ -132,24 +120,33 @@
             panelInfo.Size = new Size(341, 651);
             panelInfo.TabIndex = 2;
             // 
-            // panelTimer
+            // buttonFire
             // 
-            panelTimer.BorderStyle = BorderStyle.FixedSingle;
-            panelTimer.Controls.Add(labelTimer);
-            panelTimer.Location = new Point(1016, 649);
-            panelTimer.Name = "panelTimer";
-            panelTimer.Size = new Size(341, 80);
-            panelTimer.TabIndex = 3;
+            buttonFire.Location = new Point(7, 619);
+            buttonFire.Name = "buttonFire";
+            buttonFire.Size = new Size(314, 23);
+            buttonFire.TabIndex = 0;
+            buttonFire.Text = "Potwierdź";
+            buttonFire.UseVisualStyleBackColor = true;
             // 
-            // labelTimer
+            // panelCamera
             // 
-            labelTimer.Dock = DockStyle.Fill;
-            labelTimer.Location = new Point(0, 0);
-            labelTimer.Name = "labelTimer";
-            labelTimer.Size = new Size(339, 78);
-            labelTimer.TabIndex = 0;
-            labelTimer.Text = "W tym miejscu będzie wyświetlany zegar";
-            labelTimer.TextAlign = ContentAlignment.MiddleCenter;
+            panelCamera.BackColor = SystemColors.ControlLightLight;
+            panelCamera.BorderStyle = BorderStyle.FixedSingle;
+            panelCamera.Controls.Add(pictureBoxCamera);
+            panelCamera.Location = new Point(7, 299);
+            panelCamera.Name = "panelCamera";
+            panelCamera.Size = new Size(314, 314);
+            panelCamera.TabIndex = 0;
+            // 
+            // pictureBoxCamera
+            // 
+            pictureBoxCamera.BackColor = SystemColors.ControlDark;
+            pictureBoxCamera.Location = new Point(3, 3);
+            pictureBoxCamera.Name = "pictureBoxCamera";
+            pictureBoxCamera.Size = new Size(306, 306);
+            pictureBoxCamera.TabIndex = 0;
+            pictureBoxCamera.TabStop = false;
             // 
             // tableLayoutPanel
             // 
@@ -178,44 +175,6 @@
             tableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
             tableLayoutPanel.Size = new Size(314, 240);
             tableLayoutPanel.TabIndex = 0;
-            // 
-            // panelSensorName
-            // 
-            panelSensorName.BackColor = SystemColors.ControlLightLight;
-            panelSensorName.BorderStyle = BorderStyle.FixedSingle;
-            panelSensorName.Controls.Add(labelSensorName);
-            panelSensorName.Location = new Point(7, 3);
-            panelSensorName.Name = "panelSensorName";
-            panelSensorName.Size = new Size(314, 44);
-            panelSensorName.TabIndex = 0;
-            // 
-            // panelCamera
-            // 
-            panelCamera.BackColor = SystemColors.ControlLightLight;
-            panelCamera.BorderStyle = BorderStyle.FixedSingle;
-            panelCamera.Controls.Add(pictureBoxCamera);
-            panelCamera.Location = new Point(7, 299);
-            panelCamera.Name = "panelCamera";
-            panelCamera.Size = new Size(314, 314);
-            panelCamera.TabIndex = 0;
-            // 
-            // buttonFire
-            // 
-            buttonFire.Location = new Point(7, 619);
-            buttonFire.Name = "buttonFire";
-            buttonFire.Size = new Size(314, 23);
-            buttonFire.TabIndex = 0;
-            buttonFire.Text = "Potwierdź";
-            buttonFire.UseVisualStyleBackColor = true;
-            // 
-            // pictureBoxCamera
-            // 
-            pictureBoxCamera.BackColor = SystemColors.ControlDark;
-            pictureBoxCamera.Location = new Point(3, 3);
-            pictureBoxCamera.Name = "pictureBoxCamera";
-            pictureBoxCamera.Size = new Size(306, 306);
-            pictureBoxCamera.TabIndex = 0;
-            pictureBoxCamera.TabStop = false;
             // 
             // labelState
             // 
@@ -317,6 +276,16 @@
             labelLastUpdateInfo.Text = "-";
             labelLastUpdateInfo.TextAlign = ContentAlignment.MiddleCenter;
             // 
+            // panelSensorName
+            // 
+            panelSensorName.BackColor = SystemColors.ControlLightLight;
+            panelSensorName.BorderStyle = BorderStyle.FixedSingle;
+            panelSensorName.Controls.Add(labelSensorName);
+            panelSensorName.Location = new Point(7, 3);
+            panelSensorName.Name = "panelSensorName";
+            panelSensorName.Size = new Size(314, 44);
+            panelSensorName.TabIndex = 0;
+            // 
             // labelSensorName
             // 
             labelSensorName.Dock = DockStyle.Fill;
@@ -326,6 +295,25 @@
             labelSensorName.TabIndex = 0;
             labelSensorName.Text = "Czujnik";
             labelSensorName.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // panelTimer
+            // 
+            panelTimer.BorderStyle = BorderStyle.FixedSingle;
+            panelTimer.Controls.Add(labelTimer);
+            panelTimer.Location = new Point(1016, 649);
+            panelTimer.Name = "panelTimer";
+            panelTimer.Size = new Size(341, 80);
+            panelTimer.TabIndex = 3;
+            // 
+            // labelTimer
+            // 
+            labelTimer.Dock = DockStyle.Fill;
+            labelTimer.Location = new Point(0, 0);
+            labelTimer.Name = "labelTimer";
+            labelTimer.Size = new Size(339, 78);
+            labelTimer.TabIndex = 0;
+            labelTimer.Text = "W tym miejscu będzie wyświetlany zegar";
+            labelTimer.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // FormMain
             // 
@@ -338,25 +326,20 @@
             Controls.Add(panelDisplay);
             Name = "FormMain";
             Text = "ZPI";
-            panelDisplay.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)pictureBoxDisplay).EndInit();
             panelNavigation.ResumeLayout(false);
             panelInfo.ResumeLayout(false);
-            panelTimer.ResumeLayout(false);
-            tableLayoutPanel.ResumeLayout(false);
-            panelSensorName.ResumeLayout(false);
             panelCamera.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)pictureBoxCamera).EndInit();
+            tableLayoutPanel.ResumeLayout(false);
+            panelSensorName.ResumeLayout(false);
+            panelTimer.ResumeLayout(false);
             ResumeLayout(false);
         }
 
         #endregion
-
-        private Panel panelDisplay;
         private Panel panelNavigation;
         private Panel panelInfo;
         private Panel panelTimer;
-        private PictureBox pictureBoxDisplay;
         private Button buttonOverview;
         private Button buttonMenu;
         private Button buttonSwitch;
@@ -377,5 +360,6 @@
         private Label labelLastUpdate;
         private Label labelLastUpdateInfo;
         private Label labelSensorName;
+        public Panel panelDisplay;
     }
 }

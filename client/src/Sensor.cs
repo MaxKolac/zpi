@@ -18,20 +18,28 @@ internal class Sensor
 
     private int sensorX, sensorY;
     private string sensorName;
-    private SensorState sensorState;
+    private SensorState currentSensorState;
     private string sensorSector;
     private string sensorLocation;
     private int sensorTemperature;
     private string sensorDetails;
     private int sensorLastUpdate;
-
+    public int SensorX { get => sensorX; set => sensorX = value; }
+    public int SensorY { get => sensorY; set => sensorY = value; }
+    public string SensorName { get => sensorName; set => sensorName = value; }
+    internal SensorState CurrentSensorState { get => currentSensorState; set => currentSensorState = value; }
+    public string SensorSector { get => sensorSector; set => sensorSector = value; }
+    public string SensorLocation { get => sensorLocation; set => sensorLocation = value; }
+    public int SensorTemperature { get => sensorTemperature; set => sensorTemperature = value; }
+    public string SensorDetails { get => sensorDetails; set => sensorDetails = value; }
+    public int SensorLastUpdate { get => sensorLastUpdate; set => sensorLastUpdate = value; }
     #region Constructor
     public Sensor(int sensorX, int sensorY, string sensorName, string sensorSector, string sensorLocation)
     {
         this.sensorX = sensorX;
         this.sensorY = sensorY;
         this.sensorName = sensorName;
-        this.sensorState = SensorState.Inactive;
+        this.currentSensorState = SensorState.Inactive;
         this.sensorSector = sensorSector;
         this.sensorLocation = sensorLocation;
     }
@@ -40,7 +48,7 @@ internal class Sensor
         this.sensorX = 0;
         this.sensorY = 0;
         this.sensorName = sensorName;
-        this.sensorState = SensorState.Inactive;
+        this.currentSensorState = SensorState.Inactive;
         this.sensorSector = sensorSector;
         this.sensorLocation = sensorLocation;
     }
@@ -66,51 +74,25 @@ internal class Sensor
         this.sensorLocation = sensorLocation;
     }
     #endregion
-    #region ChangeInfo
-    public void SensorChangeName(string sensorName)
-    {
-        this.sensorName = sensorName;
-    }
-    #endregion
     #region UpdateInformation
     public void Update(SensorState sensorState)
     {
-        this.sensorState = sensorState;
+        this.currentSensorState = sensorState;
         this.sensorLastUpdate = 0;
     }
     public void Update(SensorState sensorState, int sensorTemperature, string sensorDetails)
     {
-        this.sensorState = sensorState;
+        this.currentSensorState = sensorState;
         this.sensorTemperature = sensorTemperature;
         this.sensorDetails = sensorDetails;
         this.sensorLastUpdate = 0;
     }
     public void Update(string sensorState, int sensorTemperature, string sensorDetails)
     {
-        this.sensorState = StringToState(sensorState);
+        this.currentSensorState = StringToState(sensorState);
         this.sensorTemperature = sensorTemperature;
         this.sensorDetails = sensorDetails;
         this.sensorLastUpdate = 0;
-    }
-    #endregion
-    #region GetInfo
-    public (int, int) SensorGetCoordinates()
-    {
-        return (sensorX, sensorY);
-    }
-    public (string, string, string) SensorGetInfo()
-    {
-        return (sensorName, sensorLocation, sensorSector);
-    }
-
-    public (SensorState, int, string) SensorGetDetails()
-    {
-        return (sensorState, sensorTemperature, sensorDetails);
-    }
-
-    public int SensorGetLastUpdate()
-    {
-        return this.sensorLastUpdate;
     }
     #endregion
     #region Utilities
