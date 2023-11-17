@@ -1,24 +1,24 @@
 [
   {
-	"X": 0,
-	"Y": 0,
-    "Nazwa": "Czujnik 1",
-    "Stan": "Aktywny",
-    "Segment": "Segment A1",
-    "Lokalizacja": "Przykładowa Lokalizacja 1",
-    "Temperatura": 25.5,
-    "Ostatnia Aktualizacja": 0,
-    "Numer Zdjęcia": "C1.jpg"
+	"SensorX": 0,
+	"SensorY": 0,
+    "SensorName": "Czujnik 1",
+    "CurrentSensorStateString": "Active",
+    "SensorSegment": "A1",
+    "SensorLocation": "Przykładowa Lokalizacja 1",
+    "SensorTemperature": 25.5,
+    "SensorDetails": "C1.jpg",
+	"SensorLastUpdate": 0
   },
   {
-  	"X": 0,
-	"Y": 0,
-    "Nazwa": "Czujnik 2",
-    "Stan": "Aktywny",
-    "Segment": "Segment B1",
-    "Lokalizacja": "Przykładowa Lokalizacja 2",
-    "Temperatura": 20.0,
-    "Ostatnia Aktualizacja": 0,
-    "Numer Zdjęcia": "C2.jpg"
-  }
+	"SensorX": 0,
+	"SensorY": 0,
+    "SensorName": "Czujnik 2",
+    "CurrentSensorStateString": "Inactive",
+    "SensorSegment": "B1",
+    "SensorLocation": "Przykładowa Lokalizacja 2",
+    "SensorTemperature": 20.0,
+    "SensorDetails": "C2.jpg",
+	"SensorLastUpdate": 0
+  },
 ]

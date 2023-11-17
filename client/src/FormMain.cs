@@ -1,5 +1,9 @@
-using System.Text.Json;
+using System;
 using System.Windows.Forms;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using static System.Windows.Forms.Design.AxImporter;
+using System.Diagnostics;
 
 namespace ZPIClient
 {
@@ -8,27 +12,38 @@ namespace ZPIClient
         private string jsonPath = "../../../sensors/sensorData.json";
         private List<Sensor> sensorList = new List<Sensor>();
         private int currentSensorIndex = -1;
+        private JsonSerializerOptions options = new JsonSerializerOptions();
 
+
+        //Dynamic objects
+        TableLayoutPanel[] panelSensorContainer;
+        Label[] labelSensor;
+        Panel[] panelSensorInformation;
+        PictureBox[] pictureBoxSensorStatus;
+        Label[] labelSensorStatus;
+        Label[] labelSensorStatusDisplay;
+        Label[] labelSensorSegment;
+        Label[] labelSensorSegmentDisplay;
 
         public FormMain()
         {
             InitializeComponent();
+            initializeOptions();
             initializeSensors();
             populateSensorList();
+            updateColors();
         }
         public void initializeSensors()
         {
-            string json = File.ReadAllText(jsonPath);
-            List<Sensor> dataSet = JsonSerializer.Deserialize<List<Sensor>>(json);
+            List<Sensor> dataSet = readJSON();
             foreach (var data in dataSet)
             {
-                sensorList.Add(new Sensor(data.SensorX, data.SensorY, data.SensorName, data.SensorSector, data.SensorLocation));
+                sensorList.Add(new Sensor(data.SensorX, data.SensorY, data.SensorName, data.CurrentSensorStateString , data.SensorSegment, data.SensorLocation, data.SensorTemperature, data.SensorDetails, data.SensorLastUpdate));
             }
         }
         public void updateSensors()
         {
-            string json = File.ReadAllText(jsonPath);
-            List<Sensor> dataSet = JsonSerializer.Deserialize<List<Sensor>>(json);
+            List<Sensor> dataSet = readJSON();
             foreach (var data in dataSet)
             {
                 int currentSensorIndex = sensorList.FindIndex(obiekt => obiekt.SensorName == data.SensorName);
@@ -51,35 +66,33 @@ namespace ZPIClient
             int fontSize = 16;
             #endregion
 
-            //int count = sensorList.Count;
-            int count = 2;
+            int count = sensorList.Count;
 
-            var panelContainer = new TableLayoutPanel[count];
-            var labelSensor = new Label[count];
-            var panelInfo = new Panel[count];
-
-            var pictureBoxStatus = new PictureBox[count];
-            var labelStatus = new Label[count];
-            var labelStatusDisplay = new Label[count];
-            var labelSegment = new Label[count];
-            var labelSegmentDisplay = new Label[count];
+            panelSensorContainer = new TableLayoutPanel[count];
+            labelSensor = new Label[count];
+            panelSensorInformation = new Panel[count];
+            pictureBoxSensorStatus = new PictureBox[count];
+            labelSensorStatus = new Label[count];
+            labelSensorStatusDisplay = new Label[count];
+            labelSensorSegment = new Label[count];
+            labelSensorSegmentDisplay = new Label[count];
 
             for (int i = 0; i < count; i++)
             {
                 #region Sensor Panel Container
-                panelContainer[i] = new TableLayoutPanel();
-                panelContainer[i].Name = "panelLabelSensor" + i;
-                panelContainer[i].Location = new Point(panelX, panelY);
-                panelContainer[i].Width = panelWidth;
-                panelContainer[i].Height = panelHeight;
-                panelContainer[i].CellBorderStyle = TableLayoutPanelCellBorderStyle.Single;
-                panelContainer[i].BackColor = SystemColors.ControlLightLight;
-                panelContainer[i].ColumnCount = 2;
-                panelContainer[i].RowCount = 1;
-                panelContainer[i].ColumnStyles.Add(new ColumnStyle(SizeType.Percent, headerWidth));
-                panelContainer[i].ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100 - headerWidth));
-                panelContainer[i].RowStyles.Add(new RowStyle(SizeType.Absolute, rowHeight));
-                panelDisplay.Controls.Add(panelContainer[i]);
+                panelSensorContainer[i] = new TableLayoutPanel();
+                panelSensorContainer[i].Name = "tableLayoutPanel" + i;
+                panelSensorContainer[i].Location = new Point(panelX, panelY);
+                panelSensorContainer[i].Width = panelWidth;
+                panelSensorContainer[i].Height = panelHeight;
+                panelSensorContainer[i].CellBorderStyle = TableLayoutPanelCellBorderStyle.Single;
+                panelSensorContainer[i].BackColor = SystemColors.ControlLightLight;
+                panelSensorContainer[i].ColumnCount = 2;
+                panelSensorContainer[i].RowCount = 1;
+                panelSensorContainer[i].ColumnStyles.Add(new ColumnStyle(SizeType.Percent, headerWidth));
+                panelSensorContainer[i].ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100 - headerWidth));
+                panelSensorContainer[i].RowStyles.Add(new RowStyle(SizeType.Absolute, rowHeight));
+                panelDisplay.Controls.Add(panelSensorContainer[i]);
                 #endregion
                 #region Sensor Name Label
                 labelSensor[i] = new Label();
@@ -88,75 +101,72 @@ namespace ZPIClient
                 labelSensor[i].AutoSize = false;
                 labelSensor[i].TextAlign = ContentAlignment.MiddleCenter;
                 labelSensor[i].Dock = DockStyle.Fill;
-                //labelSensor[i].Text = sensorList[i].SensorName;
-                labelSensor[i].Text = "Test";
-                panelContainer[i].Controls.Add(labelSensor[i]);
+                labelSensor[i].Text = sensorList[i].SensorName;
+                panelSensorContainer[i].Controls.Add(labelSensor[i]);
                 #endregion
                 #region Sensor Info Panel
-                panelInfo[i] = new Panel();
-                panelInfo[i].Name = "panelInfo" + i;
-                panelInfo[i].Location = new Point(0, 0);
-                panelInfo[i].Width = (int)panelContainer[i].ColumnStyles[1].Width;
-                panelInfo[i].Height = (int)panelContainer[i].RowStyles[0].Height;
-                panelInfo[i].AutoSize = false;
-                panelInfo[i].Dock = DockStyle.Fill;
-                panelContainer[i].Controls.Add(panelInfo[i]);
+                panelSensorInformation[i] = new Panel();
+                panelSensorInformation[i].Name = "panelInfo" + i;
+                panelSensorInformation[i].Location = new Point(0, 0);
+                panelSensorInformation[i].Width = (int)panelSensorContainer[i].ColumnStyles[1].Width;
+                panelSensorInformation[i].Height = (int)panelSensorContainer[i].RowStyles[0].Height;
+                panelSensorInformation[i].AutoSize = false;
+                panelSensorInformation[i].Dock = DockStyle.Fill;
+                panelSensorContainer[i].Controls.Add(panelSensorInformation[i]);
                 #endregion
                 #region Sensor Status Picture
-                pictureBoxStatus[i] = new PictureBox();
-                pictureBoxStatus[i].Name = "pictureBoxStatus" + i;
-                pictureBoxStatus[i].Location = new Point(pictureBoxMargin, panelInfo[i].Height / 4);
-                pictureBoxStatus[i].Width = pictureBoxSize;
-                pictureBoxStatus[i].Height = pictureBoxSize;
-                pictureBoxStatus[i].BackColor = Color.Lime;
-                roundPictureBox(ref pictureBoxStatus[i]);
-                panelInfo[i].Controls.Add(pictureBoxStatus[i]);
+                pictureBoxSensorStatus[i] = new PictureBox();
+                pictureBoxSensorStatus[i].Name = "pictureBoxStatus" + i;
+                pictureBoxSensorStatus[i].Location = new Point(pictureBoxMargin, panelSensorInformation[i].Height / 4);
+                pictureBoxSensorStatus[i].Width = pictureBoxSize;
+                pictureBoxSensorStatus[i].Height = pictureBoxSize;
+                pictureBoxSensorStatus[i].BackColor = Color.Lime;
+                roundPictureBox(ref pictureBoxSensorStatus[i]);
+                panelSensorInformation[i].Controls.Add(pictureBoxSensorStatus[i]);
                 #endregion
                 #region Sensor Status Label
-                labelStatus[i] = new Label();
-                labelStatus[i].Name = "labelStatus" + i;
-                labelStatus[i].Location = new Point(pictureBoxStatus[i].Location.X + pictureBoxMargin, panelInfo[i].Height / 4);
-                labelStatus[i].MaximumSize = new Size(150, rowHeight);
-                labelStatus[i].AutoSize = true;
-                labelStatus[i].Font = new Font(labelStatus[i].Font.Name, fontSize);
-                labelStatus[i].TextAlign = ContentAlignment.TopLeft;
-                labelStatus[i].Text = "Status:";
-                panelInfo[i].Controls.Add(labelStatus[i]);
+                labelSensorStatus[i] = new Label();
+                labelSensorStatus[i].Name = "labelStatus" + i;
+                labelSensorStatus[i].Location = new Point(pictureBoxSensorStatus[i].Location.X + pictureBoxMargin, panelSensorInformation[i].Height / 4);
+                labelSensorStatus[i].MaximumSize = new Size(150, rowHeight);
+                labelSensorStatus[i].AutoSize = true;
+                labelSensorStatus[i].Font = new Font(labelSensorStatus[i].Font.Name, fontSize);
+                labelSensorStatus[i].TextAlign = ContentAlignment.TopLeft;
+                labelSensorStatus[i].Text = "Status:";
+                panelSensorInformation[i].Controls.Add(labelSensorStatus[i]);
                 #endregion
                 #region Sensor Status Display Label
-                labelStatusDisplay[i] = new Label();
-                labelStatusDisplay[i].Name = "labelStatusDisplay" + i;
-                labelStatusDisplay[i].Location = new Point(labelStatus[i].Location.X + labelStatus[i].Width, panelInfo[i].Height / 4);
-                labelStatusDisplay[i].MaximumSize = new Size(300, rowHeight);
-                labelStatusDisplay[i].AutoSize = true;
-                labelStatusDisplay[i].Font = new Font(labelStatusDisplay[i].Font.Name, fontSize);
-                labelStatusDisplay[i].TextAlign = ContentAlignment.TopLeft;
-                //labelStatusDisplay[i].Text = sensorList[i].getSensorStateAsString();
-                labelStatusDisplay[i].Text = "PRZYK£ADOWY STAN";
-                panelInfo[i].Controls.Add(labelStatusDisplay[i]);
+                labelSensorStatusDisplay[i] = new Label();
+                labelSensorStatusDisplay[i].Name = "labelStatusDisplay" + i;
+                labelSensorStatusDisplay[i].Location = new Point(labelSensorStatus[i].Location.X + labelSensorStatus[i].Width, panelSensorInformation[i].Height / 4);
+                labelSensorStatusDisplay[i].MaximumSize = new Size(300, rowHeight);
+                labelSensorStatusDisplay[i].AutoSize = true;
+                labelSensorStatusDisplay[i].Font = new Font(labelSensorStatusDisplay[i].Font.Name, fontSize);
+                labelSensorStatusDisplay[i].TextAlign = ContentAlignment.TopLeft;
+                labelSensorStatusDisplay[i].Text = sensorList[i].StateToString();
+                panelSensorInformation[i].Controls.Add(labelSensorStatusDisplay[i]);
                 #endregion
                 #region Sensor Segment Label
-                labelSegment[i] = new Label();
-                labelSegment[i].Name = "labelSegment" + i;
-                labelSegment[i].Location = new Point(labelStatusDisplay[i].Location.X + labelStatusDisplay[i].Width + elementMargin, panelInfo[i].Height / 4);
-                labelSegment[i].MaximumSize = new Size(150, rowHeight);
-                labelSegment[i].AutoSize = true;
-                labelSegment[i].Font = new Font(labelSegment[i].Font.Name, fontSize);
-                labelSegment[i].TextAlign = ContentAlignment.TopLeft;
-                labelSegment[i].Text = "Segment:";
-                panelInfo[i].Controls.Add(labelSegment[i]);
+                labelSensorSegment[i] = new Label();
+                labelSensorSegment[i].Name = "labelSegment" + i;
+                labelSensorSegment[i].Location = new Point(labelSensorStatusDisplay[i].Location.X + labelSensorStatusDisplay[i].Width + elementMargin, panelSensorInformation[i].Height / 4);
+                labelSensorSegment[i].MaximumSize = new Size(150, rowHeight);
+                labelSensorSegment[i].AutoSize = true;
+                labelSensorSegment[i].Font = new Font(labelSensorSegment[i].Font.Name, fontSize);
+                labelSensorSegment[i].TextAlign = ContentAlignment.TopLeft;
+                labelSensorSegment[i].Text = "Segment:";
+                panelSensorInformation[i].Controls.Add(labelSensorSegment[i]);
                 #endregion
                 #region Sensor Segment Display Label
-                labelSegmentDisplay[i] = new Label();
-                labelSegmentDisplay[i].Name = "labelSegmentDisplay" + i;
-                labelSegmentDisplay[i].Location = new Point(labelSegment[i].Location.X + labelSegment[i].Width, panelInfo[i].Height / 4);
-                labelSegmentDisplay[i].MaximumSize = new Size(300, rowHeight);
-                labelSegmentDisplay[i].AutoSize = true;
-                labelSegmentDisplay[i].Font = new Font(labelSegmentDisplay[i].Font.Name, fontSize);
-                labelSegmentDisplay[i].TextAlign = ContentAlignment.TopLeft;
-                //labelStatusDisplay[i].Text = sensorList[i].getSensorStateAsString();
-                labelSegmentDisplay[i].Text = "A0";
-                panelInfo[i].Controls.Add(labelSegmentDisplay[i]);
+                labelSensorSegmentDisplay[i] = new Label();
+                labelSensorSegmentDisplay[i].Name = "labelSegmentDisplay" + i;
+                labelSensorSegmentDisplay[i].Location = new Point(labelSensorSegment[i].Location.X + labelSensorSegment[i].Width, panelSensorInformation[i].Height / 4);
+                labelSensorSegmentDisplay[i].MaximumSize = new Size(300, rowHeight);
+                labelSensorSegmentDisplay[i].AutoSize = true;
+                labelSensorSegmentDisplay[i].Font = new Font(labelSensorSegmentDisplay[i].Font.Name, fontSize);
+                labelSensorSegmentDisplay[i].TextAlign = ContentAlignment.TopLeft;
+                labelSensorSegmentDisplay[i].Text = sensorList[i].SensorSegment;
+                panelSensorInformation[i].Controls.Add(labelSensorSegmentDisplay[i]);
                 #endregion
 
                 panelY += rowHeight * 2;
@@ -164,13 +174,31 @@ namespace ZPIClient
 
 
         }
-
+        public void initializeOptions()
+        {
+            options.PropertyNameCaseInsensitive = true;
+            options.AllowTrailingCommas = true;
+        }
         private void roundPictureBox(ref PictureBox pb)
         {
             System.Drawing.Drawing2D.GraphicsPath gp = new System.Drawing.Drawing2D.GraphicsPath();
             gp.AddEllipse(0, 0, pb.Width - 3, pb.Height - 3);
             Region rg = new Region(gp);
             pb.Region = rg;
+        }
+        private List<Sensor> readJSON()
+        {
+            using FileStream json = File.OpenRead(jsonPath);
+            List<Sensor> sensors = JsonSerializer.Deserialize<List<Sensor>>(json, options);
+            return sensors;
+        }
+        private void updateColors()
+        {
+            int count = sensorList.Count;
+            for (int i = 0; i<count; i++)
+            {
+                pictureBoxSensorStatus[i].BackColor = sensorList[i].StateToColor();
+            }
         }
     }
 }
