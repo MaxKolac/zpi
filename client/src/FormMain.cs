@@ -229,15 +229,17 @@ namespace ZPIClient
                 labelLocationInfo.Text = sensorList[currentSensorIndex].SensorLocation;
                 labelTemperatureInfo.Text = sensorList[currentSensorIndex].SensorTemperature.ToString() + "°C";
                 labelLastUpdateInfo.Text = sensorList[currentSensorIndex].SensorLastUpdate.ToString();
-                Image cameraImage = Image.FromFile("../../../sensors/" + sensorList[currentSensorIndex].SensorDetails);
-                if (cameraImage != null)
+
+                try
                 {
+                    Image cameraImage = Image.FromFile("../../../sensors/" + sensorList[currentSensorIndex].SensorDetails);
                     pictureBoxCamera.Image = cameraImage;
                 }
-                else
+                catch(FileNotFoundException)
                 {
                     pictureBoxCamera.Image = pictureBoxCamera.ErrorImage;
                 }
+
                 switch (sensorList[currentSensorIndex].CurrentSensorState)
                 {
                     case Sensor.SensorState.Alert:
