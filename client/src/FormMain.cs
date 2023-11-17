@@ -38,7 +38,7 @@ namespace ZPIClient
             List<Sensor> dataSet = readJSON();
             foreach (var data in dataSet)
             {
-                sensorList.Add(new Sensor(data.SensorX, data.SensorY, data.SensorName, data.CurrentSensorStateString , data.SensorSegment, data.SensorLocation, data.SensorTemperature, data.SensorDetails, data.SensorLastUpdate));
+                sensorList.Add(new Sensor(data.SensorX, data.SensorY, data.SensorName, data.CurrentSensorStateString, data.SensorSegment, data.SensorLocation, data.SensorTemperature, data.SensorDetails, data.SensorLastUpdate));
             }
         }
         public void updateSensors()
@@ -92,6 +92,8 @@ namespace ZPIClient
                 panelSensorContainer[i].ColumnStyles.Add(new ColumnStyle(SizeType.Percent, headerWidth));
                 panelSensorContainer[i].ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100 - headerWidth));
                 panelSensorContainer[i].RowStyles.Add(new RowStyle(SizeType.Absolute, rowHeight));
+                panelSensorContainer[i].Tag = i;
+                panelSensorContainer[i].Click += sensorContainer_Click;
                 panelDisplay.Controls.Add(panelSensorContainer[i]);
                 #endregion
                 #region Sensor Name Label
@@ -102,6 +104,8 @@ namespace ZPIClient
                 labelSensor[i].TextAlign = ContentAlignment.MiddleCenter;
                 labelSensor[i].Dock = DockStyle.Fill;
                 labelSensor[i].Text = sensorList[i].SensorName;
+                labelSensor[i].Tag = i;
+                labelSensor[i].Click += sensorContainer_Click;
                 panelSensorContainer[i].Controls.Add(labelSensor[i]);
                 #endregion
                 #region Sensor Info Panel
@@ -112,6 +116,8 @@ namespace ZPIClient
                 panelSensorInformation[i].Height = (int)panelSensorContainer[i].RowStyles[0].Height;
                 panelSensorInformation[i].AutoSize = false;
                 panelSensorInformation[i].Dock = DockStyle.Fill;
+                panelSensorInformation[i].Tag = i;
+                panelSensorInformation[i].Click += sensorContainer_Click;
                 panelSensorContainer[i].Controls.Add(panelSensorInformation[i]);
                 #endregion
                 #region Sensor Status Picture
@@ -122,6 +128,8 @@ namespace ZPIClient
                 pictureBoxSensorStatus[i].Height = pictureBoxSize;
                 pictureBoxSensorStatus[i].BackColor = Color.Lime;
                 roundPictureBox(ref pictureBoxSensorStatus[i]);
+                pictureBoxSensorStatus[i].Tag = i;
+                pictureBoxSensorStatus[i].Click += sensorContainer_Click;
                 panelSensorInformation[i].Controls.Add(pictureBoxSensorStatus[i]);
                 #endregion
                 #region Sensor Status Label
@@ -133,6 +141,8 @@ namespace ZPIClient
                 labelSensorStatus[i].Font = new Font(labelSensorStatus[i].Font.Name, fontSize);
                 labelSensorStatus[i].TextAlign = ContentAlignment.TopLeft;
                 labelSensorStatus[i].Text = "Status:";
+                labelSensorStatus[i].Tag = i;
+                labelSensorStatus[i].Click += sensorContainer_Click;
                 panelSensorInformation[i].Controls.Add(labelSensorStatus[i]);
                 #endregion
                 #region Sensor Status Display Label
@@ -144,6 +154,8 @@ namespace ZPIClient
                 labelSensorStatusDisplay[i].Font = new Font(labelSensorStatusDisplay[i].Font.Name, fontSize);
                 labelSensorStatusDisplay[i].TextAlign = ContentAlignment.TopLeft;
                 labelSensorStatusDisplay[i].Text = sensorList[i].StateToString();
+                labelSensorStatusDisplay[i].Tag = i;
+                labelSensorStatusDisplay[i].Click += sensorContainer_Click;
                 panelSensorInformation[i].Controls.Add(labelSensorStatusDisplay[i]);
                 #endregion
                 #region Sensor Segment Label
@@ -155,6 +167,8 @@ namespace ZPIClient
                 labelSensorSegment[i].Font = new Font(labelSensorSegment[i].Font.Name, fontSize);
                 labelSensorSegment[i].TextAlign = ContentAlignment.TopLeft;
                 labelSensorSegment[i].Text = "Segment:";
+                labelSensorSegment[i].Tag = i;
+                labelSensorSegment[i].Click += sensorContainer_Click;
                 panelSensorInformation[i].Controls.Add(labelSensorSegment[i]);
                 #endregion
                 #region Sensor Segment Display Label
@@ -166,6 +180,8 @@ namespace ZPIClient
                 labelSensorSegmentDisplay[i].Font = new Font(labelSensorSegmentDisplay[i].Font.Name, fontSize);
                 labelSensorSegmentDisplay[i].TextAlign = ContentAlignment.TopLeft;
                 labelSensorSegmentDisplay[i].Text = sensorList[i].SensorSegment;
+                labelSensorSegmentDisplay[i].Tag = i;
+                labelSensorSegmentDisplay[i].Click += sensorContainer_Click;
                 panelSensorInformation[i].Controls.Add(labelSensorSegmentDisplay[i]);
                 #endregion
 
@@ -195,10 +211,58 @@ namespace ZPIClient
         private void updateColors()
         {
             int count = sensorList.Count;
-            for (int i = 0; i<count; i++)
+            for (int i = 0; i < count; i++)
             {
                 pictureBoxSensorStatus[i].BackColor = sensorList[i].StateToColor();
             }
+        }
+
+        private void sensorContainer_Click(object sender, EventArgs e)
+        {
+            Control control = (Control)sender;
+            currentSensorIndex = (int)control.Tag;
+            if (currentSensorIndex != -1)
+            {
+                labelSensorName.Text = sensorList[currentSensorIndex].SensorName;
+                labelStateInfo.Text = sensorList[currentSensorIndex].StateToString();
+                labelSegmentInfo.Text = sensorList[currentSensorIndex].SensorSegment;
+                labelLocationInfo.Text = sensorList[currentSensorIndex].SensorLocation;
+                labelTemperatureInfo.Text = sensorList[currentSensorIndex].SensorTemperature.ToString() + "°C";
+                labelLastUpdateInfo.Text = sensorList[currentSensorIndex].SensorLastUpdate.ToString();
+                Image cameraImage = Image.FromFile("../../../sensors/" + sensorList[currentSensorIndex].SensorDetails);
+                if (cameraImage != null)
+                {
+                    pictureBoxCamera.Image = cameraImage;
+                }
+                else
+                {
+                    pictureBoxCamera.Image = pictureBoxCamera.ErrorImage;
+                }
+                switch (sensorList[currentSensorIndex].CurrentSensorState)
+                {
+                    case Sensor.SensorState.Alert:
+                        buttonFire.BackColor = Color.Red;
+                        buttonFire.ForeColor = Color.White;
+                        buttonFire.Enabled = true;
+                        buttonFire.Text = "PotwierdŸ Po¿ar";
+                        break;
+
+                    case Sensor.SensorState.Fire:
+                        buttonFire.BackColor = Color.Red;
+                        buttonFire.ForeColor = Color.White;
+                        buttonFire.Enabled = true;
+                        buttonFire.Text = "PotwierdŸ Zwalczenie Po¿aru";
+                        break;
+
+                    default:
+                        buttonFire.BackColor = SystemColors.Control;
+                        buttonFire.ForeColor = SystemColors.ControlText;
+                        buttonFire.Enabled = false;
+                        buttonFire.Text = "Brak Problemów";
+                        break;
+                }
+            }
+
         }
     }
 }

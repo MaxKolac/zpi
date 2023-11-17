@@ -123,6 +123,7 @@
             // 
             // buttonFire
             // 
+            buttonFire.Enabled = false;
             buttonFire.Location = new Point(7, 619);
             buttonFire.Name = "buttonFire";
             buttonFire.Size = new Size(314, 23);
@@ -146,6 +147,7 @@
             pictureBoxCamera.Location = new Point(3, 3);
             pictureBoxCamera.Name = "pictureBoxCamera";
             pictureBoxCamera.Size = new Size(306, 306);
+            pictureBoxCamera.SizeMode = PictureBoxSizeMode.StretchImage;
             pictureBoxCamera.TabIndex = 0;
             pictureBoxCamera.TabStop = false;
             // 
