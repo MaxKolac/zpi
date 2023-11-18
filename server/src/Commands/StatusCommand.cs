@@ -21,18 +21,18 @@ public class StatusCommand : Command
             {
                 case TcpHandlerArgument:
                 case SignalTranslatorArgument:
-                    _logger?.WriteLine($"Status of {ClassArgument}:", null);
+                    _logger?.WriteLine($"Status of {ClassArgument}:");
                     break;
                 default:
-                    _logger?.WriteLine("Unrecognized argument.", null);
-                    _logger?.WriteLine(GetHelp(), null);
+                    _logger?.WriteLine("Unrecognized argument.");
+                    _logger?.WriteLine(GetHelp());
                     break;
             }
         }
         else
         {
-            _logger?.WriteLine($"{Command.Status} requires 1 argument.", null);
-            _logger?.WriteLine(GetHelp(), null);
+            _logger?.WriteLine($"{Command.Status} requires 1 argument.");
+            _logger?.WriteLine(GetHelp());
         }
         Invoke(this, new EventArgs.CommandEventArgs());
     }
@@ -63,7 +63,7 @@ public class StatusCommand : Command
         }
         else if (arguments.Length > 1)
         {
-            _logger?.WriteLine("Too many arguments.", null);
+            _logger?.WriteLine("Too many arguments.");
         }
     }
 }

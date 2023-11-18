@@ -20,8 +20,10 @@ public class TcpHandler
 {
     private readonly CancellationTokenSource _token;
     private readonly Logger? _logger;
-    private readonly TcpListener _listener;
-    private readonly Task _listenerTask;
+    private readonly TcpListener[] _listeners;
+    private readonly Task[] _listenerTasks;
+
+    private readonly SemaphoreSlim _semaphore;
     private int _connectionsInitialized = 0;
     private int _connectionsHandled = 0;
 
@@ -31,22 +33,67 @@ public class TcpHandler
     public bool IsListening { get; private set; } = false;
 
     /// <summary>
+    /// Zwraca liczbę instancji <see cref="TcpListener"/>, na których <see cref="TcpHandler"/> nasłuchuje połączeń.
+    /// </summary>
+    public int ListenersCount => _listeners.Length;
+
+    /// <summary>
+    /// Zwraca liczbę <b>aktywnych</b> instancji <see cref="TcpListener"/>, na których <see cref="TcpHandler"/> nasłuchuje połączeń.
+    /// </summary>
+    public int ActiveListenersCount()
+    {
+        int activeListeners = 0;
+        foreach (var listener in _listeners)
+        {
+            if (listener.IsActive())
+                activeListeners++;
+        }
+        return activeListeners;
+    }
+
+    /// <summary>
     /// Wydarzenie, które jest inwokowane gdy <see cref="TcpHandler"/> otrzyma pełny ciąg bajtów z nasłuchiwanego portu.
     /// </summary>
     public static event EventHandler<TcpHandlerEventArgs>? OnSignalReceived;
 
-    public TcpHandler(IPAddress address, int listenPort, Logger? logger = null)
+    public TcpHandler(IPAddress address, int listenPort, Logger? logger = null) :
+        this(address, new int[] { listenPort }, logger)
     {
-        _token = new CancellationTokenSource();
-        _logger = logger;
-        _listener = new TcpListener(address, listenPort);
-        _listenerTask = new Task(async () =>
+    }
+
+    public TcpHandler(IPAddress address, int[] listenPorts, Logger? logger = null)
+    {
+        if (listenPorts is null)
+            throw new ArgumentException(null, nameof(listenPorts));
+        if (listenPorts.Length == 0)
+            throw new ArgumentException($"{nameof(listenPorts)} is empty.");
+        if (listenPorts.Distinct().Count() != listenPorts.Length)
+            throw new ArgumentException($"{nameof(listenPorts)} contained duplicate port numbers.");
+        foreach (var port in listenPorts)
         {
-            while (!_token.IsCancellationRequested)
+            if (port < 1024 || 65535 < port)
+                throw new ArgumentException($"{nameof(listenPorts)} contained an invalid TCP port number.");
+        }
+
+        _token = new CancellationTokenSource();
+        _semaphore = new SemaphoreSlim(1, 1);
+        _logger = logger;
+        _listeners = new TcpListener[listenPorts.Length];
+        _listenerTasks = new Task[listenPorts.Length];
+
+        for (int i = 0; i < listenPorts.Length; i++)
+        {
+            int index = i;
+            _listeners[index] = new TcpListener(address, listenPorts[index]);
+            _listenerTasks[index] = new Task(async () =>
             {
-                await HandleConnectionAsync();
-            }
-        });
+                while (!_token.IsCancellationRequested)
+                {
+                    await HandleConnectionAsync(_listeners[index]);
+                }
+            });
+        }
+
         Command.OnExecuted += ShowStatus;
     }
 
@@ -56,24 +103,37 @@ public class TcpHandler
     }
 
     /// <summary>
-    /// Pobiera obecną wartość <see cref="Settings.TcpListeningPorts"/> i rozpoczyna nasłuch na podanych portach.
+    /// Pobiera obecną wartość <see cref="Settings.TcpListeningPorts"/> i rozpoczyna nasłuch na podanych portach. Jeżeli jeden z portów okaże się być zajętym, <see cref="TcpHandler"/> kontynuuje pracę bez nasłuchu na danym porcie i informuje o tym fakcie w <see cref="Logger"/>ze.<br/>
+    /// Jeżeli wszystkie porty jakie zostały pobrane okażą się zajęte, wyjątek <see cref="IOException"/> jest rzucony.
     /// </summary>
     public void BeginListening()
     {
         if (IsListening)
             return;
 
-        try
+        _logger?.WriteLine("Starting up.", nameof(TcpHandler));
+        IsListening = true;
+        int inactiveListeners = 0;
+        for (int i = 0; i < _listeners.Length; i++)
         {
-            _logger?.WriteLine("Starting up.", nameof(TcpHandler));
-            IsListening = true;
-            _listener.Start();
-            _listenerTask.Start();
+            try
+            {
+                _listeners[i].Start();
+                _listenerTasks[i].Start();
+            }
+            catch (SocketException)
+            {
+                _logger?.WriteLine($"Could not start the TcpListener on port {_listeners[i].GetLocalPort()} - port already in use! {nameof(TcpHandler)} won't be able to listen for connections on that port.", nameof(TcpHandler));
+                inactiveListeners++;
+            }
         }
-        catch (Exception ex)
+        if (inactiveListeners == _listeners.Length)
         {
-            StopListening();
-            _logger?.WriteLine(ex.ToString(), nameof(TcpHandler));
+            throw new IOException($"All ports {nameof(TcpHandler)} was registered on were occupied!");
+        }
+        else if (inactiveListeners > 0)
+        {
+            _logger?.WriteLine($"ALERT! Failed to start TcpListener on {inactiveListeners} port(s).", nameof(TcpHandler));
         }
     }
 
@@ -87,22 +147,32 @@ public class TcpHandler
 
         _logger?.WriteLine("Shutting down.", nameof(TcpHandler));
         _token.Cancel();
-        _listenerTask.Wait();
-        _listener.Stop();
+        foreach (var unstartedTask in _listenerTasks)
+        {
+            //Starting unstarted tasks after signaling cancellation through a token, so that they will immediately run into a while() condition and finish execution without ever invoking HandleConnectionAsync()
+            if (unstartedTask.Status == TaskStatus.Created)
+                unstartedTask.Start();
+        }
+        Task.WaitAll(_listenerTasks);
+        foreach (var listener in _listeners)
+            listener.Stop();
         IsListening = false;
     }
 
-    private async Task HandleConnectionAsync()
+    private async Task HandleConnectionAsync(TcpListener listener)
     {
-        _logger?.WriteLine($"Ready to accept connection on port {((IPEndPoint)_listener.LocalEndpoint).Port}.", nameof(TcpHandler));
+        _logger?.WriteLine($"Ready to accept connection on port {listener.GetLocalPort()}.", nameof(TcpHandler));
         try
         {
-            using TcpClient incomingClient = await _listener.AcceptTcpClientAsync(_token.Token);
+            using TcpClient incomingClient = await listener.AcceptTcpClientAsync(_token.Token);
             IPEndPoint clientEndPoint = (IPEndPoint)incomingClient.Client.RemoteEndPoint!;
             IPAddress clientAddress = clientEndPoint.Address;
             int clientPort = clientEndPoint.Port;
             _logger?.WriteLine($"Accepted connection from {clientAddress}:{clientPort}.", nameof(TcpHandler));
+
+            await _semaphore.WaitAsync();
             _connectionsInitialized++;
+            _semaphore.Release();
 
             using var stream = incomingClient.GetStream();
             int receivedBytesCount;
@@ -130,22 +200,26 @@ public class TcpHandler
                 buffer = new byte[bufferLength];
 
                 //Log that shit
-                _logger?.WriteLine($"Received {sanitizedBuffer.Count} bytes from {clientAddress}:{clientPort} on port {((IPEndPoint)_listener.LocalEndpoint).Port}.", nameof(TcpHandler));
+                _logger?.WriteLine($"Received {sanitizedBuffer.Count} bytes from {clientAddress}:{clientPort} on port {listener.GetLocalPort()}.", nameof(TcpHandler));
             }
-            _logger?.WriteLine($"Closed the connection from {clientAddress}:{clientEndPoint.Port}.", nameof(TcpHandler));
+            _logger?.WriteLine($"Closed the connection from {clientAddress}:{clientPort}.", nameof(TcpHandler));
             OnSignalReceived?.Invoke(this, new TcpHandlerEventArgs(clientAddress, clientPort, fullMessage.ToArray()));
+
+            await _semaphore.WaitAsync();
             _connectionsHandled++;
+            _semaphore.Release();
         }
         catch (IOException ex)
         {
             //Usually thrown when the other end abruptly closes the connection
+            _logger?.WriteLine($"IOException thrown on port {listener.GetLocalPort()}.", nameof(TcpHandler));
             _logger?.WriteLine($"{ex.Message}.", nameof(TcpHandler));
         }
         catch (OperationCanceledException)
         {
             if (_token.IsCancellationRequested)
             {
-                _logger?.WriteLine($"Cancelling connection handling due to cancellation token.", nameof(TcpHandler));
+                _logger?.WriteLine($"Cancelling connection handling on port {listener.GetLocalPort()} due to cancellation token.", nameof(TcpHandler));
                 return;
             }
             else
@@ -157,7 +231,7 @@ public class TcpHandler
         {
             if (_token.IsCancellationRequested)
             {
-                _logger?.WriteLine($"Cancelling connection handling due to cancellation token.", nameof(TcpHandler));
+                _logger?.WriteLine($"Cancelling connection handling on port {listener.GetLocalPort()} due to cancellation token.", nameof(TcpHandler));
                 return;
             }
             else
@@ -169,16 +243,45 @@ public class TcpHandler
 
     private void ShowStatus(object? sender, CommandEventArgs e)
     {
-        if (sender is StatusCommand command && command.ClassArgument == StatusCommand.SignalTranslatorArgument)
+        if (sender is StatusCommand command && command.ClassArgument == StatusCommand.TcpHandlerArgument)
         {
-            var endPoint = (IPEndPoint)_listener.LocalEndpoint;
-            _logger?.WriteLine($"Running: {IsListening}", null);
-            _logger?.WriteLine($"Logging: {_logger is not null}", null);
-            _logger?.WriteLine($"Listening on: {endPoint.Address}", null);
-            _logger?.WriteLine($"\t{endPoint.Port}", null);
-            _logger?.WriteLine($"ListenerTask: {_listenerTask.Status}", null);
-            _logger?.WriteLine($"Connections initialized: {_connectionsInitialized}", null);
-            _logger?.WriteLine($"Connections fully handled: {_connectionsHandled}", null);
+            _logger?.WriteLine($"Running: {IsListening}");
+            _logger?.WriteLine($"Logging: {_logger is not null}");
+            _logger?.WriteLine($"Connections initialized: {_connectionsInitialized}");
+            _logger?.WriteLine($"Connections fully handled: {_connectionsHandled}");
+            _logger?.WriteLine($"Listeners:", null);
+            for (int i = 0; i < _listeners.Length; i++)
+            {
+                _logger?.WriteLine($"\tAddress: {_listeners[i].GetLocalAddress()}");
+                _logger?.WriteLine($"\tPort: {_listeners[i].GetLocalPort()}");
+                _logger?.WriteLine($"\tIsActive: {_listeners[i].IsActive()}");
+                _logger?.WriteLine($"\tTask Status: {_listenerTasks[i].Status}");
+                _logger?.WriteLine("\t --- ");
+            }
         }
+    }
+
+}
+
+public static class TcpListenerExtensions
+{
+    public static int GetLocalPort(this TcpListener listener)
+    {
+        return ((IPEndPoint)listener.LocalEndpoint).Port;
+    }
+
+    public static IPAddress GetLocalAddress(this TcpListener listener)
+    {
+        return ((IPEndPoint)listener.LocalEndpoint).Address;
+    }
+
+    /// <summary>
+    /// <see href="https://stackoverflow.com/a/59482929/21342746"/>
+    /// </summary>
+    /// <param name="listener"></param>
+    /// <returns></returns>
+    public static bool IsActive(this TcpListener listener)
+    {
+        return listener.Server.IsBound;
     }
 }

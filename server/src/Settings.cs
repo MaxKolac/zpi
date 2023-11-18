@@ -6,9 +6,9 @@ public static class Settings
 {
     /// <summary>
     /// Tabela portów, na których <see cref="API.TcpHandler"/> będzie nasłuchiwał przychodzących połączeń od kamer i użytkowników.<br/>
-    /// Domyślny port to 25565.
+    /// Domyślne porty to 25565, 25566, 25567.
     /// </summary>
-    public static int TcpListeningPort { get; set; } = 25565;
+    public static int[] TcpListeningPort { get; set; } = new int[] { 25565, 25566, 25567 };
 
     /// <summary>
     /// Adres IP serwera w sieci lokalnej. Na tym adresie będą nasłuchiwane porty.<br/>
@@ -18,7 +18,7 @@ public static class Settings
 
     public static void ResetToDefault()
     {
-        TcpListeningPort = 25565;
+        TcpListeningPort = new int[] { 25565, 25566, 25567 };
         ServerAddress = IPAddress.Parse("127.0.0.1");
     }
 }

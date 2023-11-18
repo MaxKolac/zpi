@@ -14,6 +14,7 @@ public class SignalTranslator
 {
     private readonly Logger? _logger;
     private int _invocations = 0;
+    private Dictionary<HostType, int> _invocationDictionary;
 
     /// <summary>
     /// Wskazuje czy <see cref="SignalTranslator"/> został uruchomiony i obsługuje inwokacje wydarzenia <see cref="TcpHandler.OnSignalReceived"/>.
@@ -23,6 +24,10 @@ public class SignalTranslator
     public SignalTranslator(Logger? logger = null)
     {
         _logger = logger;
+        _invocationDictionary = new Dictionary<HostType, int>();
+        foreach (var hostType in Enum.GetValues(typeof(HostType)))
+            _invocationDictionary.Add((HostType)hostType, 0);
+        
         Command.OnExecuted += ShowStatus;
     }
 
@@ -75,6 +80,7 @@ public class SignalTranslator
         };
 
         string message = $"Received {e.Data.Length} bytes of data from {datasender.Type} device. Address = {e.SenderIp}:{e.SenderPort}. ";
+        _invocationDictionary[datasender.Type]++;
         switch (datasender.Type)
         {
             case HostType.Unknown:
@@ -89,7 +95,7 @@ public class SignalTranslator
                     rawData += dataByte;
                 string decodedData = Encoding.UTF8.GetString(e.Data);
 
-                _logger?.WriteLine(message + $"Recognized PuTTY client. Raw = '{rawData}', Decoded = '{decodedData}'.", nameof(SignalTranslator));
+                _logger?.WriteLine(message + $" Raw = '{rawData}', Decoded = '{decodedData}'.", nameof(SignalTranslator));
                 break;
             case HostType.User:
                 _logger?.WriteLine(message + $"User recognized: {datasender.Name}.", nameof(SignalTranslator));
@@ -101,9 +107,12 @@ public class SignalTranslator
     {
         if (sender is StatusCommand command && command.ClassArgument == StatusCommand.SignalTranslatorArgument)
         {
-            _logger?.WriteLine($"Running: {IsTranslating}", null);
-            _logger?.WriteLine($"Logging: {_logger is not null}", null);
-            _logger?.WriteLine($"Signals translated: {_invocations}", null);
+            _logger?.WriteLine($"Running: {IsTranslating}");
+            _logger?.WriteLine($"Logging: {_logger is not null}");
+            _logger?.WriteLine($"Signals translated: {_invocations}");
+            _logger?.WriteLine($"Signals per {nameof(HostType)} devices: ");
+            foreach (KeyValuePair<HostType, int> kvp in  _invocationDictionary)
+                _logger?.WriteLine($"\t{kvp.Key}: {kvp.Value}");
         }
     }
 }
