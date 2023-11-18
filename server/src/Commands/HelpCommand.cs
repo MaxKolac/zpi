@@ -70,7 +70,7 @@ public class HelpCommand : Command
         var builder = new StringBuilder();
         builder.AppendLine(Help + " [command]");
         builder.AppendLine(Shutdown);
-        builder.AppendLine(Status + $" [{StatusCommand.TcpHandlerArgument}/{StatusCommand.TcpHandlerArgument}]");
+        builder.AppendLine(Status + $" [{StatusCommand.SignalTranslatorArgument}/{StatusCommand.TcpHandlerArgument}]");
         return builder.ToString();
     }
 }
