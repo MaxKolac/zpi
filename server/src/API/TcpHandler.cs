@@ -128,9 +128,13 @@ public class TcpHandler
             }
         }
         if (inactiveListeners == _listeners.Length)
+        {
             throw new IOException($"All ports {nameof(TcpHandler)} was registered on were occupied!");
-        else
+        }
+        else if (inactiveListeners > 0)
+        {
             _logger?.WriteLine($"ALERT! Failed to start TcpListener on {inactiveListeners} port(s).", nameof(TcpHandler));
+        }
     }
 
     /// <summary>
@@ -243,16 +247,16 @@ public class TcpHandler
         {
             _logger?.WriteLine($"Running: {IsListening}", null);
             _logger?.WriteLine($"Logging: {_logger is not null}", null);
+            _logger?.WriteLine($"Connections initialized: {_connectionsInitialized}", null);
+            _logger?.WriteLine($"Connections fully handled: {_connectionsHandled}", null);
             _logger?.WriteLine($"Listeners:", null);
             for (int i = 0; i < _listeners.Length; i++)
             {
                 _logger?.WriteLine($"\tPort: {_listeners[i].GetLocalPort()}", null);
                 _logger?.WriteLine($"\tIsActive: {_listeners[i].IsActive()}", null);
                 _logger?.WriteLine($"\tTask Status: {_listenerTasks[i].Status}", null);
-                _logger?.WriteLine("---", null);
+                _logger?.WriteLine("\t --- ", null);
             }
-            _logger?.WriteLine($"Connections initialized: {_connectionsInitialized}", null);
-            _logger?.WriteLine($"Connections fully handled: {_connectionsHandled}", null);
         }
     }
 
