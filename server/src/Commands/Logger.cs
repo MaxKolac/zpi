@@ -44,7 +44,7 @@ public class Logger
         };
         if (command is null)
         {
-            WriteLine($"Command '{words[0]}' unrecognized. Type '{Command.Help}' to get all available commands.", null);
+            WriteLine($"Command '{words[0]}' unrecognized. Type '{Command.Help}' to get all available commands.");
         }
         words.RemoveAt(0);
 

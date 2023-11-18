@@ -44,12 +44,12 @@ namespace ZPIServer
             Command.OnExecuted += OnCommandExecuted;
 
             stopwatch.Stop();
-            logger.WriteLine($"Done! {double.Round(stopwatch.Elapsed.TotalMilliseconds)} milliseconds elapsed.", null);
+            logger.WriteLine($"Done! {double.Round(stopwatch.Elapsed.TotalMilliseconds)} milliseconds elapsed.");
         }
 
         private static void StopServer()
         {
-            logger?.WriteLine("Shutting the server down.", null);
+            logger?.WriteLine("Shutting the server down.");
             
             Command.OnExecuted -= OnCommandExecuted;
 

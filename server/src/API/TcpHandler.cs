@@ -245,17 +245,18 @@ public class TcpHandler
     {
         if (sender is StatusCommand command && command.ClassArgument == StatusCommand.TcpHandlerArgument)
         {
-            _logger?.WriteLine($"Running: {IsListening}", null);
-            _logger?.WriteLine($"Logging: {_logger is not null}", null);
-            _logger?.WriteLine($"Connections initialized: {_connectionsInitialized}", null);
-            _logger?.WriteLine($"Connections fully handled: {_connectionsHandled}", null);
+            _logger?.WriteLine($"Running: {IsListening}");
+            _logger?.WriteLine($"Logging: {_logger is not null}");
+            _logger?.WriteLine($"Connections initialized: {_connectionsInitialized}");
+            _logger?.WriteLine($"Connections fully handled: {_connectionsHandled}");
             _logger?.WriteLine($"Listeners:", null);
             for (int i = 0; i < _listeners.Length; i++)
             {
-                _logger?.WriteLine($"\tPort: {_listeners[i].GetLocalPort()}", null);
-                _logger?.WriteLine($"\tIsActive: {_listeners[i].IsActive()}", null);
-                _logger?.WriteLine($"\tTask Status: {_listenerTasks[i].Status}", null);
-                _logger?.WriteLine("\t --- ", null);
+                _logger?.WriteLine($"\tAddress: {_listeners[i].GetLocalAddress()}");
+                _logger?.WriteLine($"\tPort: {_listeners[i].GetLocalPort()}");
+                _logger?.WriteLine($"\tIsActive: {_listeners[i].IsActive()}");
+                _logger?.WriteLine($"\tTask Status: {_listenerTasks[i].Status}");
+                _logger?.WriteLine("\t --- ");
             }
         }
     }
@@ -267,6 +268,11 @@ public static class TcpListenerExtensions
     public static int GetLocalPort(this TcpListener listener)
     {
         return ((IPEndPoint)listener.LocalEndpoint).Port;
+    }
+
+    public static IPAddress GetLocalAddress(this TcpListener listener)
+    {
+        return ((IPEndPoint)listener.LocalEndpoint).Address;
     }
 
     /// <summary>
