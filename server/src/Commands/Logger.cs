@@ -6,11 +6,13 @@
 public class Logger
 {
     private readonly CancellationTokenSource _token;
+    private readonly SemaphoreSlim _accessSemaphore;
     private readonly Task _loggerTask;
 
     public Logger()
     {
         _token = new();
+        _accessSemaphore = new(1, 1);
         _loggerTask = new Task(() =>
         {
             while (!_token.IsCancellationRequested)
@@ -60,8 +62,10 @@ public class Logger
     /// </summary>
     /// <param name="message">Linijka do przekazania.</param>
     /// <param name="callingClass">Nazwa klasy wywołującej metodę. Pojawi się jako prefiks w nawiasach kwadratowych. Podanie wartości <c>null</c> pominie dodawanie prefiksu i wyświetli jedynie <paramref name="message"/>.</param>
-    public void WriteLine(string? message, string? callingClass)
+    public void WriteLine(string? message, string? callingClass = null)
     {
+        _accessSemaphore.Wait();
+
         //Remember where the cursor is so its position can be restored later
         int cursorOffset = Console.GetCursorPosition().Left;
         //Create a new empty line to copy currently entered user input into
@@ -83,5 +87,7 @@ public class Logger
         //Move cursor back at the beginning of user's input
         cursorPosition = Console.GetCursorPosition();
         Console.SetCursorPosition(cursorOffset, cursorPosition.Top + 1);
+
+        _accessSemaphore.Release();
     }
 }
