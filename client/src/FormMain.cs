@@ -13,6 +13,8 @@ namespace ZPIClient
         private List<Sensor> sensorList = new List<Sensor>();
         private int currentSensorIndex = -1;
         private JsonSerializerOptions options = new JsonSerializerOptions();
+        private int timerInterval = 30;
+        private int timerElapsedTime = 30;
 
 
         //Dynamic objects
@@ -21,9 +23,7 @@ namespace ZPIClient
         Panel[] panelSensorInformation;
         PictureBox[] pictureBoxSensorStatus;
         Label[] labelSensorStatus;
-        Label[] labelSensorStatusDisplay;
         Label[] labelSensorSegment;
-        Label[] labelSensorSegmentDisplay;
 
         public FormMain()
         {
@@ -32,6 +32,7 @@ namespace ZPIClient
             initializeSensors();
             populateSensorList();
             updateColors();
+            timerRefresh.Start();
         }
         public void initializeSensors()
         {
@@ -44,11 +45,13 @@ namespace ZPIClient
         public void updateSensors()
         {
             List<Sensor> dataSet = readJSON();
+            int i = 0;
             foreach (var data in dataSet)
             {
-                int currentSensorIndex = sensorList.FindIndex(obiekt => obiekt.SensorName == data.SensorName);
-                sensorList[currentSensorIndex].Update(data.CurrentSensorState, data.SensorTemperature, data.SensorDetails);
+                sensorList[i].Update(Sensor.StringToState(data.CurrentSensorStateString), data.SensorTemperature);
+                i++;
             }
+            updateColors();
         }
         public void populateSensorList()
         {
@@ -62,8 +65,8 @@ namespace ZPIClient
             int rowHeight = 50; //Value in pixels
             int pictureBoxSize = 15; //Value in pixels
             int pictureBoxMargin = 20; //Value in pixels
-            int elementMargin = 50; //Value in pixels
-            int fontSize = 16;
+            int elementMargin = 25; //Value in pixels
+            int fontSize = (int)labelSensorName.Font.Size;
             #endregion
 
             int count = sensorList.Count;
@@ -73,9 +76,7 @@ namespace ZPIClient
             panelSensorInformation = new Panel[count];
             pictureBoxSensorStatus = new PictureBox[count];
             labelSensorStatus = new Label[count];
-            labelSensorStatusDisplay = new Label[count];
             labelSensorSegment = new Label[count];
-            labelSensorSegmentDisplay = new Label[count];
 
             for (int i = 0; i < count; i++)
             {
@@ -123,7 +124,7 @@ namespace ZPIClient
                 #region Sensor Status Picture
                 pictureBoxSensorStatus[i] = new PictureBox();
                 pictureBoxSensorStatus[i].Name = "pictureBoxStatus" + i;
-                pictureBoxSensorStatus[i].Location = new Point(pictureBoxMargin, panelSensorInformation[i].Height / 4);
+                pictureBoxSensorStatus[i].Location = new Point(pictureBoxMargin, panelSensorInformation[i].Height / 2 - pictureBoxSize / 2);
                 pictureBoxSensorStatus[i].Width = pictureBoxSize;
                 pictureBoxSensorStatus[i].Height = pictureBoxSize;
                 pictureBoxSensorStatus[i].BackColor = Color.Lime;
@@ -135,54 +136,30 @@ namespace ZPIClient
                 #region Sensor Status Label
                 labelSensorStatus[i] = new Label();
                 labelSensorStatus[i].Name = "labelStatus" + i;
-                labelSensorStatus[i].Location = new Point(pictureBoxSensorStatus[i].Location.X + pictureBoxMargin, panelSensorInformation[i].Height / 4);
-                labelSensorStatus[i].MaximumSize = new Size(150, rowHeight);
-                labelSensorStatus[i].AutoSize = true;
+                labelSensorStatus[i].Location = new Point(pictureBoxSensorStatus[i].Location.X + pictureBoxMargin, 0);
+                labelSensorStatus[i].AutoSize = false;
+                labelSensorStatus[i].Width = panelSensorInformation[i].Width / 3;
+                labelSensorStatus[i].Height = panelSensorInformation[i].Height;
                 labelSensorStatus[i].Font = new Font(labelSensorStatus[i].Font.Name, fontSize);
-                labelSensorStatus[i].TextAlign = ContentAlignment.TopLeft;
-                labelSensorStatus[i].Text = "Status:";
+                labelSensorStatus[i].TextAlign = ContentAlignment.MiddleLeft;
+                labelSensorStatus[i].Text = "Status: " + sensorList[i].StateToString();
                 labelSensorStatus[i].Tag = i;
                 labelSensorStatus[i].Click += sensorContainer_Click;
                 panelSensorInformation[i].Controls.Add(labelSensorStatus[i]);
                 #endregion
-                #region Sensor Status Display Label
-                labelSensorStatusDisplay[i] = new Label();
-                labelSensorStatusDisplay[i].Name = "labelStatusDisplay" + i;
-                labelSensorStatusDisplay[i].Location = new Point(labelSensorStatus[i].Location.X + labelSensorStatus[i].Width, panelSensorInformation[i].Height / 4);
-                labelSensorStatusDisplay[i].MaximumSize = new Size(300, rowHeight);
-                labelSensorStatusDisplay[i].AutoSize = true;
-                labelSensorStatusDisplay[i].Font = new Font(labelSensorStatusDisplay[i].Font.Name, fontSize);
-                labelSensorStatusDisplay[i].TextAlign = ContentAlignment.TopLeft;
-                labelSensorStatusDisplay[i].Text = sensorList[i].StateToString();
-                labelSensorStatusDisplay[i].Tag = i;
-                labelSensorStatusDisplay[i].Click += sensorContainer_Click;
-                panelSensorInformation[i].Controls.Add(labelSensorStatusDisplay[i]);
-                #endregion
                 #region Sensor Segment Label
                 labelSensorSegment[i] = new Label();
                 labelSensorSegment[i].Name = "labelSegment" + i;
-                labelSensorSegment[i].Location = new Point(labelSensorStatusDisplay[i].Location.X + labelSensorStatusDisplay[i].Width + elementMargin, panelSensorInformation[i].Height / 4);
-                labelSensorSegment[i].MaximumSize = new Size(150, rowHeight);
-                labelSensorSegment[i].AutoSize = true;
+                labelSensorSegment[i].Location = new Point(labelSensorStatus[i].Location.X + labelSensorStatus[i].Width + elementMargin, 0);
+                labelSensorSegment[i].AutoSize = false;
+                labelSensorSegment[i].Width = panelSensorInformation[i].Width / 3;
+                labelSensorSegment[i].Height = panelSensorInformation[i].Height;
                 labelSensorSegment[i].Font = new Font(labelSensorSegment[i].Font.Name, fontSize);
-                labelSensorSegment[i].TextAlign = ContentAlignment.TopLeft;
-                labelSensorSegment[i].Text = "Segment:";
+                labelSensorSegment[i].TextAlign = ContentAlignment.MiddleLeft;
+                labelSensorSegment[i].Text = "Segment: " + sensorList[i].SensorSegment;
                 labelSensorSegment[i].Tag = i;
                 labelSensorSegment[i].Click += sensorContainer_Click;
                 panelSensorInformation[i].Controls.Add(labelSensorSegment[i]);
-                #endregion
-                #region Sensor Segment Display Label
-                labelSensorSegmentDisplay[i] = new Label();
-                labelSensorSegmentDisplay[i].Name = "labelSegmentDisplay" + i;
-                labelSensorSegmentDisplay[i].Location = new Point(labelSensorSegment[i].Location.X + labelSensorSegment[i].Width, panelSensorInformation[i].Height / 4);
-                labelSensorSegmentDisplay[i].MaximumSize = new Size(300, rowHeight);
-                labelSensorSegmentDisplay[i].AutoSize = true;
-                labelSensorSegmentDisplay[i].Font = new Font(labelSensorSegmentDisplay[i].Font.Name, fontSize);
-                labelSensorSegmentDisplay[i].TextAlign = ContentAlignment.TopLeft;
-                labelSensorSegmentDisplay[i].Text = sensorList[i].SensorSegment;
-                labelSensorSegmentDisplay[i].Tag = i;
-                labelSensorSegmentDisplay[i].Click += sensorContainer_Click;
-                panelSensorInformation[i].Controls.Add(labelSensorSegmentDisplay[i]);
                 #endregion
 
                 panelY += rowHeight * 2;
@@ -216,7 +193,6 @@ namespace ZPIClient
                 pictureBoxSensorStatus[i].BackColor = sensorList[i].StateToColor();
             }
         }
-
         private void sensorContainer_Click(object sender, EventArgs e)
         {
             Control control = (Control)sender;
@@ -228,14 +204,14 @@ namespace ZPIClient
                 labelSegmentInfo.Text = sensorList[currentSensorIndex].SensorSegment;
                 labelLocationInfo.Text = sensorList[currentSensorIndex].SensorLocation;
                 labelTemperatureInfo.Text = sensorList[currentSensorIndex].SensorTemperature.ToString() + "°C";
-                labelLastUpdateInfo.Text = sensorList[currentSensorIndex].SensorLastUpdate.ToString();
+                labelLastUpdateInfo.Text = sensorList[currentSensorIndex].SensorLastUpdate.ToString() + " sekund temu.";
 
                 try
                 {
                     Image cameraImage = Image.FromFile("../../../sensors/" + sensorList[currentSensorIndex].SensorDetails);
                     pictureBoxCamera.Image = cameraImage;
                 }
-                catch(FileNotFoundException)
+                catch (FileNotFoundException)
                 {
                     pictureBoxCamera.Image = pictureBoxCamera.ErrorImage;
                 }
@@ -246,25 +222,50 @@ namespace ZPIClient
                         buttonFire.BackColor = Color.Red;
                         buttonFire.ForeColor = Color.White;
                         buttonFire.Enabled = true;
-                        buttonFire.Text = "PotwierdŸ Po¿ar";
+                        buttonFire.Text = "PotwierdŸ po¿ar";
                         break;
 
                     case Sensor.SensorState.Fire:
                         buttonFire.BackColor = Color.Red;
                         buttonFire.ForeColor = Color.White;
                         buttonFire.Enabled = true;
-                        buttonFire.Text = "PotwierdŸ Zwalczenie Po¿aru";
+                        buttonFire.Text = "PotwierdŸ zwalczenie po¿aru";
                         break;
 
                     default:
                         buttonFire.BackColor = SystemColors.Control;
                         buttonFire.ForeColor = SystemColors.ControlText;
                         buttonFire.Enabled = false;
-                        buttonFire.Text = "Brak Problemów";
+                        buttonFire.Text = "Brak problemów";
                         break;
                 }
             }
 
+        }
+        private void timerRefresh_Tick(object sender, EventArgs e)
+        {
+            if (timerElapsedTime > 0)
+            {
+                timerElapsedTime -= 1;
+                incrementTimers();
+            }
+            else
+            {
+                timerElapsedTime = 30;
+                updateSensors();
+            }
+            if (currentSensorIndex != -1)
+            {
+                labelLastUpdateInfo.Text = sensorList[currentSensorIndex].SensorLastUpdate.ToString() + " sekund temu.";
+            }
+            labelTimer.Text = "Nastêpna aktualizacja za: " + timerElapsedTime + " sekund.";
+        }
+        private void incrementTimers()
+        {
+            foreach (Sensor sensor in sensorList)
+            {
+                sensor.SensorLastUpdate += 1;
+            }
         }
     }
 }

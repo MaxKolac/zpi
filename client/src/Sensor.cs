@@ -91,23 +91,15 @@ internal class Sensor
         this.currentSensorState = sensorState;
         this.sensorLastUpdate = 0;
     }
-    public void Update(SensorState sensorState, float sensorTemperature, string sensorDetails)
+    public void Update(SensorState sensorState, float sensorTemperature)
     {
         this.currentSensorState = sensorState;
         this.sensorTemperature = sensorTemperature;
-        this.sensorDetails = sensorDetails;
-        this.sensorLastUpdate = 0;
-    }
-    public void Update(string sensorState, int sensorTemperature, string sensorDetails)
-    {
-        this.currentSensorState = StringToState(sensorState);
-        this.sensorTemperature = sensorTemperature;
-        this.sensorDetails = sensorDetails;
         this.sensorLastUpdate = 0;
     }
     #endregion
     #region Utilities
-    public SensorState StringToState(string inputType)
+    public static SensorState StringToState(string inputType)
     {
         switch (inputType)
         {

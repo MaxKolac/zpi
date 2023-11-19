@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            components = new System.ComponentModel.Container();
             panelDisplay = new Panel();
             panelNavigation = new Panel();
             buttonOverview = new Button();
@@ -52,6 +53,7 @@
             labelSensorName = new Label();
             panelTimer = new Panel();
             labelTimer = new Label();
+            timerRefresh = new System.Windows.Forms.Timer(components);
             panelNavigation.SuspendLayout();
             panelInfo.SuspendLayout();
             panelCamera.SuspendLayout();
@@ -84,15 +86,17 @@
             // 
             // buttonOverview
             // 
+            buttonOverview.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point);
             buttonOverview.Location = new Point(686, 9);
             buttonOverview.Name = "buttonOverview";
             buttonOverview.Size = new Size(324, 59);
             buttonOverview.TabIndex = 3;
-            buttonOverview.Text = "Podgląd Zgłoszeń";
+            buttonOverview.Text = "Podgląd zgłoszeń";
             buttonOverview.UseVisualStyleBackColor = true;
             // 
             // buttonMenu
             // 
+            buttonMenu.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point);
             buttonMenu.Location = new Point(12, 9);
             buttonMenu.Name = "buttonMenu";
             buttonMenu.Size = new Size(324, 59);
@@ -102,11 +106,12 @@
             // 
             // buttonSwitch
             // 
+            buttonSwitch.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point);
             buttonSwitch.Location = new Point(348, 9);
             buttonSwitch.Name = "buttonSwitch";
             buttonSwitch.Size = new Size(324, 59);
             buttonSwitch.TabIndex = 2;
-            buttonSwitch.Text = "Przełącz Widok";
+            buttonSwitch.Text = "Przełącz widok";
             buttonSwitch.UseVisualStyleBackColor = true;
             // 
             // panelInfo
@@ -124,6 +129,7 @@
             // buttonFire
             // 
             buttonFire.Enabled = false;
+            buttonFire.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point);
             buttonFire.Location = new Point(7, 619);
             buttonFire.Name = "buttonFire";
             buttonFire.Size = new Size(314, 23);
@@ -182,6 +188,7 @@
             // labelState
             // 
             labelState.Dock = DockStyle.Fill;
+            labelState.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point);
             labelState.Location = new Point(4, 1);
             labelState.Name = "labelState";
             labelState.Size = new Size(87, 46);
@@ -192,6 +199,7 @@
             // labelStateInfo
             // 
             labelStateInfo.Dock = DockStyle.Fill;
+            labelStateInfo.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point);
             labelStateInfo.Location = new Point(98, 1);
             labelStateInfo.Name = "labelStateInfo";
             labelStateInfo.Size = new Size(212, 46);
@@ -202,6 +210,7 @@
             // labelSegment
             // 
             labelSegment.Dock = DockStyle.Fill;
+            labelSegment.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point);
             labelSegment.Location = new Point(4, 48);
             labelSegment.Name = "labelSegment";
             labelSegment.Size = new Size(87, 46);
@@ -212,6 +221,7 @@
             // labelSegmentInfo
             // 
             labelSegmentInfo.Dock = DockStyle.Fill;
+            labelSegmentInfo.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point);
             labelSegmentInfo.Location = new Point(98, 48);
             labelSegmentInfo.Name = "labelSegmentInfo";
             labelSegmentInfo.Size = new Size(212, 46);
@@ -222,6 +232,7 @@
             // labelLocation
             // 
             labelLocation.Dock = DockStyle.Fill;
+            labelLocation.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point);
             labelLocation.Location = new Point(4, 95);
             labelLocation.Name = "labelLocation";
             labelLocation.Size = new Size(87, 46);
@@ -232,6 +243,7 @@
             // labelLocationInfo
             // 
             labelLocationInfo.Dock = DockStyle.Fill;
+            labelLocationInfo.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point);
             labelLocationInfo.Location = new Point(98, 95);
             labelLocationInfo.Name = "labelLocationInfo";
             labelLocationInfo.Size = new Size(212, 46);
@@ -242,6 +254,7 @@
             // labelTemperature
             // 
             labelTemperature.Dock = DockStyle.Fill;
+            labelTemperature.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point);
             labelTemperature.Location = new Point(4, 142);
             labelTemperature.Name = "labelTemperature";
             labelTemperature.Size = new Size(87, 46);
@@ -252,6 +265,7 @@
             // labelTemperatureInfo
             // 
             labelTemperatureInfo.Dock = DockStyle.Fill;
+            labelTemperatureInfo.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point);
             labelTemperatureInfo.Location = new Point(98, 142);
             labelTemperatureInfo.Name = "labelTemperatureInfo";
             labelTemperatureInfo.Size = new Size(212, 46);
@@ -262,16 +276,18 @@
             // labelLastUpdate
             // 
             labelLastUpdate.Dock = DockStyle.Fill;
+            labelLastUpdate.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point);
             labelLastUpdate.Location = new Point(4, 189);
             labelLastUpdate.Name = "labelLastUpdate";
             labelLastUpdate.Size = new Size(87, 50);
             labelLastUpdate.TabIndex = 8;
-            labelLastUpdate.Text = "Ostatnia Aktualizacja";
+            labelLastUpdate.Text = "Ostatnia aktualizacja";
             labelLastUpdate.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // labelLastUpdateInfo
             // 
             labelLastUpdateInfo.Dock = DockStyle.Fill;
+            labelLastUpdateInfo.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point);
             labelLastUpdateInfo.Location = new Point(98, 189);
             labelLastUpdateInfo.Name = "labelLastUpdateInfo";
             labelLastUpdateInfo.Size = new Size(212, 50);
@@ -292,6 +308,7 @@
             // labelSensorName
             // 
             labelSensorName.Dock = DockStyle.Fill;
+            labelSensorName.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point);
             labelSensorName.Location = new Point(0, 0);
             labelSensorName.Name = "labelSensorName";
             labelSensorName.Size = new Size(312, 42);
@@ -311,12 +328,18 @@
             // labelTimer
             // 
             labelTimer.Dock = DockStyle.Fill;
+            labelTimer.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point);
             labelTimer.Location = new Point(0, 0);
             labelTimer.Name = "labelTimer";
             labelTimer.Size = new Size(339, 78);
             labelTimer.TabIndex = 0;
-            labelTimer.Text = "W tym miejscu będzie wyświetlany zegar";
+            labelTimer.Text = "Następna aktualizacja: 30";
             labelTimer.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // timerRefresh
+            // 
+            timerRefresh.Interval = 1000;
+            timerRefresh.Tick += timerRefresh_Tick;
             // 
             // FormMain
             // 
@@ -364,5 +387,6 @@
         private Label labelLastUpdateInfo;
         private Label labelSensorName;
         public Panel panelDisplay;
+        private System.Windows.Forms.Timer timerRefresh;
     }
 }
