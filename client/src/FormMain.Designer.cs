@@ -350,6 +350,7 @@
             Controls.Add(panelInfo);
             Controls.Add(panelNavigation);
             Controls.Add(panelDisplay);
+            MaximizeBox = false;
             Name = "FormMain";
             Text = "ZPI";
             panelNavigation.ResumeLayout(false);

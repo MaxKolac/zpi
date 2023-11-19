@@ -13,8 +13,7 @@ namespace ZPIClient
         private List<Sensor> sensorList = new List<Sensor>();
         private int currentSensorIndex = -1;
         private JsonSerializerOptions options = new JsonSerializerOptions();
-        private int timerInterval = 30;
-        private int timerElapsedTime = 30;
+        private int timerInterval, timerElapsedTime = 30;
 
 
         //Dynamic objects
@@ -195,17 +194,21 @@ namespace ZPIClient
         }
         private void sensorContainer_Click(object sender, EventArgs e)
         {
+            if (currentSensorIndex != -1)
+            {
+                panelSensorContainer[currentSensorIndex].BackColor = SystemColors.ControlLightLight;
+            }
             Control control = (Control)sender;
             currentSensorIndex = (int)control.Tag;
             if (currentSensorIndex != -1)
             {
+                panelSensorContainer[currentSensorIndex].BackColor = Color.SkyBlue;
                 labelSensorName.Text = sensorList[currentSensorIndex].SensorName;
                 labelStateInfo.Text = sensorList[currentSensorIndex].StateToString();
                 labelSegmentInfo.Text = sensorList[currentSensorIndex].SensorSegment;
                 labelLocationInfo.Text = sensorList[currentSensorIndex].SensorLocation;
                 labelTemperatureInfo.Text = sensorList[currentSensorIndex].SensorTemperature.ToString() + "°C";
                 labelLastUpdateInfo.Text = sensorList[currentSensorIndex].SensorLastUpdate.ToString() + " sekund temu.";
-
                 try
                 {
                     Image cameraImage = Image.FromFile("../../../sensors/" + sensorList[currentSensorIndex].SensorDetails);
@@ -239,6 +242,7 @@ namespace ZPIClient
                         buttonFire.Text = "Brak problemów";
                         break;
                 }
+
             }
 
         }
@@ -251,7 +255,7 @@ namespace ZPIClient
             }
             else
             {
-                timerElapsedTime = 30;
+                timerElapsedTime = timerInterval;
                 updateSensors();
             }
             if (currentSensorIndex != -1)

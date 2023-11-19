@@ -18,84 +18,76 @@ internal class Sensor
         Null
     }
 
-    private int sensorX, sensorY;
-    private string sensorName;
-    private string currentSensorStateString;
-    private SensorState currentSensorState;
-    private string sensorSegment;
-    private string sensorLocation;
-    private float sensorTemperature;
-    private string sensorDetails;
-    private int sensorLastUpdate;
-    public int SensorX { get => sensorX; set => sensorX = value; }
-    public int SensorY { get => sensorY; set => sensorY = value; }
-    public string SensorName { get => sensorName; set => sensorName = value; }
-    public string CurrentSensorStateString { get => currentSensorStateString; set => currentSensorStateString = value; }
-    internal SensorState CurrentSensorState { get => currentSensorState; set => currentSensorState = value; }
-    public string SensorSegment { get => sensorSegment; set => sensorSegment = value; }
-    public string SensorLocation { get => sensorLocation; set => sensorLocation = value; }
-    public float SensorTemperature { get => sensorTemperature; set => sensorTemperature = value; }
-    public string SensorDetails { get => sensorDetails; set => sensorDetails = value; }
-    public int SensorLastUpdate { get => sensorLastUpdate; set => sensorLastUpdate = value; }
+    public int SensorX { get; set; }
+    public int SensorY { get; set; }
+    public string SensorName { get; set; }
+    public string CurrentSensorStateString { get; set; }
+    internal SensorState CurrentSensorState { get; set; }
+    public string SensorSegment { get; set; }
+    public string SensorLocation { get; set; }
+    public float SensorTemperature { get; set; }
+    public string SensorDetails { get; set; }
+    public int SensorLastUpdate { get; set; }
+
     #region Constructor
     public Sensor()
     {
-        this.sensorX = 0;
-        this.sensorY = 0;
-        this.sensorName = string.Empty;
-        this.currentSensorState = SensorState.Null;
-        this.sensorSegment = string.Empty;
-        this.sensorLocation = string.Empty;
-        this.sensorTemperature = 0;
-        this.sensorDetails = string.Empty;
-        this.sensorLastUpdate = 0;
+        this.SensorX = 0;
+        this.SensorY = 0;
+        this.SensorName = string.Empty;
+        this.CurrentSensorState = SensorState.Null;
+        this.SensorSegment = string.Empty;
+        this.SensorLocation = string.Empty;
+        this.SensorTemperature = 0;
+        this.SensorDetails = string.Empty;
+        this.SensorLastUpdate = 0;
     }
     public Sensor(int sensorX, int sensorY, string sensorName, string currentSensorStateString, string sensorSegment, string sensorLocation, float sensorTemperature, string sensorDetails, int sensorLastUpdate)
     {
-        this.sensorX = sensorX;
-        this.sensorY = sensorY;
-        this.sensorName = sensorName;
-        this.currentSensorStateString = currentSensorStateString;
-        this.currentSensorState = StringToState(currentSensorStateString);
-        this.sensorSegment = sensorSegment;
-        this.sensorLocation = sensorLocation;
-        this.sensorTemperature = sensorTemperature;
-        this.sensorDetails = sensorDetails;
-        this.sensorLastUpdate = sensorLastUpdate;
+        this.SensorX = sensorX;
+        this.SensorY = sensorY;
+        this.SensorName = sensorName;
+        this.CurrentSensorStateString = currentSensorStateString;
+        this.CurrentSensorState = StringToState(currentSensorStateString);
+        this.SensorSegment = sensorSegment;
+        this.SensorLocation = sensorLocation;
+        this.SensorTemperature = sensorTemperature;
+        this.SensorDetails = sensorDetails;
+        this.SensorLastUpdate = sensorLastUpdate;
     }
     #endregion
     #region ChangeLocation
     public void SensorChangeLocation(int sensorX, int sensorY)
     {
-        this.sensorX = sensorX;
-        this.sensorY = sensorY;
+        this.SensorX = sensorX;
+        this.SensorY = sensorY;
     }
     public void SensorChangeLocation(string sensorName, string sensorSector, string sensorLocation)
     {
-        this.sensorName = sensorName;
-        this.sensorSegment = sensorSector;
-        this.sensorLocation = sensorLocation;
+        this.SensorName = sensorName;
+        this.SensorSegment = sensorSector;
+        this.SensorLocation = sensorLocation;
     }
     public void SensorChangeLocation(int sensorX, int sensorY, string sensorName, string sensorSector, string sensorLocation)
     {
-        this.sensorX = sensorX;
-        this.sensorY = sensorY;
-        this.sensorName = sensorName;
-        this.sensorSegment = sensorSector;
-        this.sensorLocation = sensorLocation;
+        this.SensorX = sensorX;
+        this.SensorY = sensorY;
+        this.SensorName = sensorName;
+        this.SensorSegment = sensorSector;
+        this.SensorLocation = sensorLocation;
     }
     #endregion
     #region UpdateInformation
     public void Update(SensorState sensorState)
     {
-        this.currentSensorState = sensorState;
-        this.sensorLastUpdate = 0;
+        this.CurrentSensorState = sensorState;
+        this.SensorLastUpdate = 0;
     }
     public void Update(SensorState sensorState, float sensorTemperature)
     {
-        this.currentSensorState = sensorState;
-        this.sensorTemperature = sensorTemperature;
-        this.sensorLastUpdate = 0;
+        this.CurrentSensorState = sensorState;
+        this.SensorTemperature = sensorTemperature;
+        this.SensorLastUpdate = 0;
     }
     #endregion
     #region Utilities
@@ -122,7 +114,7 @@ internal class Sensor
     
     public string StateToString()
     {
-        switch (currentSensorState)
+        switch (CurrentSensorState)
         {
             case SensorState.Active:
                 return "Active";
@@ -143,7 +135,7 @@ internal class Sensor
 
     public Color StateToColor()
     {
-        switch (currentSensorState)
+        switch (CurrentSensorState)
         {
             case SensorState.Active:
                 return Color.Lime;
