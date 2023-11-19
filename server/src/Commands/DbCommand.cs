@@ -145,23 +145,23 @@ public class DbCommand : Command
                         {
                             using var context = new DatabaseContext();
 
-                            IList<HostDevice> devices = context.HostDevices.ToList();
+                            IList<HostDevice> devices = context.HostDevices.Include(nameof(HostDevice.Sector)).ToList();
                             _logger?.WriteLine("Test for normal devices - Queried all HostDevices:");
                             foreach (var device in devices)
                                 _logger?.WriteLine(device.ToString());
 
                             IList<Sector> sectors = context.Sectors.ToList();
                             _logger?.WriteLine("Test for normal devices - Queried all Sectors:");
-                            foreach (var device in sectors)
-                                _logger?.WriteLine(device.ToString());
+                            foreach (var sector in sectors)
+                                _logger?.WriteLine(sector.ToString());
 
                             _logger?.WriteLine("Test for relational mapping - Query all related Sectors:");
                             foreach (var device in devices) 
-                                _logger?.WriteLine(device.ToString() + "\n" + device.Sector?.ToString());
+                                _logger?.WriteLine(device.Sector?.ToString());
 
                             _logger?.WriteLine("Test for querying by ID = 1:");
-                            _logger?.WriteLine(context.HostDevices.Find((HostDevice x) => x.Id == 1)?.ToString());
-                            _logger?.WriteLine(context.Sectors.Find((Sector x) => x.Id == 1)?.ToString());
+                            _logger?.WriteLine(context.HostDevices.Where((HostDevice x) => x.Id == 1)?.First().ToString());
+                            _logger?.WriteLine(context.Sectors.Where((Sector x) => x.Id == 1)?.First().ToString());
 
                             _logger?.WriteLine("Test for Read performed.");
                         }
@@ -176,22 +176,22 @@ public class DbCommand : Command
                             using var context = new DatabaseContext();
 
                             _logger?.WriteLine("Queried all HostDevices:");
-                            foreach (var device in context.HostDevices.ToList())
+                            foreach (var device in context.HostDevices.Include(nameof(HostDevice.Sector)).ToList())
                                 _logger?.WriteLine(device.ToString());
 
                             _logger?.WriteLine("Applying standard change.");
-                            var hostDevice = context.HostDevices.Find((HostDevice x) => x.Id == 1);
+                            var hostDevice = context.HostDevices.Where((HostDevice x) => x.Type != HostType.User).First();
                             hostDevice.LastTemperature = (decimal?)1234.56;
                             hostDevice.Address = IPAddress.Parse("123.123.123.123");
                             context.SaveChanges();
 
                             _logger?.WriteLine("Applying relation change.");
-                            var anotherSector = context.Sectors.Find((Sector s) => s.Id != hostDevice.SectorId );
+                            var anotherSector = context.Sectors.Where((Sector s) => s.Id != hostDevice.SectorId).First();
                             hostDevice.Sector = anotherSector;
                             context.SaveChanges();
 
                             _logger?.WriteLine("Queried all HostDevices:");
-                            foreach (var device in context.HostDevices.ToList())
+                            foreach (var device in context.HostDevices.Include(nameof(HostDevice.Sector)).ToList())
                                 _logger?.WriteLine(device.ToString());
 
                             _logger?.WriteLine("Test for Update performed.");
@@ -207,23 +207,23 @@ public class DbCommand : Command
                             using var context = new DatabaseContext();
 
                             _logger?.WriteLine("Queried all HostDevices and Sectors:");
-                            foreach (var device in context.HostDevices.ToList())
+                            foreach (var device in context.HostDevices.Include(nameof(HostDevice.Sector)).ToList())
                                 _logger?.WriteLine(device.ToString());
                             foreach (var sector in context.Sectors.ToList())
                                 _logger?.WriteLine(sector.ToString());
 
                             _logger?.WriteLine("Standard removal.");
-                            var hostDevice = context.HostDevices.Find((HostDevice x) => x.Id == 3);
+                            var hostDevice = context.HostDevices.Where((HostDevice x) => x.Id == 3).First();
                             context.HostDevices.Remove(hostDevice);
                             context.SaveChanges();
 
                             _logger?.WriteLine("Related object removal.");
-                            var sectorToRemove = context.Sectors.Find((Sector s) => s.Id != hostDevice.SectorId);
+                            var sectorToRemove = context.Sectors.Where((Sector s) => s.Id != hostDevice.SectorId).First();
                             context.Sectors.Remove(sectorToRemove);
                             context.SaveChanges();
 
                             _logger?.WriteLine("Queried all HostDevices and Sectors:");
-                            foreach (var device in context.HostDevices.ToList())
+                            foreach (var device in context.HostDevices.Include(nameof(HostDevice.Sector)).ToList())
                                 _logger?.WriteLine(device.ToString());
                             foreach (var sector in context.Sectors.ToList())
                                 _logger?.WriteLine(sector.ToString());
