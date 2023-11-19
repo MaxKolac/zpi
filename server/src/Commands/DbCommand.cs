@@ -98,7 +98,7 @@ public class DbCommand : Command
                                 Type = HostType.CameraSimulator,
                                 Address = IPAddress.Parse("1.2.3.5"),
                                 Sector = sectorA,
-                                LastKnownStatus = HostDevice.DeviceStatus.OK | HostDevice.DeviceStatus.LowPower,
+                                LastKnownStatus = HostDevice.DeviceStatus.LowPower,
                                 LastTemperature = (decimal?)5.2,
                                 ExactLocation = "125N,326W"
                             };

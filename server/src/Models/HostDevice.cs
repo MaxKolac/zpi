@@ -8,7 +8,6 @@ public class HostDevice
     /// <summary>
     /// Status urządzenia kamery. Numery zaczynające się od 100 oznaczają ostrzeżenia, a od 200 oznaczają błędy krytyczne. Uzytkownicy mają zawsze status 1.
     /// </summary>
-    [Flags]
     public enum DeviceStatus
     {
         /// <summary>
