@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using System.Text;
 
 namespace ZPIServer.Models;
 
@@ -48,4 +49,20 @@ public class HostDevice
     public DeviceStatus? LastKnownStatus { get; set; }
     public decimal? LastTemperature { get; set; }
     public string? ExactLocation { get; set; }
+
+    public override string ToString()
+    {
+        var builder = new StringBuilder();
+        builder.Append("( ");
+        builder.Append(nameof(Id) + $": {Id} | ");
+        builder.Append(nameof(Name) + $": {Name} | ");
+        builder.Append(nameof(Type) + $": {Type} | ");
+        builder.Append(nameof(Address) + $": {Address} | ");
+        builder.Append(nameof(SectorId) + $": {SectorId} | ");
+        builder.Append(nameof(LastKnownStatus) + $": {LastKnownStatus} | ");
+        builder.Append(nameof(LastTemperature) + $": {LastTemperature} | ");
+        builder.Append(nameof(ExactLocation) + $": {ExactLocation} ");
+        builder.Append(')');
+        return builder.ToString();
+    }
 }

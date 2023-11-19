@@ -1,4 +1,6 @@
-﻿namespace ZPIServer.Models;
+﻿using System.Text;
+
+namespace ZPIServer.Models;
 
 /// <summary>
 /// Jeden obszar organizacyjny obserwowany przez jedną kamerę termowizyjną.
@@ -34,4 +36,16 @@ public class Sector
     #region Foreign Key
     public IList<HostDevice>? HostDevices { get; set; }
     #endregion
+
+    public override string ToString()
+    {
+        var builder = new StringBuilder();
+        builder.Append("( ");
+        builder.Append(nameof(Id) + $": {Id} | ");
+        builder.Append(nameof(Name) + $": {Name} | ");
+        builder.Append(nameof(LastStatus) + $": {LastStatus} | ");
+        builder.Append(nameof(Description) + $": {Description} ");
+        builder.Append(')');
+        return builder.ToString();
+    }
 }
