@@ -68,12 +68,14 @@ public class SignalTranslator
         //TODO: Query the DB for the proper record based on received IP
         var datasender = new HostDevice() 
         { 
+            Name = "Unknown",
             Address = e.SenderIp,
             Type = e.SenderIp.Equals(IPAddress.Parse("127.0.0.1")) ? HostType.PuTTYClient : HostType.CameraSimulator,
             LastKnownStatus = HostDevice.DeviceStatus.OK
         };
         datasender ??= new HostDevice()
         {
+            Name = "Unknown",
             Address = e.SenderIp,
             Type = HostType.Unknown,
             LastKnownStatus = HostDevice.DeviceStatus.Unknown

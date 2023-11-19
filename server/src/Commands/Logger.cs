@@ -37,6 +37,7 @@ public class Logger
         //Recognize command
         Command? command = words[0] switch
         {
+            Command.Db => new DbCommand(this),
             Command.Help => new HelpCommand(this),
             Command.Shutdown => new ShutdownCommand(this),
             Command.Status => new StatusCommand(this),

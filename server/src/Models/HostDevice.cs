@@ -1,11 +1,12 @@
 ﻿using System.Net;
+using System.Text;
 
 namespace ZPIServer.Models;
 
 public class HostDevice
 {
     /// <summary>
-    /// Status urządzenia kamery. Numery zaczynające się od 100 oznaczają ostrzeżenia, a od 200 oznaczają błędy krytyczne. Uzytkownicy mają zawsze status 0.
+    /// Status urządzenia kamery. Numery zaczynające się od 100 oznaczają ostrzeżenia, a od 200 oznaczają błędy krytyczne. Uzytkownicy mają zawsze status 1.
     /// </summary>
     public enum DeviceStatus
     {
@@ -33,16 +34,34 @@ public class HostDevice
         Unresponsive = 201,
     }
 
-    //TODO: Integrate into EF Core
     //Fields for both Users and Cameras
-    public int Id { get; set; }
-    public string? Name { get; set; }
-    public HostType Type { get; set; }
-    public IPAddress? Address { get; set; }
+    public int Id { get; set; } //Primary key
+    public required string Name { get; set; }
+    public required HostType Type { get; set; }
+    public required IPAddress Address { get; set; }
 
     //Camera specific fields
-    public int SectorId { get; set; }
-    public DeviceStatus LastKnownStatus { get; set; }
-    public decimal LastHighestTemperature { get; set; }
+    #region Foreign Key
+    public int? SectorId { get; set; }
+    public Sector? Sector { get; set; }
+    #endregion
+    public DeviceStatus? LastKnownStatus { get; set; }
+    public decimal? LastTemperature { get; set; }
     public string? ExactLocation { get; set; }
+
+    public override string ToString()
+    {
+        var builder = new StringBuilder();
+        builder.Append("( ");
+        builder.Append(nameof(Id) + $": {Id} | ");
+        builder.Append(nameof(Name) + $": {Name} | ");
+        builder.Append(nameof(Type) + $": {Type} | ");
+        builder.Append(nameof(Address) + $": {Address} | ");
+        builder.Append(nameof(SectorId) + $": {SectorId} | ");
+        builder.Append(nameof(LastKnownStatus) + $": {LastKnownStatus} | ");
+        builder.Append(nameof(LastTemperature) + $": {LastTemperature} | ");
+        builder.Append(nameof(ExactLocation) + $": {ExactLocation} ");
+        builder.Append(')');
+        return builder.ToString();
+    }
 }

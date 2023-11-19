@@ -39,6 +39,7 @@ public class StatusCommandTests
         Assert.Equal(commandToExecute, receivedCommand);
         Assert.Null(receivedCommand?.ClassArgument);
     }
+
     private static StatusCommand? PerformExecution(StatusCommand commandToExecute, string[]? arguments)
     {
         StatusCommand? receivedCommand = null;
