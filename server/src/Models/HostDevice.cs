@@ -5,8 +5,9 @@ namespace ZPIServer.Models;
 public class HostDevice
 {
     /// <summary>
-    /// Status urządzenia kamery. Numery zaczynające się od 100 oznaczają ostrzeżenia, a od 200 oznaczają błędy krytyczne. Uzytkownicy mają zawsze status 0.
+    /// Status urządzenia kamery. Numery zaczynające się od 100 oznaczają ostrzeżenia, a od 200 oznaczają błędy krytyczne. Uzytkownicy mają zawsze status 1.
     /// </summary>
+    [Flags]
     public enum DeviceStatus
     {
         /// <summary>
@@ -33,16 +34,18 @@ public class HostDevice
         Unresponsive = 201,
     }
 
-    //TODO: Integrate into EF Core
     //Fields for both Users and Cameras
-    public int Id { get; set; }
-    public string? Name { get; set; }
-    public HostType Type { get; set; }
-    public IPAddress? Address { get; set; }
+    public int Id { get; set; } //Primary key
+    public required string Name { get; set; }
+    public required HostType Type { get; set; }
+    public required IPAddress Address { get; set; }
 
     //Camera specific fields
-    public int SectorId { get; set; }
-    public DeviceStatus LastKnownStatus { get; set; }
-    public decimal LastHighestTemperature { get; set; }
+    #region Foreign Key
+    public int? SectorId { get; set; }
+    public Sector? Sector { get; set; }
+    #endregion
+    public DeviceStatus? LastKnownStatus { get; set; }
+    public decimal? LastTemperature { get; set; }
     public string? ExactLocation { get; set; }
 }

@@ -26,8 +26,12 @@ public class Sector
         Confirmed = 2,
     }
 
-    public int Id { get; set; }
+    public int Id { get; set; } //Primary key
     public required string Name { get; set; }
+    public required FireStatus LastStatus { get; set; }
     public string? Description { get; set; }
-    public FireStatus LastStatus { get; set; }
+
+    #region Foreign Key
+    public IList<HostDevice>? HostDevices { get; set; }
+    #endregion
 }
