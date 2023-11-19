@@ -399,3 +399,10 @@ FodyWeavers.xsd
 
 # Environmental files
 *.env
+!*TEMPLATE.env
+
+# Images
+*.tiff
+
+# Archives
+*.zip
