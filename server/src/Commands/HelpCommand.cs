@@ -17,6 +17,9 @@ public class HelpCommand : Command
         {
             switch (CommandIdentifier)
             {
+                case Db:
+                    _logger?.WriteLine(new DbCommand(_logger).GetHelp());
+                    break;
                 case Help:
                     _logger?.WriteLine(GetHelp());
                     break;
@@ -46,7 +49,8 @@ public class HelpCommand : Command
         builder.AppendLine("Shows all available commands.");
         builder.AppendLine("If entered with the name of a command as argument, it shows the syntax of that command.");
         builder.AppendLine("Example:");
-        builder.AppendLine("\thelp shutdown");
+        builder.AppendLine($"\t{Command.Help} {Command.Db}");
+        builder.AppendLine($"\t{Command.Help} {Command.Shutdown}");
         return builder.ToString();
     }
 
@@ -68,9 +72,10 @@ public class HelpCommand : Command
     private static string GetAvailableCommands()
     { 
         var builder = new StringBuilder();
-        builder.AppendLine(Help + " [command]");
-        builder.AppendLine(Shutdown);
-        builder.AppendLine(Status + $" [{StatusCommand.SignalTranslatorArgument}/{StatusCommand.TcpHandlerArgument}]");
+        builder.AppendLine($"{Command.Db} [{DbCommand.ListAllArgument}]");
+        builder.AppendLine($"{Command.Help} [command]");
+        builder.AppendLine($"{Command.Shutdown}");
+        builder.AppendLine($"{Command.Status} [{StatusCommand.SignalTranslatorArgument}/{StatusCommand.TcpHandlerArgument}]");
         return builder.ToString();
     }
 }

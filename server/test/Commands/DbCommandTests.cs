@@ -1,51 +1,49 @@
-﻿using Xunit.Abstractions;
-using ZPIServer.Commands;
+﻿using ZPIServer.Commands;
 using ZPIServer.EventArgs;
 
 namespace ZPIServerTests.Commands;
 
-public class StatusCommandTests
+public class DbCommandTests
 {
     [Fact]
     static void CheckExecutionWithNoArguments()
     {
-        var commandToExecute = new StatusCommand();
-        StatusCommand? receivedCommand = PerformExecution(commandToExecute, null);
+        var commandToExecute = new DbCommand();
+        DbCommand? receivedCommand = PerformExecution(commandToExecute, null);
 
         Assert.Equal(commandToExecute, receivedCommand);
-        Assert.Null(receivedCommand?.ClassArgument);
+        Assert.Null(receivedCommand?.FirstArg);
     }
 
     [Theory]
-    [InlineData(StatusCommand.SignalTranslatorArgument)]
-    [InlineData(StatusCommand.TcpHandlerArgument)]
-    static void CheckExecutionWithArguments(string argument)
+    [MemberData(nameof(GetValidArguments), MemberType = typeof(DbCommandTests))]
+    static void CheckExecutionWithValidArguments(string[] arguments)
     {
-        var commandToExecute = new StatusCommand();
-        StatusCommand? receivedCommand = PerformExecution(commandToExecute, new string[] { argument });
+        var commandToExecute = new DbCommand();
+        DbCommand? receivedCommand = PerformExecution(commandToExecute, arguments);
 
         Assert.Equal(commandToExecute, receivedCommand);
-        Assert.Equal(argument, receivedCommand?.ClassArgument);
+        Assert.Contains(receivedCommand?.FirstArg, arguments);
     }
 
     [Theory]
-    [MemberData(nameof(GetInvalidArguments), MemberType = typeof(StatusCommandTests))]
+    [MemberData(nameof(GetInvalidArguments), MemberType = typeof(DbCommandTests))]
     static void CheckExecutionWithInvalidArguments(string[]? arguments)
     {
 
-        var commandToExecute = new StatusCommand();
-        StatusCommand? receivedCommand = PerformExecution(commandToExecute, arguments);
+        var commandToExecute = new DbCommand();
+        DbCommand? receivedCommand = PerformExecution(commandToExecute, arguments);
 
         Assert.Equal(commandToExecute, receivedCommand);
-        Assert.Null(receivedCommand?.ClassArgument);
+        Assert.Null(receivedCommand?.FirstArg);
     }
 
-    private static StatusCommand? PerformExecution(StatusCommand commandToExecute, string[]? arguments)
+    private static DbCommand? PerformExecution(DbCommand commandToExecute, string[]? arguments)
     {
-        StatusCommand? receivedCommand = null;
+        DbCommand? receivedCommand = null;
         EventHandler<CommandEventArgs> handler = (sender, e) =>
         {
-            receivedCommand = sender as StatusCommand;
+            receivedCommand = sender as DbCommand;
         };
 
         Command.OnExecuted += handler;
@@ -55,6 +53,13 @@ public class StatusCommandTests
         Command.OnExecuted -= handler;
 
         return receivedCommand;
+    }
+
+    public static IEnumerable<object?[]> GetValidArguments()
+    {
+        yield return new object?[] { new string?[]{ DbCommand.ListAllArgument, null, null } };
+        yield return new object?[] { new string?[]{ null, DbCommand.ListAllArgument, null } };
+        yield return new object?[] { new string?[]{ null, null, DbCommand.ListAllArgument } };
     }
 
     public static IEnumerable<object?[]> GetInvalidArguments()
