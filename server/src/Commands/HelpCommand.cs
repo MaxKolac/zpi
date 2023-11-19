@@ -7,38 +7,34 @@ public class HelpCommand : Command
 {
     public string? CommandIdentifier { get; private set; }
 
-    public HelpCommand(Logger? logger = null) : base(logger) 
-    { 
+    public HelpCommand(Logger? logger = null) : base(logger)
+    {
     }
 
     public override void Execute()
     {
-        if (CommandIdentifier is not null)
+        switch (CommandIdentifier)
         {
-            switch (CommandIdentifier)
-            {
-                case Db:
-                    _logger?.WriteLine(new DbCommand(_logger).GetHelp());
-                    break;
-                case Help:
-                    _logger?.WriteLine(GetHelp());
-                    break;
-                case Shutdown:
-                    _logger?.WriteLine(new ShutdownCommand(_logger).GetHelp());
-                    break;
-                case Status:
-                    _logger?.WriteLine(new StatusCommand(_logger).GetHelp());
-                    break;
-                default:
-                    CommandIdentifier = null;
-                    _logger?.WriteLine("Unrecognized command.");
-                    _logger?.WriteLine(GetAvailableCommands());
-                    break;
-            }
-        }
-        else
-        {
-            _logger?.WriteLine(GetAvailableCommands());
+            case null:
+                _logger?.WriteLine(GetAvailableCommands());
+                break;
+            case Db:
+                _logger?.WriteLine(new DbCommand(_logger).GetHelp());
+                break;
+            case Help:
+                _logger?.WriteLine(GetHelp());
+                break;
+            case Shutdown:
+                _logger?.WriteLine(new ShutdownCommand(_logger).GetHelp());
+                break;
+            case Status:
+                _logger?.WriteLine(new StatusCommand(_logger).GetHelp());
+                break;
+            default:
+                CommandIdentifier = null;
+                _logger?.WriteLine("Unrecognized command.");
+                _logger?.WriteLine(GetAvailableCommands());
+                break;
         }
         Invoke(this, new CommandEventArgs());
     }
@@ -70,7 +66,7 @@ public class HelpCommand : Command
     }
 
     private static string GetAvailableCommands()
-    { 
+    {
         var builder = new StringBuilder();
         builder.AppendLine($"{Command.Db} [{DbCommand.ListAllArgument}]");
         builder.AppendLine($"{Command.Help} [command]");

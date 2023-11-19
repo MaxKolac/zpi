@@ -15,24 +15,20 @@ public class StatusCommand : Command
 
     public override void Execute()
     {
-        if (ClassArgument is not null)
+        switch (ClassArgument)
         {
-            switch (ClassArgument) 
-            {
-                case TcpHandlerArgument:
-                case SignalTranslatorArgument:
-                    _logger?.WriteLine($"Status of {ClassArgument}:");
-                    break;
-                default:
-                    _logger?.WriteLine("Unrecognized argument.");
-                    _logger?.WriteLine(GetHelp());
-                    break;
-            }
-        }
-        else
-        {
-            _logger?.WriteLine($"{Command.Status} requires 1 argument.");
-            _logger?.WriteLine(GetHelp());
+            case null:
+                _logger?.WriteLine($"{Command.Status} requires 1 argument.");
+                _logger?.WriteLine(GetHelp());
+                break;
+            case TcpHandlerArgument:
+            case SignalTranslatorArgument:
+                _logger?.WriteLine($"Status of {ClassArgument}:");
+                break;
+            default:
+                _logger?.WriteLine("Unrecognized argument.");
+                _logger?.WriteLine(GetHelp());
+                break;
         }
         Invoke(this, new EventArgs.CommandEventArgs());
     }

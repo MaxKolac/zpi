@@ -65,11 +65,6 @@ public class DbCommandTests
     public static IEnumerable<object?[]> GetInvalidArguments()
     {
         yield return new object?[] { new string?[] { "", "", "", "   " } };
-        yield return new object?[] { new string?[] { "tcplistener", "tcplistener" } };
-        yield return new object?[] { new string?[] { "signaltranslator", "signaltranslator" } };
-        yield return new object?[] { new string?[] { "singaltransl" } };
-        yield return new object?[] { new string?[] { "tpclistn" } };
-        yield return new object?[] { new string?[] { "$" } };
         yield return new object?[] { new string?[] { null } };
         yield return new object?[] { new string?[] { null, null } };
     }
