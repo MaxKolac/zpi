@@ -1,0 +1,24 @@
+[
+  {
+	"SensorX": 0,
+	"SensorY": 0,
+    "SensorName": "Czujnik 1",
+    "CurrentSensorStateString": "Active",
+    "SensorSegment": "A1",
+    "SensorLocation": "Przykładowa Lokalizacja 1",
+    "SensorTemperature": 25.5,
+    "SensorDetails": "C1.jpg",
+	"SensorLastUpdate": 0
+  },
+  {
+	"SensorX": 0,
+	"SensorY": 0,
+    "SensorName": "Czujnik 2",
+    "CurrentSensorStateString": "Inactive",
+    "SensorSegment": "B1",
+    "SensorLocation": "Przykładowa Lokalizacja 2",
+    "SensorTemperature": 20.0,
+    "SensorDetails": "C2.jpg",
+	"SensorLastUpdate": 0
+  },
+]
