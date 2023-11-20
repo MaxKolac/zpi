@@ -57,9 +57,9 @@ public class DbCommandTests
 
     public static IEnumerable<object?[]> GetValidArguments()
     {
-        yield return new object?[] { new string?[]{ DbCommand.ListAllArgument, null, null } };
-        yield return new object?[] { new string?[]{ null, DbCommand.ListAllArgument, null } };
-        yield return new object?[] { new string?[]{ null, null, DbCommand.ListAllArgument } };
+        yield return new object?[] { new string?[] { DbCommand.ListAllArgument, null, null } };
+        yield return new object?[] { new string?[] { null, DbCommand.ListAllArgument, null } };
+        yield return new object?[] { new string?[] { null, null, DbCommand.ListAllArgument } };
     }
 
     public static IEnumerable<object?[]> GetInvalidArguments()

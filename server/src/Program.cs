@@ -69,7 +69,7 @@ namespace ZPIServer
         private static void StopServer()
         {
             logger?.WriteLine("Shutting the server down.");
-            
+
             Command.OnExecuted -= OnCommandExecuted;
 
             signalTranslator?.StopTranslating();

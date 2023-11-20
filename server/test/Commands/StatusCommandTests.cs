@@ -1,5 +1,4 @@
-﻿using Xunit.Abstractions;
-using ZPIServer.Commands;
+﻿using ZPIServer.Commands;
 using ZPIServer.EventArgs;
 
 namespace ZPIServerTests.Commands;

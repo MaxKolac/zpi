@@ -1,6 +1,6 @@
 ﻿using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using ZPICommunicationModels;
+using ZPICommunicationModels.Models;
 
 namespace ZPIServer;
 

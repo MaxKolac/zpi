@@ -2,7 +2,8 @@
 using Microsoft.EntityFrameworkCore;
 using System.Net;
 using System.Text;
-using ZPICommunicationModels;
+using ZPICommunicationModels.Models;
+using static ZPICommunicationModels.Models.HostDevice;
 
 namespace ZPIServer.Commands;
 
@@ -23,7 +24,7 @@ public class DbCommand : Command
         switch (FirstArg)
         {
             case null:
-                _logger?.WriteLine($"{Command.Db} requires 1 or more arguments.");
+                _logger?.WriteLine($"{Db} requires 1 or more arguments.");
                 _logger?.WriteLine(GetHelp());
                 break;
             case ListAllArgument:
@@ -88,7 +89,7 @@ public class DbCommand : Command
                                 Type = HostType.CameraSimulator,
                                 Address = IPAddress.Parse("1.2.3.4"),
                                 Sector = sectorB,
-                                LastKnownStatus = HostDevice.DeviceStatus.OK,
+                                LastKnownStatus = DeviceStatus.OK,
                                 LastKnownTemperature = 24.3m,
                                 LocationAltitude = 12.3456789010m,
                                 LocationLatitude = 23.192488583m
@@ -99,7 +100,7 @@ public class DbCommand : Command
                                 Type = HostType.CameraSimulator,
                                 Address = IPAddress.Parse("1.2.3.5"),
                                 Sector = sectorA,
-                                LastKnownStatus = HostDevice.DeviceStatus.LowPower,
+                                LastKnownStatus = DeviceStatus.LowPower,
                                 LastKnownTemperature = 5.2m,
                                 LocationAltitude = 12.235687879543m,
                                 LocationLatitude = 23.19292929292m
@@ -110,7 +111,7 @@ public class DbCommand : Command
                                 Type = HostType.CameraSimulator,
                                 Address = IPAddress.Parse("1.2.3.6"),
                                 Sector = sectorC,
-                                LastKnownStatus = HostDevice.DeviceStatus.Unresponsive,
+                                LastKnownStatus = DeviceStatus.Unresponsive,
                                 LastKnownTemperature = 1526.2m,
                                 LocationAltitude = 12.2345646646666m,
                                 LocationLatitude = 23.1234444111234m
@@ -159,7 +160,7 @@ public class DbCommand : Command
                                 _logger?.WriteLine(sector.ToString());
 
                             _logger?.WriteLine("Test for relational mapping - Query all related Sectors:");
-                            foreach (var device in devices) 
+                            foreach (var device in devices)
                                 _logger?.WriteLine(device.Sector?.ToString());
 
                             _logger?.WriteLine("Test for querying by ID = 1:");
@@ -259,7 +260,7 @@ public class DbCommand : Command
         builder.AppendLine("\tShows all records from all tables.");
 
         builder.AppendLine("Examples:");
-        builder.AppendLine($"\t{Command.Db} {ListAllArgument}");
+        builder.AppendLine($"\t{Db} {ListAllArgument}");
         return builder.ToString();
     }
 
