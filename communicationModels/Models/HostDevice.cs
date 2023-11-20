@@ -66,6 +66,10 @@ public class HostDevice
         /// Urzadzenie jest widoczne z poziomu połączenia sieciowego, ale nie odpowiedziało na ostatnie żądanie.
         /// </summary>
         Unresponsive = 201,
+        /// <summary>
+        /// Nie udało się odczytać ostatniej wiadomości odebranej z urządzenia.
+        /// </summary>
+        DataCorrupted = 202
     }
 
     //Fields for both Users and Cameras

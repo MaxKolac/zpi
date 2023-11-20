@@ -119,7 +119,9 @@ public class SignalTranslator
                 }
                 else
                 {
-                    _logger?.WriteLine($"API of {datasender.Type} returned a null {nameof(CameraDataMessage)} object! No changes in the database were made.", nameof(SignalTranslator), Logger.MessageType.Warning);
+                    datasender.LastKnownStatus = DeviceStatus.DataCorrupted;
+                    context.SaveChanges();
+                    _logger?.WriteLine($"API of {datasender.Type} returned a null {nameof(CameraDataMessage)} object! No changes in the database were made. Marking device's record with {nameof(DeviceStatus.DataCorrupted)}.", nameof(SignalTranslator), Logger.MessageType.Warning);
                 }
                 break;
             case HostType.PuTTYClient:
