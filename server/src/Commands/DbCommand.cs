@@ -89,8 +89,9 @@ public class DbCommand : Command
                                 Address = IPAddress.Parse("1.2.3.4"),
                                 Sector = sectorB,
                                 LastKnownStatus = HostDevice.DeviceStatus.OK,
-                                LastTemperature = (decimal?)24.3,
-                                ExactLocation = "123N,321W"
+                                LastKnownTemperature = 24.3m,
+                                LocationAltitude = 12.3456789010m,
+                                LocationLatitude = 23.192488583m
                             };
                             HostDevice camera2 = new()
                             {
@@ -99,8 +100,9 @@ public class DbCommand : Command
                                 Address = IPAddress.Parse("1.2.3.5"),
                                 Sector = sectorA,
                                 LastKnownStatus = HostDevice.DeviceStatus.LowPower,
-                                LastTemperature = (decimal?)5.2,
-                                ExactLocation = "125N,326W"
+                                LastKnownTemperature = 5.2m,
+                                LocationAltitude = 12.235687879543m,
+                                LocationLatitude = 23.19292929292m
                             };
                             HostDevice camera3 = new()
                             {
@@ -109,8 +111,9 @@ public class DbCommand : Command
                                 Address = IPAddress.Parse("1.2.3.6"),
                                 Sector = sectorC,
                                 LastKnownStatus = HostDevice.DeviceStatus.Unresponsive,
-                                LastTemperature = (decimal?)1526.2,
-                                ExactLocation = "121N,321W"
+                                LastKnownTemperature = 1526.2m,
+                                LocationAltitude = 12.2345646646666m,
+                                LocationLatitude = 23.1234444111234m
                             };
                             HostDevice user1 = new()
                             {
@@ -181,7 +184,7 @@ public class DbCommand : Command
 
                             _logger?.WriteLine("Applying standard change.");
                             var hostDevice = context.HostDevices.Where((HostDevice x) => x.Type != HostType.User).First();
-                            hostDevice.LastTemperature = (decimal?)1234.56;
+                            hostDevice.LastKnownTemperature = 1234.56m;
                             hostDevice.Address = IPAddress.Parse("123.123.123.123");
                             context.SaveChanges();
 

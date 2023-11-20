@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.Drawing;
+using System.Net;
 using System.Text;
 
 namespace ZPIServer.Models;
@@ -46,8 +47,16 @@ public class HostDevice
     public Sector? Sector { get; set; }
     #endregion
     public DeviceStatus? LastKnownStatus { get; set; }
-    public decimal? LastTemperature { get; set; }
-    public string? ExactLocation { get; set; }
+    public decimal LastKnownTemperature { get; set; }
+    /// <summary>
+    /// Wysokość geograficzna.
+    /// </summary>
+    public decimal LocationAltitude { get; set; }
+    /// <summary>
+    /// Szerokość geograficza.
+    /// </summary>
+    public decimal LocationLatitude { get; set; }
+    public byte[]? LastImage { get; set; }
 
     public override string ToString()
     {
@@ -59,8 +68,10 @@ public class HostDevice
         builder.Append(nameof(Address) + $": {Address} | ");
         builder.Append(nameof(SectorId) + $": {SectorId} | ");
         builder.Append(nameof(LastKnownStatus) + $": {LastKnownStatus} | ");
-        builder.Append(nameof(LastTemperature) + $": {LastTemperature} | ");
-        builder.Append(nameof(ExactLocation) + $": {ExactLocation} ");
+        builder.Append(nameof(LastKnownTemperature) + $": {LastKnownTemperature} | ");
+        builder.Append(nameof(LocationAltitude) + $": {LocationAltitude} | ");
+        builder.Append(nameof(LocationLatitude) + $": {LocationLatitude} | ");
+        builder.Append(nameof(LastImage) + $": {(LastImage is null ? 0 : LastImage.Length)} byte(s) ");
         builder.Append(')');
         return builder.ToString();
     }
