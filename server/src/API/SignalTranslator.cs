@@ -1,10 +1,11 @@
-﻿using System.Net;
+﻿using Newtonsoft.Json;
 using System.Text;
+using ZPICommunicationModels.Messages;
+using ZPICommunicationModels.Models;
 using ZPIServer.API.CameraLibraries;
 using ZPIServer.Commands;
 using ZPIServer.EventArgs;
-using ZPICommunicationModels;
-using Newtonsoft.Json;
+using static ZPICommunicationModels.Models.HostDevice;
 
 namespace ZPIServer.API;
 
@@ -75,7 +76,7 @@ public class SignalTranslator
             Name = "Unknown",
             Address = e.SenderIp,
             Type = HostType.Unknown,
-            LastKnownStatus = HostDevice.DeviceStatus.Unknown
+            LastKnownStatus = DeviceStatus.Unknown
         };
 
         string message = $"Received {e.Data.Length} bytes of data from {datasender.Type} device. Address = {e.SenderIp}:{e.SenderPort}. ";
@@ -86,7 +87,7 @@ public class SignalTranslator
                 _logger?.WriteLine(message + "Ignoring...", nameof(SignalTranslator));
                 break;
             case HostType.CameraSimulator:
-                _logger?.WriteLine(message + $"Sender is {datasender.Name}. Forwarding to {nameof(CameraSimulatorAPI)}.", nameof(SignalTranslator));
+                _logger?.WriteLine(message + $"Sender is '{datasender.Name}'. Forwarding to their respective API library.", nameof(SignalTranslator));
                 ICamera? api = datasender.Type switch
                 {
                     HostType.CameraSimulator => new CameraSimulatorAPI(),
@@ -107,18 +108,18 @@ public class SignalTranslator
                     _logger?.WriteLine($"API of {datasender.Type} failed to parse the received JSON string! {ex.Message}", nameof(SignalTranslator), Logger.MessageType.Error);
                 }
 
-                var decodedDevice = api?.GetHostDevice();
-                if (decodedDevice is not null)
+                var decodedMessage = api?.GetDecodedMessage();
+                if (decodedMessage is not null)
                 {
-                    datasender.LastKnownStatus = HostDevice.DeviceStatus.OK;
-                    datasender.LastImage = decodedDevice.LastImage;
-                    datasender.LastKnownTemperature = decodedDevice.LastKnownTemperature;
+                    datasender.LastKnownTemperature = decodedMessage.LargestTemperature;
+                    datasender.LastImage = decodedMessage.Image;
+                    datasender.LastKnownStatus = decodedMessage.Status;
                     context.SaveChanges();
-                    _logger?.WriteLine($"{datasender.Name} ({nameof(HostDevice.Id)}: {datasender.Id}) updated with new image and temperature. Status set to {datasender.LastKnownStatus}.", nameof(SignalTranslator));
+                    _logger?.WriteLine($"{datasender.Name} ({nameof(HostDevice.Id)}: {datasender.Id}) updated with new temperature and image. Status set to {datasender.LastKnownStatus}.", nameof(SignalTranslator));
                 }
                 else
                 {
-                    _logger?.WriteLine($"API of {datasender.Type} returned a null {nameof(HostDevice)} object! No changes in the database were made.", nameof(SignalTranslator), Logger.MessageType.Warning);
+                    _logger?.WriteLine($"API of {datasender.Type} returned a null {nameof(CameraDataMessage)} object! No changes in the database were made.", nameof(SignalTranslator), Logger.MessageType.Warning);
                 }
                 break;
             case HostType.PuTTYClient:
