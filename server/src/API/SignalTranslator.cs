@@ -1,9 +1,11 @@
-﻿using System.Net;
+﻿using Newtonsoft.Json;
 using System.Text;
+using ZPICommunicationModels.Messages;
+using ZPICommunicationModels.Models;
 using ZPIServer.API.CameraLibraries;
 using ZPIServer.Commands;
 using ZPIServer.EventArgs;
-using ZPIServer.Models;
+using static ZPICommunicationModels.Models.HostDevice;
 
 namespace ZPIServer.API;
 
@@ -13,8 +15,8 @@ namespace ZPIServer.API;
 public class SignalTranslator
 {
     private readonly Logger? _logger;
+    private readonly Dictionary<HostType, int> _invocationDictionary;
     private int _invocations = 0;
-    private Dictionary<HostType, int> _invocationDictionary;
 
     /// <summary>
     /// Wskazuje czy <see cref="SignalTranslator"/> został uruchomiony i obsługuje inwokacje wydarzenia <see cref="TcpHandler.OnSignalReceived"/>.
@@ -27,7 +29,7 @@ public class SignalTranslator
         _invocationDictionary = new Dictionary<HostType, int>();
         foreach (var hostType in Enum.GetValues(typeof(HostType)))
             _invocationDictionary.Add((HostType)hostType, 0);
-        
+
         Command.OnExecuted += ShowStatus;
     }
 
@@ -65,20 +67,16 @@ public class SignalTranslator
     void HandleReceivedSignal(object? sender, TcpHandlerEventArgs e)
     {
         _invocations++;
-        //TODO: Query the DB for the proper record based on received IP
-        var datasender = new HostDevice() 
-        { 
-            Name = "Unknown",
-            Address = e.SenderIp,
-            Type = e.SenderIp.Equals(IPAddress.Parse("127.0.0.1")) ? HostType.PuTTYClient : HostType.CameraSimulator,
-            LastKnownStatus = HostDevice.DeviceStatus.OK
-        };
+        HostDevice? datasender = null;
+        using var context = new DatabaseContext();
+        datasender = context.HostDevices.Where((host) => host.Address.Equals(e.SenderIp)).FirstOrDefault();
+        //If device with that IP is not found, assume device is unknown
         datasender ??= new HostDevice()
         {
             Name = "Unknown",
             Address = e.SenderIp,
             Type = HostType.Unknown,
-            LastKnownStatus = HostDevice.DeviceStatus.Unknown
+            LastKnownStatus = DeviceStatus.Unknown
         };
 
         string message = $"Received {e.Data.Length} bytes of data from {datasender.Type} device. Address = {e.SenderIp}:{e.SenderPort}. ";
@@ -89,15 +87,47 @@ public class SignalTranslator
                 _logger?.WriteLine(message + "Ignoring...", nameof(SignalTranslator));
                 break;
             case HostType.CameraSimulator:
-                _logger?.WriteLine(message + $"Forwarding to {nameof(CameraSimulatorAPI)}.", nameof(SignalTranslator));
+                _logger?.WriteLine(message + $"Sender is '{datasender.Name}'. Forwarding to their respective API library.", nameof(SignalTranslator));
+                ICamera? api = datasender.Type switch
+                {
+                    HostType.CameraSimulator => new CameraSimulatorAPI(),
+                    _ => null
+                };
+
+                //This is where individual APIs perform their magic and catch exceptions if their magic trick blew up
+                try
+                {
+                    api?.DecodeReceivedBytes(e.Data);
+                }
+                catch (ArgumentException ex)
+                {
+                    _logger?.WriteLine($"API of {datasender.Type} received invalid argument! {ex.Message}", nameof(SignalTranslator), Logger.MessageType.Error);
+                }
+                catch (JsonException ex)
+                {
+                    _logger?.WriteLine($"API of {datasender.Type} failed to parse the received JSON string! {ex.Message}", nameof(SignalTranslator), Logger.MessageType.Error);
+                }
+
+                var decodedMessage = api?.GetDecodedMessage();
+                if (decodedMessage is not null)
+                {
+                    datasender.LastKnownTemperature = decodedMessage.LargestTemperature;
+                    datasender.LastImage = decodedMessage.Image;
+                    datasender.LastKnownStatus = decodedMessage.Status;
+                    context.SaveChanges();
+                    _logger?.WriteLine($"{datasender.Name} ({nameof(HostDevice.Id)}: {datasender.Id}) updated with new temperature and image. Status set to {datasender.LastKnownStatus}.", nameof(SignalTranslator));
+                }
+                else
+                {
+                    _logger?.WriteLine($"API of {datasender.Type} returned a null {nameof(CameraDataMessage)} object! No changes in the database were made.", nameof(SignalTranslator), Logger.MessageType.Warning);
+                }
                 break;
             case HostType.PuTTYClient:
                 string rawData = string.Empty;
                 foreach (var dataByte in e.Data)
                     rawData += dataByte;
                 string decodedData = Encoding.UTF8.GetString(e.Data);
-
-                _logger?.WriteLine(message + $" Raw = '{rawData}', Decoded = '{decodedData}'.", nameof(SignalTranslator));
+                _logger?.WriteLine(message + $"Raw = '{rawData}', Decoded = '{decodedData}'.", nameof(SignalTranslator));
                 break;
             case HostType.User:
                 _logger?.WriteLine(message + $"User recognized: {datasender.Name}.", nameof(SignalTranslator));
@@ -113,7 +143,7 @@ public class SignalTranslator
             _logger?.WriteLine($"Logging: {_logger is not null}");
             _logger?.WriteLine($"Signals translated: {_invocations}");
             _logger?.WriteLine($"Signals per {nameof(HostType)} devices: ");
-            foreach (KeyValuePair<HostType, int> kvp in  _invocationDictionary)
+            foreach (KeyValuePair<HostType, int> kvp in _invocationDictionary)
                 _logger?.WriteLine($"\t{kvp.Key}: {kvp.Value}");
         }
     }

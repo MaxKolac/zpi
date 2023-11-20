@@ -18,7 +18,7 @@ public class StatusCommand : Command
         switch (ClassArgument)
         {
             case null:
-                _logger?.WriteLine($"{Command.Status} requires 1 argument.");
+                _logger?.WriteLine($"{Status} requires 1 argument.");
                 _logger?.WriteLine(GetHelp());
                 break;
             case TcpHandlerArgument:
@@ -54,7 +54,7 @@ public class StatusCommand : Command
         if (arguments.Length == 1)
         {
             string arg = arguments[0];
-            if (arg == StatusCommand.SignalTranslatorArgument || arg == StatusCommand.TcpHandlerArgument)
+            if (arg == SignalTranslatorArgument || arg == TcpHandlerArgument)
                 ClassArgument = arg;
         }
         else if (arguments.Length > 1)

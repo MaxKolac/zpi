@@ -1,7 +1,8 @@
 ﻿using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using ZPICommunicationModels.Models;
 
-namespace ZPIServer.Models;
+namespace ZPIServer;
 
 /// <summary>
 /// Klasa z pakietu EntityFramework Core, która pozwala na przeprowadzanie operacji CRUD (Create, Read, Update, Delete) na bazie danych w przyjazny i programowalny sposób.<br/>

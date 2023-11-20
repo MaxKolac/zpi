@@ -2,7 +2,8 @@
 using Microsoft.EntityFrameworkCore;
 using System.Net;
 using System.Text;
-using ZPIServer.Models;
+using ZPICommunicationModels.Models;
+using static ZPICommunicationModels.Models.HostDevice;
 
 namespace ZPIServer.Commands;
 
@@ -23,7 +24,7 @@ public class DbCommand : Command
         switch (FirstArg)
         {
             case null:
-                _logger?.WriteLine($"{Command.Db} requires 1 or more arguments.");
+                _logger?.WriteLine($"{Db} requires 1 or more arguments.");
                 _logger?.WriteLine(GetHelp());
                 break;
             case ListAllArgument:
@@ -50,7 +51,7 @@ public class DbCommand : Command
                 }
                 catch (SqliteException ex)
                 {
-                    _logger?.WriteLine($"ERROR! Something wrong with the database file: {ex.Message}");
+                    _logger?.WriteLine($"ERROR! Something went wrong with the database file: {ex.Message}", messageType: Logger.MessageType.Error);
                 }
                 break;
             case TestArgument:
@@ -88,9 +89,10 @@ public class DbCommand : Command
                                 Type = HostType.CameraSimulator,
                                 Address = IPAddress.Parse("1.2.3.4"),
                                 Sector = sectorB,
-                                LastKnownStatus = HostDevice.DeviceStatus.OK,
-                                LastTemperature = (decimal?)24.3,
-                                ExactLocation = "123N,321W"
+                                LastKnownStatus = DeviceStatus.OK,
+                                LastKnownTemperature = 24.3m,
+                                LocationAltitude = 12.3456789010m,
+                                LocationLatitude = 23.192488583m
                             };
                             HostDevice camera2 = new()
                             {
@@ -98,9 +100,10 @@ public class DbCommand : Command
                                 Type = HostType.CameraSimulator,
                                 Address = IPAddress.Parse("1.2.3.5"),
                                 Sector = sectorA,
-                                LastKnownStatus = HostDevice.DeviceStatus.LowPower,
-                                LastTemperature = (decimal?)5.2,
-                                ExactLocation = "125N,326W"
+                                LastKnownStatus = DeviceStatus.LowPower,
+                                LastKnownTemperature = 5.2m,
+                                LocationAltitude = 12.235687879543m,
+                                LocationLatitude = 23.19292929292m
                             };
                             HostDevice camera3 = new()
                             {
@@ -108,9 +111,10 @@ public class DbCommand : Command
                                 Type = HostType.CameraSimulator,
                                 Address = IPAddress.Parse("1.2.3.6"),
                                 Sector = sectorC,
-                                LastKnownStatus = HostDevice.DeviceStatus.Unresponsive,
-                                LastTemperature = (decimal?)1526.2,
-                                ExactLocation = "121N,321W"
+                                LastKnownStatus = DeviceStatus.Unresponsive,
+                                LastKnownTemperature = 1526.2m,
+                                LocationAltitude = 12.2345646646666m,
+                                LocationLatitude = 23.1234444111234m
                             };
                             HostDevice user1 = new()
                             {
@@ -137,7 +141,7 @@ public class DbCommand : Command
                         }
                         catch (SqliteException ex)
                         {
-                            _logger?.WriteLine($"ERROR! {ex.Message}");
+                            _logger?.WriteLine($"ERROR! {ex.Message}", messageType: Logger.MessageType.Error);
                         }
                         break;
                     case "r": //Read
@@ -156,7 +160,7 @@ public class DbCommand : Command
                                 _logger?.WriteLine(sector.ToString());
 
                             _logger?.WriteLine("Test for relational mapping - Query all related Sectors:");
-                            foreach (var device in devices) 
+                            foreach (var device in devices)
                                 _logger?.WriteLine(device.Sector?.ToString());
 
                             _logger?.WriteLine("Test for querying by ID = 1:");
@@ -167,7 +171,7 @@ public class DbCommand : Command
                         }
                         catch (SqliteException ex)
                         {
-                            _logger?.WriteLine($"ERROR! {ex.Message}");
+                            _logger?.WriteLine($"ERROR! {ex.Message}", messageType: Logger.MessageType.Error);
                         }
                         break;
                     case "u": //Update
@@ -181,7 +185,7 @@ public class DbCommand : Command
 
                             _logger?.WriteLine("Applying standard change.");
                             var hostDevice = context.HostDevices.Where((HostDevice x) => x.Type != HostType.User).First();
-                            hostDevice.LastTemperature = (decimal?)1234.56;
+                            hostDevice.LastKnownTemperature = 1234.56m;
                             hostDevice.Address = IPAddress.Parse("123.123.123.123");
                             context.SaveChanges();
 
@@ -198,7 +202,7 @@ public class DbCommand : Command
                         }
                         catch (SqliteException ex)
                         {
-                            _logger?.WriteLine($"ERROR! {ex.Message}");
+                            _logger?.WriteLine($"ERROR! {ex.Message}", messageType: Logger.MessageType.Error);
                         }
                         break;
                     case "d": //Delete
@@ -232,7 +236,7 @@ public class DbCommand : Command
                         }
                         catch (SqliteException ex)
                         {
-                            _logger?.WriteLine($"ERROR! {ex.Message}");
+                            _logger?.WriteLine($"ERROR! {ex.Message}", messageType: Logger.MessageType.Error);
                         }
                         break;
                     default:
@@ -256,7 +260,7 @@ public class DbCommand : Command
         builder.AppendLine("\tShows all records from all tables.");
 
         builder.AppendLine("Examples:");
-        builder.AppendLine($"\t{Command.Db} {ListAllArgument}");
+        builder.AppendLine($"\t{Db} {ListAllArgument}");
         return builder.ToString();
     }
 

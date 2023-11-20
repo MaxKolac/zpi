@@ -1,6 +1,7 @@
 ﻿using System.Text;
+using System.Text.Json.Serialization;
 
-namespace ZPIServer.Models;
+namespace ZPICommunicationModels.Models;
 
 /// <summary>
 /// Jeden obszar organizacyjny obserwowany przez jedną kamerę termowizyjną.
@@ -28,12 +29,25 @@ public class Sector
         Confirmed = 2,
     }
 
-    public int Id { get; set; } //Primary key
+    /// <summary>
+    /// Klucz podstawowy. Lepiej tego nie edytować manualnie.
+    /// </summary>
+    public int Id { get; set; }
+    /// <summary>
+    /// Nazwa sektora.
+    /// </summary>
     public required string Name { get; set; }
+    /// <summary>
+    /// Ostatni znany stan pożarowy w danym sektorze.
+    /// </summary>
     public required FireStatus LastStatus { get; set; }
+    /// <summary>
+    /// Opcjonalny opis.
+    /// </summary>
     public string? Description { get; set; }
 
     #region Foreign Key
+    [JsonIgnore]
     public IList<HostDevice>? HostDevices { get; set; }
     #endregion
 

@@ -1,12 +1,18 @@
-﻿namespace ZPIServer.API;
+﻿using ZPICommunicationModels.Messages;
 
-/// <summary>
-/// Wspólny interfejs, pod który wszystkie sygnały kamer termowizyjnych będzie tłumaczony przez odpowiednią klasę w <see cref="CameraLibraries"/>.<br/>
-/// Metody z prefiksami 'Request' wysyłają żądania do kamer. Metody z prefiksami 'Decode' zwracają dane otrzymane z ostatniego żądania.
-/// </summary>
+namespace ZPIServer.API;
+
 public interface ICamera
 {
-    void RequestPicture();
+    /// <summary>
+    /// Pobiera surowy ciąg bitów przekazany z <see cref="SignalTranslator"/> i konwertuje je na swój sposób na odczytywalną wiadomość <see cref="CameraDataMessage"/>.<br/>
+    /// Jeżeli konwersja się nie udała, ustawia instancję na <c>null</c>.
+    /// </summary>
+    /// <param name="bytes">Ciąg bitów z obsługiwanego urządzenia.</param>
+    void DecodeReceivedBytes(byte[]? bytes);
 
-    void DecodePicture(); 
+    /// <summary>
+    /// Zwraca wynik przekonwertowania ciągu bitów na wiadomość <see cref="CameraDataMessage"/>. Jeżeli konwersja się nie udała, zwraca <c>null</c>.
+    /// </summary>
+    CameraDataMessage? GetDecodedMessage();
 }

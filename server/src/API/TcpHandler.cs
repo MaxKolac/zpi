@@ -123,7 +123,7 @@ public class TcpHandler
             }
             catch (SocketException)
             {
-                _logger?.WriteLine($"Could not start the TcpListener on port {_listeners[i].GetLocalPort()} - port already in use! {nameof(TcpHandler)} won't be able to listen for connections on that port.", nameof(TcpHandler));
+                _logger?.WriteLine($"Could not start the TcpListener on port {_listeners[i].GetLocalPort()} - port already in use! {nameof(TcpHandler)} won't be able to listen for connections on that port.", nameof(TcpHandler), Logger.MessageType.Warning);
                 inactiveListeners++;
             }
         }
@@ -133,7 +133,7 @@ public class TcpHandler
         }
         else if (inactiveListeners > 0)
         {
-            _logger?.WriteLine($"ALERT! Failed to start TcpListener on {inactiveListeners} port(s).", nameof(TcpHandler));
+            _logger?.WriteLine($"Failed to start TcpListener on {inactiveListeners} port(s).", nameof(TcpHandler), Logger.MessageType.Warning);
         }
     }
 
@@ -212,14 +212,14 @@ public class TcpHandler
         catch (IOException ex)
         {
             //Usually thrown when the other end abruptly closes the connection
-            _logger?.WriteLine($"IOException thrown on port {listener.GetLocalPort()}.", nameof(TcpHandler));
-            _logger?.WriteLine($"{ex.Message}.", nameof(TcpHandler));
+            _logger?.WriteLine($"IOException thrown on port {listener.GetLocalPort()}.", nameof(TcpHandler), Logger.MessageType.Warning);
+            _logger?.WriteLine($"{ex.Message}.", nameof(TcpHandler), Logger.MessageType.Warning);
         }
         catch (OperationCanceledException)
         {
             if (_token.IsCancellationRequested)
             {
-                _logger?.WriteLine($"Cancelling connection handling on port {listener.GetLocalPort()} due to cancellation token.", nameof(TcpHandler));
+                _logger?.WriteLine($"Cancelling connection handling on port {listener.GetLocalPort()} due to cancellation token.", nameof(TcpHandler), Logger.MessageType.Warning);
                 return;
             }
             else
@@ -231,7 +231,7 @@ public class TcpHandler
         {
             if (_token.IsCancellationRequested)
             {
-                _logger?.WriteLine($"Cancelling connection handling on port {listener.GetLocalPort()} due to cancellation token.", nameof(TcpHandler));
+                _logger?.WriteLine($"Cancelling connection handling on port {listener.GetLocalPort()} due to cancellation token.", nameof(TcpHandler), Logger.MessageType.Warning);
                 return;
             }
             else

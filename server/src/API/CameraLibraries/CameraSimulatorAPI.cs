@@ -1,14 +1,21 @@
-﻿namespace ZPIServer.API.CameraLibraries;
+﻿using Newtonsoft.Json;
+using System.Text;
+using ZPICommunicationModels.Messages;
+
+namespace ZPIServer.API.CameraLibraries;
 
 public class CameraSimulatorAPI : ICamera
 {
-    public void DecodePicture()
+    private CameraDataMessage? _message;
+
+    public void DecodeReceivedBytes(byte[]? bytes)
     {
-        throw new NotImplementedException();
+        if (bytes is null || bytes.Length == 0)
+            throw new ArgumentException("Received bytes were empty or null");
+
+        string decodedString = Encoding.UTF8.GetString(bytes);
+        _message = JsonConvert.DeserializeObject<CameraDataMessage>(decodedString);
     }
 
-    public void RequestPicture()
-    {
-        throw new NotImplementedException();
-    }
+    public CameraDataMessage? GetDecodedMessage() => _message;
 }
