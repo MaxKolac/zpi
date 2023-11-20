@@ -24,6 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\communicationModels\ZPICommunicationModels.csproj" />
     <ProjectReference Include="..\src\ZPIClient.csproj" />
   </ItemGroup>
 

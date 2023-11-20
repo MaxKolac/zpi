@@ -2,8 +2,11 @@
 using System.Net;
 using System.Text;
 
-namespace ZPIServer.Models;
+namespace ZPICommunicationModels;
 
+/// <summary>
+/// Urządzenie sieciowe. Może to być kamera, użytkownik lub coś innego. Lista urządzeń znajduje się w <see cref="HostType"/>.
+/// </summary>
 public class HostDevice
 {
     /// <summary>
@@ -36,9 +39,21 @@ public class HostDevice
     }
 
     //Fields for both Users and Cameras
+    /// <summary>
+    /// Klucz podstawowy. Lepiej tego nie edytować manualnie.
+    /// </summary>
     public int Id { get; set; } //Primary key
+    /// <summary>
+    /// Nazwa urządzenia.
+    /// </summary>
     public required string Name { get; set; }
+    /// <summary>
+    /// Wskazuje czym jest to urządzenie.
+    /// </summary>
     public required HostType Type { get; set; }
+    /// <summary>
+    /// Adres IP urządzenia.
+    /// </summary>
     public required IPAddress Address { get; set; }
 
     //Camera specific fields
@@ -46,17 +61,28 @@ public class HostDevice
     public int? SectorId { get; set; }
     public Sector? Sector { get; set; }
     #endregion
+    /// <summary>
+    /// Właściwość tylko dla kamer.<br/>
+    /// Ostatni znany status kamery.
+    /// </summary>
     public DeviceStatus? LastKnownStatus { get; set; }
+    /// <summary>
+    /// Właściwość tylko dla kamer.<br/>
+    /// Ostatnia znana najwyższa wykryta temperatura.
+    /// </summary>
     public decimal LastKnownTemperature { get; set; }
     /// <summary>
+    /// Właściwość tylko dla kamer.<br/>
     /// Wysokość geograficzna.
     /// </summary>
     public decimal LocationAltitude { get; set; }
     /// <summary>
+    /// Właściwość tylko dla kamer.<br/>
     /// Szerokość geograficza.
     /// </summary>
     public decimal LocationLatitude { get; set; }
     /// <summary>
+    /// Właściwość tylko dla kamer.<br/>
     /// EF Core nie może przechowywać <see cref="Bitmap"/> jako kolumny. Użyj <see cref="ToBitmap(byte[]?)"/> i <see cref="ToByteArray(Bitmap?)"/> aby konwertować obraz na ciąg bitów i vice versa.
     /// </summary>
     public byte[]? LastImage { get; set; }

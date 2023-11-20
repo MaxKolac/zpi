@@ -1,7 +1,7 @@
-﻿namespace ZPIServer.Models;
+﻿namespace ZPICommunicationModels;
 
 /// <summary>
-/// Identyfikuje jak <see cref="API.SignalTranslator"/> ma potraktować sygnał z danego hosta.
+/// Identyfikuje jakie dokładnie urządzenie kryje się za danym rekordem.
 /// </summary>
 public enum HostType
 {

@@ -3,7 +3,7 @@ using System.Text;
 using ZPIServer.API.CameraLibraries;
 using ZPIServer.Commands;
 using ZPIServer.EventArgs;
-using ZPIServer.Models;
+using ZPICommunicationModels;
 
 namespace ZPIServer.API;
 
@@ -13,8 +13,8 @@ namespace ZPIServer.API;
 public class SignalTranslator
 {
     private readonly Logger? _logger;
+    private readonly Dictionary<HostType, int> _invocationDictionary;
     private int _invocations = 0;
-    private Dictionary<HostType, int> _invocationDictionary;
 
     /// <summary>
     /// Wskazuje czy <see cref="SignalTranslator"/> został uruchomiony i obsługuje inwokacje wydarzenia <see cref="TcpHandler.OnSignalReceived"/>.

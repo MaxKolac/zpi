@@ -7,6 +7,7 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace ZPIClient;
+[Obsolete]
 internal class Sensor
 {
     public enum SensorState

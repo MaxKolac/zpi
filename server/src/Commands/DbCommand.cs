@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using System.Net;
 using System.Text;
-using ZPIServer.Models;
+using ZPICommunicationModels;
 
 namespace ZPIServer.Commands;
 
