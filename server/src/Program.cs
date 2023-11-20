@@ -50,7 +50,7 @@ namespace ZPIServer
                 }
                 catch (FormatException)
                 {
-                    logger.WriteLine($"WARNING! Failed to format argument 0 to IPAddress. Server will launch on default value of 127.0.0.1.", ServerConsolePrefix);
+                    logger.WriteLine($"Failed to format argument 0 to IPAddress. Server will launch on default value of 127.0.0.1.", ServerConsolePrefix, Logger.MessageType.Warning);
                 }
             }
 

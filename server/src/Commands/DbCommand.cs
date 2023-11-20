@@ -50,7 +50,7 @@ public class DbCommand : Command
                 }
                 catch (SqliteException ex)
                 {
-                    _logger?.WriteLine($"ERROR! Something wrong with the database file: {ex.Message}");
+                    _logger?.WriteLine($"ERROR! Something went wrong with the database file: {ex.Message}", messageType: Logger.MessageType.Error);
                 }
                 break;
             case TestArgument:
@@ -140,7 +140,7 @@ public class DbCommand : Command
                         }
                         catch (SqliteException ex)
                         {
-                            _logger?.WriteLine($"ERROR! {ex.Message}");
+                            _logger?.WriteLine($"ERROR! {ex.Message}", messageType: Logger.MessageType.Error);
                         }
                         break;
                     case "r": //Read
@@ -170,7 +170,7 @@ public class DbCommand : Command
                         }
                         catch (SqliteException ex)
                         {
-                            _logger?.WriteLine($"ERROR! {ex.Message}");
+                            _logger?.WriteLine($"ERROR! {ex.Message}", messageType: Logger.MessageType.Error);
                         }
                         break;
                     case "u": //Update
@@ -201,7 +201,7 @@ public class DbCommand : Command
                         }
                         catch (SqliteException ex)
                         {
-                            _logger?.WriteLine($"ERROR! {ex.Message}");
+                            _logger?.WriteLine($"ERROR! {ex.Message}", messageType: Logger.MessageType.Error);
                         }
                         break;
                     case "d": //Delete
@@ -235,7 +235,7 @@ public class DbCommand : Command
                         }
                         catch (SqliteException ex)
                         {
-                            _logger?.WriteLine($"ERROR! {ex.Message}");
+                            _logger?.WriteLine($"ERROR! {ex.Message}", messageType: Logger.MessageType.Error);
                         }
                         break;
                     default:

@@ -96,8 +96,7 @@ public class SignalTranslator
                 foreach (var dataByte in e.Data)
                     rawData += dataByte;
                 string decodedData = Encoding.UTF8.GetString(e.Data);
-
-                _logger?.WriteLine(message + $" Raw = '{rawData}', Decoded = '{decodedData}'.", nameof(SignalTranslator));
+                _logger?.WriteLine(message + $"Raw = '{rawData}', Decoded = '{decodedData}'.", nameof(SignalTranslator));
                 break;
             case HostType.User:
                 _logger?.WriteLine(message + $"User recognized: {datasender.Name}.", nameof(SignalTranslator));
@@ -113,7 +112,7 @@ public class SignalTranslator
             _logger?.WriteLine($"Logging: {_logger is not null}");
             _logger?.WriteLine($"Signals translated: {_invocations}");
             _logger?.WriteLine($"Signals per {nameof(HostType)} devices: ");
-            foreach (KeyValuePair<HostType, int> kvp in  _invocationDictionary)
+            foreach (KeyValuePair<HostType, int> kvp in _invocationDictionary)
                 _logger?.WriteLine($"\t{kvp.Key}: {kvp.Value}");
         }
     }

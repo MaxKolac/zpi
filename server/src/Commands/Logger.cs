@@ -9,6 +9,11 @@ public class Logger
     private readonly SemaphoreSlim _accessSemaphore;
     private readonly Task _loggerTask;
 
+    public enum MessageType
+    {
+        Normal, Warning, Error
+    }
+
     public Logger()
     {
         _token = new();
@@ -63,9 +68,18 @@ public class Logger
     /// </summary>
     /// <param name="message">Linijka do przekazania.</param>
     /// <param name="callingClass">Nazwa klasy wywołującej metodę. Pojawi się jako prefiks w nawiasach kwadratowych. Podanie wartości <c>null</c> pominie dodawanie prefiksu i wyświetli jedynie <paramref name="message"/>.</param>
-    public void WriteLine(string? message, string? callingClass = null)
+    /// <param name="messageType">Jaki rodzaj wiadomości zostaje wysłany. Zwykłe linie są wysyłane w kolorze białym, ostrzeżenia w kolorze żółtym, a błędy w kolorze czerwonym.</param>
+    public void WriteLine(string? message, string? callingClass = null, MessageType messageType = MessageType.Normal)
     {
         _accessSemaphore.Wait();
+
+        Console.ForegroundColor = messageType switch
+        {
+            MessageType.Normal => ConsoleColor.White,
+            MessageType.Warning => ConsoleColor.Yellow,
+            MessageType.Error => ConsoleColor.Red,
+            _ => ConsoleColor.White
+        };
 
         //Remember where the cursor is so its position can be restored later
         int cursorOffset = Console.GetCursorPosition().Left;
@@ -89,6 +103,7 @@ public class Logger
         cursorPosition = Console.GetCursorPosition();
         Console.SetCursorPosition(cursorOffset, cursorPosition.Top + 1);
 
+        Console.ForegroundColor = ConsoleColor.White;
         _accessSemaphore.Release();
     }
 }
