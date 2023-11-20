@@ -1,14 +1,44 @@
 ﻿using System.Drawing;
+using System.Drawing.Imaging;
 using System.Net;
 using System.Text;
+using System.Text.Json.Serialization;
+using ZPICommunicationModels.JsonConverters;
 
-namespace ZPICommunicationModels;
+namespace ZPICommunicationModels.Models;
 
 /// <summary>
 /// Urządzenie sieciowe. Może to być kamera, użytkownik lub coś innego. Lista urządzeń znajduje się w <see cref="HostType"/>.
 /// </summary>
 public class HostDevice
 {
+    /// <summary>
+    /// Identyfikuje jakie dokładnie urządzenie kryje się za danym rekordem.
+    /// </summary>
+    public enum HostType
+    {
+        /// <summary>
+        /// HostDevice jest nieznany.
+        /// </summary>
+        Unknown = 0,
+
+        /// <summary>
+        /// HostDevice to symulator kamery stworzony do testów.
+        /// </summary>
+        CameraSimulator = 1,
+
+        /// <summary>
+        /// HostDevice to lokalny klient PuTTY.
+        /// </summary>
+        PuTTYClient = 2,
+
+        /// <summary>
+        /// HostDevice to jeden z użytkowników korzystający z aplikacji desktopowej.
+        /// </summary>
+        User = 3,
+    }
+
+
     /// <summary>
     /// Status urządzenia kamery. Numery zaczynające się od 100 oznaczają ostrzeżenia, a od 200 oznaczają błędy krytyczne. Uzytkownicy mają zawsze status 1.
     /// </summary>
@@ -54,20 +84,28 @@ public class HostDevice
     /// <summary>
     /// Adres IP urządzenia.
     /// </summary>
+    [JsonConverter(typeof(IPAddressConverter))]
     public required IPAddress Address { get; set; }
 
     //Camera specific fields
-    #region Foreign Key
-    public int? SectorId { get; set; }
-    public Sector? Sector { get; set; }
-    #endregion
     /// <summary>
-    /// Właściwość tylko dla kamer.<br/>
+    /// Właściwość tylko dla kamer. <b>Klucz obcy</b><br/>
+    /// ID rekordu powiązanej instancji <see cref="Sector"/>.
+    /// </summary>
+    public int? SectorId { get; set; }
+    /// <summary>
+    /// Właściwość tylko dla kamer. <b>Klucz obcy</b><br/>
+    /// Właściwość dostępowa do sektora powiązanego z tym urządzeniem.
+    /// </summary>
+    [JsonIgnore]
+    public Sector? Sector { get; set; }
+    /// <summary>
+    /// Właściwość tylko dla kamer. <b>Tą właściwość serwer będzie próbował odczytać.</b><br/>
     /// Ostatni znany status kamery.
     /// </summary>
     public DeviceStatus? LastKnownStatus { get; set; }
     /// <summary>
-    /// Właściwość tylko dla kamer.<br/>
+    /// Właściwość tylko dla kamer. <b>Tą właściwość serwer będzie próbował odczytać.</b><br/>
     /// Ostatnia znana najwyższa wykryta temperatura.
     /// </summary>
     public decimal LastKnownTemperature { get; set; }
@@ -82,26 +120,28 @@ public class HostDevice
     /// </summary>
     public decimal LocationLatitude { get; set; }
     /// <summary>
-    /// Właściwość tylko dla kamer.<br/>
-    /// EF Core nie może przechowywać <see cref="Bitmap"/> jako kolumny. Użyj <see cref="ToBitmap(byte[]?)"/> i <see cref="ToByteArray(Bitmap?)"/> aby konwertować obraz na ciąg bitów i vice versa.
+    /// Właściwość tylko dla kamer. <b>Tą właściwość serwer będzie próbował odczytać.</b><br/>
+    /// EF Core nie może przechowywać <see cref="Image"/> jako kolumny. Użyj <see cref="ToImage(byte[]?)"/> i <see cref="ToByteArray(Image?, ImageFormat)"/> aby konwertować obraz na ciąg bitów i vice versa.
     /// </summary>
     public byte[]? LastImage { get; set; }
 
-    public static Bitmap? ToBitmap(byte[]? bytes)
+    public static Image? ToImage(byte[]? bytes)
     {
-        if (bytes is null)
+        if (!OperatingSystem.IsWindows()) //supresses CA1416
             return null;
-        using var memory = new MemoryStream(bytes);
-        return OperatingSystem.IsWindows() ? (Bitmap?)Image.FromStream(memory) : null;  //supresses CA1416
+
+        return bytes is null ? null : Image.FromStream(new MemoryStream(bytes));
     }
 
-    public static byte[]? ToByteArray(Bitmap? bitmap)
+    public static byte[]? ToByteArray(Image? bitmap, ImageFormat format)
     {
+        if (!OperatingSystem.IsWindows()) //supresses CA1416
+            return null;
+
         if (bitmap is null)
             return null;
         using var stream = new MemoryStream();
-        if (OperatingSystem.IsWindows())  //supresses CA1416
-            bitmap.Save(stream, System.Drawing.Imaging.ImageFormat.Tiff);
+        bitmap.Save(stream, format);
         return stream.ToArray();
     }
 

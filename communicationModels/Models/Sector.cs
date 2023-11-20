@@ -1,6 +1,7 @@
 ﻿using System.Text;
+using System.Text.Json.Serialization;
 
-namespace ZPICommunicationModels;
+namespace ZPICommunicationModels.Models;
 
 /// <summary>
 /// Jeden obszar organizacyjny obserwowany przez jedną kamerę termowizyjną.
@@ -46,6 +47,7 @@ public class Sector
     public string? Description { get; set; }
 
     #region Foreign Key
+    [JsonIgnore]
     public IList<HostDevice>? HostDevices { get; set; }
     #endregion
 
