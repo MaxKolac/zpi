@@ -56,7 +56,28 @@ public class HostDevice
     /// Szerokość geograficza.
     /// </summary>
     public decimal LocationLatitude { get; set; }
+    /// <summary>
+    /// EF Core nie może przechowywać <see cref="Bitmap"/> jako kolumny. Użyj <see cref="ToBitmap(byte[]?)"/> i <see cref="ToByteArray(Bitmap?)"/> aby konwertować obraz na ciąg bitów i vice versa.
+    /// </summary>
     public byte[]? LastImage { get; set; }
+
+    public static Bitmap? ToBitmap(byte[]? bytes)
+    {
+        if (bytes is null)
+            return null;
+        using var memory = new MemoryStream(bytes);
+        return OperatingSystem.IsWindows() ? (Bitmap?)Image.FromStream(memory) : null;  //supresses CA1416
+    }
+
+    public static byte[]? ToByteArray(Bitmap? bitmap)
+    {
+        if (bitmap is null)
+            return null;
+        using var stream = new MemoryStream();
+        if (OperatingSystem.IsWindows())  //supresses CA1416
+            bitmap.Save(stream, System.Drawing.Imaging.ImageFormat.Tiff);
+        return stream.ToArray();
+    }
 
     public override string ToString()
     {
