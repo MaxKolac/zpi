@@ -87,10 +87,12 @@ public class SignalTranslator
                 _logger?.WriteLine(message + "Ignoring...", nameof(SignalTranslator));
                 break;
             case HostType.CameraSimulator:
+            case HostType.PythonCameraSimulator:
                 _logger?.WriteLine(message + $"Sender is '{datasender.Name}'. Forwarding to their respective API library.", nameof(SignalTranslator));
                 ICamera? api = datasender.Type switch
                 {
                     HostType.CameraSimulator => new CameraSimulatorAPI(),
+                    HostType.PythonCameraSimulator => new PythonCameraSimulatorAPI(),
                     _ => null
                 };
 
