@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using ZPICommunicationModels.Messages;
@@ -10,13 +11,13 @@ namespace ZPICameraSimulator;
 
 internal class CameraSimulator
 {
-    public static void SendJson(CameraDataMessage message)
+    public static void SendJson(CameraDataMessage message, IPAddress address, int port)
     {
         if (!OperatingSystem.IsWindows())
             return;
 
         using var server = new TcpClient();
-        server.Connect("127.0.0.1", 25566);
+        server.Connect(address.MapToIPv4(), port);
 
         string json = JsonConvert.SerializeObject(message);
         using (var stream = server.GetStream())

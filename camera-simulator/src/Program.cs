@@ -1,5 +1,6 @@
 ﻿using System.Drawing;
 using System.Drawing.Imaging;
+using System.Net;
 using ZPICommunicationModels.Messages;
 using ZPICommunicationModels.Models;
 
@@ -26,15 +27,47 @@ public class Program
             Console.WriteLine($"Obraz: {message.Image.Length} bajtów");
             Console.WriteLine($"Status: {message.Status}");
             Console.WriteLine();
-            Console.WriteLine("1. Wyślij jako JSON.");
-            var key = Console.ReadKey();
+
+            IPAddress address = IPAddress.Parse("127.0.0.1");
+            bool conversionSuccessful = false;
+            string? input;
+            do
+            {
+                Console.WriteLine("Podaj adres IP serwera. Wprowadzenie pustej wartości wyśle wiadomość na 127.0.0.1:");
+                try
+                {
+                    input = Console.ReadLine();
+                    address = string.IsNullOrEmpty(input) ? IPAddress.Parse("127.0.0.1") : IPAddress.Parse(input);
+                    conversionSuccessful = true;
+                }
+                catch (FormatException)
+                {
+                    Console.WriteLine("Nieprawidłowy adres.");
+                }
+            }
+            while (!conversionSuccessful);
+
+            int port;
+            input = null;
+            do
+            {
+                Console.WriteLine("Podaj port serwera, na który wysłać wiadomość.");
+                Console.WriteLine("Domyślnie, serwer nasłuchuje na portach 25565, 25566 i 25567.");
+                input = Console.ReadLine();
+            }
+            while (int.TryParse(input, out port));
+
+            //Console.WriteLine("1. Wyślij jako JSON.");
+            //var key = Console.ReadKey();
+            var key = ConsoleKey.D1;
 
             try
             {
-                switch (key.Key)
+                switch (key)
                 {
                     case ConsoleKey.D1:
-                        CameraSimulator.SendJson(message);
+                        Console.WriteLine("Próba wysłania wiadomości w formacie JSON...");
+                        CameraSimulator.SendJson(message, address, port);
                         break;
                     default:
                         break;
