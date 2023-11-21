@@ -68,6 +68,7 @@ namespace ZPIServer
                     PythonCameraSimulatorAPI.CheckPythonPackagesInstallation(logger);
                     break;
                 case 1:
+                    logger.WriteLine($"Python installation detected.", ServerPrefix);
                     PythonCameraSimulatorAPI.CheckPythonPackagesInstallation(logger);
                     break;
             }
