@@ -83,6 +83,7 @@ public class SignalTranslator
         _invocationDictionary[datasender.Type]++;
         switch (datasender.Type)
         {
+            default:
             case HostType.Unknown:
                 _logger?.WriteLine(message + "Ignoring...", nameof(SignalTranslator));
                 break;
@@ -92,7 +93,7 @@ public class SignalTranslator
                 ICamera? api = datasender.Type switch
                 {
                     HostType.CameraSimulator => new CameraSimulatorAPI(),
-                    HostType.PythonCameraSimulator => new PythonCameraSimulatorAPI(),
+                    HostType.PythonCameraSimulator => new PythonCameraSimulatorAPI(_logger),
                     _ => null
                 };
 
