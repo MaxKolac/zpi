@@ -16,9 +16,19 @@ public static class Settings
     /// </summary>
     public static IPAddress ServerAddress { get; set; } = IPAddress.Parse("127.0.0.1");
 
+    /// <summary>
+    /// Wskazuje, czy serwer wykrył instalację Python'a potrzebnego do <see cref="API.CameraLibraries.PythonCameraSimulatorAPI"/>.<br/>
+    /// 1 oznacza, że wykryto wersję Python'a nowszą od 3.0.0.<br/>
+    /// 0 oznacza, że wykryto przestarzałą wersję Python'a, starszą od 3.0.0.<br/>
+    /// -1 oznacza, że nie wykryto żadnej zainstalowanej wersji Python'a.<br/>
+    /// Domyślna wartość to -1.
+    /// </summary>
+    public static int PythonInstallationStatus { get; set; } = -1;
+
     public static void ResetToDefault()
     {
         TcpListeningPort = new int[] { 25565, 25566, 25567 };
         ServerAddress = IPAddress.Parse("127.0.0.1");
+        PythonInstallationStatus = -1;
     }
 }

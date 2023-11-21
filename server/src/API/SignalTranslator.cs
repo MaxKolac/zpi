@@ -114,6 +114,7 @@ public class SignalTranslator
                 var decodedMessage = api?.GetDecodedMessage();
                 if (decodedMessage is not null)
                 {
+                    //Apply received changes if they were succesfully decoded
                     datasender.LastKnownTemperature = decodedMessage.LargestTemperature;
                     datasender.LastImage = decodedMessage.Image;
                     datasender.LastKnownStatus = decodedMessage.Status;

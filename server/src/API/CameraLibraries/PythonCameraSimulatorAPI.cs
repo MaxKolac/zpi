@@ -17,11 +17,16 @@ public class PythonCameraSimulatorAPI : ICamera
 
     public void DecodeReceivedBytes(byte[]? bytes)
     {
+        if (Settings.PythonInstallationStatus == -1)
+        {
+            _logger?.WriteLine($"Server was started without detecting a Python installation! Ignoring received bytes.", nameof(PythonCameraSimulatorAPI), Logger.MessageType.Warning);
+            return;
+        }
+
         if (bytes is null || bytes.Length == 0)
             throw new ArgumentException("Received bytes were empty or null");
 
-        if (CheckPythonInstallation() == -1)
-            return;
+        //do stuff
     }
 
     public CameraDataMessage? GetDecodedMessage() => _message;
@@ -34,7 +39,7 @@ public class PythonCameraSimulatorAPI : ICamera
     /// 0, jeśli zainstalowany jest Python w wersji starszej od 3.<br/>
     /// -1, jeśli nie wykryto żadnej instalacji Python'a.
     /// </returns>
-    private int CheckPythonInstallation()
+    public static int CheckPythonInstallation(Logger? logger = null)
     {
         int returnCode = 1;
         var startInfo = new ProcessStartInfo
@@ -58,17 +63,17 @@ public class PythonCameraSimulatorAPI : ICamera
             string trimmedResult = result.Trim();
             if (result.Contains("Python 3"))
             {
-                _logger?.WriteLine($"{trimmedResult} installation found.", nameof(PythonCameraSimulatorAPI));
+                logger?.WriteLine($"{trimmedResult} installation found.", nameof(PythonCameraSimulatorAPI));
             }
             else if (result.Contains("Python"))
             {
-                _logger?.WriteLine($"Outdated {trimmedResult} installation found. Things might break!", nameof(PythonCameraSimulatorAPI), Logger.MessageType.Warning);
+                logger?.WriteLine($"Outdated {trimmedResult} installation found. Things might break!", nameof(PythonCameraSimulatorAPI), Logger.MessageType.Warning);
                 returnCode = 0;
             }
         }
         else
         {
-            _logger?.WriteLine("Could not find 'python.exe' executable.", nameof(PythonCameraSimulatorAPI), Logger.MessageType.Error);
+            logger?.WriteLine("Could not find 'python.exe' executable.", nameof(PythonCameraSimulatorAPI), Logger.MessageType.Error);
             returnCode = -1;
         }
         return returnCode;
@@ -83,7 +88,7 @@ public class PythonCameraSimulatorAPI : ICamera
     /// python-dotenv 1.0.0
     /// </code>
     /// </summary>
-    private void CheckPythonPackagesInstallation()
+    public static void CheckPythonPackagesInstallation(Logger? logger = null)
     {
         var dependencies = new string[]
         {
@@ -102,10 +107,12 @@ public class PythonCameraSimulatorAPI : ICamera
                 Arguments = "-m pip install " + dependencies[i],
                 CreateNoWindow = true,
                 UseShellExecute = false,
-                RedirectStandardOutput = true
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
             };
         }
-        
+
+        logger?.WriteLine("Attempting to install required dependencies.", nameof(PythonCameraSimulatorAPI));
         foreach (var startInfo in startInfos) 
         {
             using var process = Process.Start(startInfo);
@@ -115,14 +122,14 @@ public class PythonCameraSimulatorAPI : ICamera
             {
                 while (!standardReader.EndOfStream)
                 {
-                    _logger?.WriteLine(standardReader.ReadLine(), PythonPrefix);
+                    logger?.WriteLine(standardReader.ReadLine(), PythonPrefix);
                 }
             });
             Task errorOutput = Task.Run(() =>
             {
                 while (!errorReader.EndOfStream)
                 {
-                    _logger?.WriteLine(errorReader.ReadLine(), PythonPrefix, Logger.MessageType.Error);
+                    logger?.WriteLine(errorReader.ReadLine(), PythonPrefix, Logger.MessageType.Error);
                 }
             });
             Task.WaitAll(standardOutput, errorOutput);
