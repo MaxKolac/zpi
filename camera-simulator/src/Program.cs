@@ -48,19 +48,19 @@ public class Program
             while (!conversionSuccessful);
 
             int port;
-            input = null;
             do
             {
                 Console.WriteLine("Podaj port serwera, na który wysłać wiadomość.");
                 Console.WriteLine("Domyślnie, serwer nasłuchuje na portach 25565, 25566 i 25567.");
                 input = Console.ReadLine();
             }
-            while (int.TryParse(input, out port));
+            while (!int.TryParse(input, out port));
 
             //Console.WriteLine("1. Wyślij jako JSON.");
             //var key = Console.ReadKey();
             var key = ConsoleKey.D1;
 
+            Console.WriteLine($"Wiadomość będzie wysłana do {address}:{port}.");
             try
             {
                 switch (key)
