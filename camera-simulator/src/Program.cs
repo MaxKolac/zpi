@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using Newtonsoft.Json;
+using System.Drawing;
 using System.Drawing.Imaging;
 using System.Net;
 using ZPICommunicationModels.Messages;
@@ -17,10 +18,34 @@ public class Program
         {
             CameraDataMessage message = new()
             {
-                LargestTemperature = -69.6969m,
-                Image = HostDevice.ToByteArray(Image.FromFile("test.png"), ImageFormat.Png) ?? Array.Empty<byte>(),
+                LargestTemperature = 0m,
+                Image = HostDevice.ToByteArray(Image.FromFile("imageToSend.png"), ImageFormat.Png) ?? Array.Empty<byte>(),
                 Status = HostDevice.DeviceStatus.OK
             };
+
+            try
+            {
+                using var reader = new StreamReader(File.OpenRead("message.json"));
+                string json = reader.ReadToEnd();
+                var deserializedMessage = JsonConvert.DeserializeObject<CameraDataMessage>(json);
+
+                if (deserializedMessage is not null)
+                    message = deserializedMessage;
+            }
+            catch (FileNotFoundException)
+            {
+                Console.WriteLine("Nie odnaleziono wiadomości tekstowej o nazwie 'message.json'.");
+                using var writer = File.CreateText("message.json");
+                writer.Write(JsonConvert.SerializeObject(message));
+                Console.WriteLine("Utworzono świeży szablon.");
+            }
+            catch (JsonSerializationException)
+            {
+                Console.WriteLine("Nie udało się deserializować wiadomości tekstowej o nazwie 'message.json'.");
+                using var writer = File.CreateText("message.json");
+                writer.Write(JsonConvert.SerializeObject(message));
+                Console.WriteLine("Utworzono świeży szablon.");
+            }
 
             Console.WriteLine("Dane, które symulator spróbuje wysłać na serwer:");
             Console.WriteLine($"Największa temperatura: {message.LargestTemperature}");
@@ -33,7 +58,7 @@ public class Program
             string? input;
             do
             {
-                Console.WriteLine("Podaj adres IP serwera. Wprowadzenie pustej wartości wyśle wiadomość na 127.0.0.1:");
+                Console.Write("Podaj adres IP serwera. Wprowadzenie pustej wartości wyśle wiadomość na 127.0.0.1: ");
                 try
                 {
                     input = Console.ReadLine();
@@ -50,28 +75,16 @@ public class Program
             int port;
             do
             {
-                Console.WriteLine("Podaj port serwera, na który wysłać wiadomość.");
-                Console.WriteLine("Domyślnie, serwer nasłuchuje na portach 25565, 25566 i 25567.");
+                Console.Write("Podaj port serwera, na który wysłać wiadomość. Domyślnie, serwer nasłuchuje na portach 25565, 25566 i 25567: ");
                 input = Console.ReadLine();
             }
             while (!int.TryParse(input, out port));
 
-            //Console.WriteLine("1. Wyślij jako JSON.");
-            //var key = Console.ReadKey();
-            var key = ConsoleKey.D1;
-
-            Console.WriteLine($"Wiadomość będzie wysłana do {address}:{port}.");
             try
             {
-                switch (key)
-                {
-                    case ConsoleKey.D1:
-                        Console.WriteLine("Próba wysłania wiadomości w formacie JSON...");
-                        CameraSimulator.SendJson(message, address, port);
-                        break;
-                    default:
-                        break;
-                }
+                Console.WriteLine($"Próba wysłania wiadomości w formacie JSON do {address}:{port}...");
+                CameraSimulator.SendJson(message, address, port);
+                Console.WriteLine("Wiadomość wysłana bez wyjątku!");
             }
             catch (Exception ex)
             {
