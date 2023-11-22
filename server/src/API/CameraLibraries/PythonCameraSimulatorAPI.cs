@@ -71,24 +71,20 @@ public class PythonCameraSimulatorAPI : ICamera
     }
 
     /// <summary>
-    /// Sprawdza obecność tych zależności w danych wersjach:
-    /// <code>
-    /// Pillow 10.0.0
-    /// numpy 1.25.0
-    /// opencv-contrib-python 4.8.1.78
-    /// python-dotenv 1.0.0
-    /// </code>
+    /// Sprawdza obecność tych zależności skryptu w Python'ie. W razie potrzeby, instaluje je.<br/>
+    /// Pełna lista zależności wraz z wymaganymi wersjami znajduje się wewnątrz metody, w tabeli <c>dependencies</c>.
     /// </summary>
     public static void CheckPythonPackagesInstallation(Logger? logger = null)
     {
         var dependencies = new string[]
         {
             "Pillow==10.0.0",
-            "numpy==1.25.0",
-            "opencv-contrib-python==4.8.1.78",
+            "numpy==1.26.2",
+            "opencv-contrib-python==4.8.1.78", //requires numpy >= 1.21.2
             "python-dotenv==1.0.0"
         };
-
+        
+        //Setup cmd.exe processes which will install those dependencies
         var startInfos = new ProcessStartInfo[dependencies.Length];
         for (int i = 0; i < startInfos.Length; i++)
         {
@@ -103,6 +99,7 @@ public class PythonCameraSimulatorAPI : ICamera
             };
         }
 
+        //Attempt to install them and redirect all the output into ZPIServer's Logger
         logger?.WriteLine("Attempting to install required dependencies.", nameof(PythonCameraSimulatorAPI));
         foreach (var startInfo in startInfos) 
         {
