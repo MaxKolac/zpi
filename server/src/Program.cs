@@ -57,20 +57,15 @@ namespace ZPIServer
             }
 
             //Getting Python and dependencies for PythonCameraSimulatorApi
-            Settings.PythonInstallationStatus = PythonCameraSimulatorAPI.CheckPythonInstallation(logger);
-            switch (Settings.PythonInstallationStatus)
+            Settings.IsPythonDetected = PythonCameraSimulatorAPI.CheckPythonInstallation(logger);
+            if (Settings.IsPythonDetected)
             {
-                case -1:
-                    logger.WriteLine($"Until Python is properly installed and server restarted, server will ignore messages from {HostDevice.HostType.PythonCameraSimulator} devices!", ServerPrefix, Logger.MessageType.Warning);
-                    break;
-                case 0:
-                    logger.WriteLine($"Outdated Python installation detected, server will attempt to parse messages from {HostDevice.HostType.PythonCameraSimulator} devices with no guarantee of success!", ServerPrefix, Logger.MessageType.Warning);
-                    PythonCameraSimulatorAPI.CheckPythonPackagesInstallation(logger);
-                    break;
-                case 1:
-                    logger.WriteLine($"Python installation detected.", ServerPrefix);
-                    PythonCameraSimulatorAPI.CheckPythonPackagesInstallation(logger);
-                    break;
+                logger.WriteLine($"Python installation detected. Checking that neccesary dependencies are also present.", ServerPrefix);
+                PythonCameraSimulatorAPI.CheckPythonPackagesInstallation(logger);
+            }
+            else
+            {
+                logger.WriteLine($"Until Python is properly installed and server restarted, server will ignore messages from {HostDevice.HostType.PythonCameraSimulator} devices!", ServerPrefix, Logger.MessageType.Warning);
             }
 
             //Components initialization

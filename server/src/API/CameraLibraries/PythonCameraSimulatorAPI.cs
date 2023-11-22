@@ -17,7 +17,7 @@ public class PythonCameraSimulatorAPI : ICamera
 
     public void DecodeReceivedBytes(byte[]? bytes)
     {
-        if (Settings.PythonInstallationStatus == -1)
+        if (!Settings.IsPythonDetected)
         {
             _logger?.WriteLine($"Server was started without detecting a Python installation! Ignoring received bytes.", nameof(PythonCameraSimulatorAPI), Logger.MessageType.Warning);
             return;
@@ -35,13 +35,10 @@ public class PythonCameraSimulatorAPI : ICamera
     /// Sprawdza czy obecny system ma zainstalowanego Python'a.
     /// </summary>
     /// <returns>
-    /// 1, jeśli zainstalowany jest Python wersji 3 lub późniejszej.<br/>
-    /// 0, jeśli zainstalowany jest Python w wersji starszej od 3.<br/>
-    /// -1, jeśli nie wykryto żadnej instalacji Python'a.
+    /// true, jeśli wykryto instalację Python'a. W przeciwnym wypadku, false.
     /// </returns>
-    public static int CheckPythonInstallation(Logger? logger = null)
+    public static bool CheckPythonInstallation(Logger? logger = null)
     {
-        int returnCode = 1;
         var startInfo = new ProcessStartInfo
         {
             FileName = @"python.exe",
@@ -58,25 +55,19 @@ public class PythonCameraSimulatorAPI : ICamera
             result = reader.ReadToEnd();
         }
 
-        if (!string.IsNullOrWhiteSpace(result))
+        bool isPythonDetected;
+        string trimmedResult = result.Trim();
+        if (!string.IsNullOrWhiteSpace(trimmedResult) && trimmedResult.Contains("Python"))
         {
-            string trimmedResult = result.Trim();
-            if (result.Contains("Python 3"))
-            {
-                logger?.WriteLine($"{trimmedResult} installation found.", nameof(PythonCameraSimulatorAPI));
-            }
-            else if (result.Contains("Python"))
-            {
-                logger?.WriteLine($"Outdated {trimmedResult} installation found. Things might break!", nameof(PythonCameraSimulatorAPI), Logger.MessageType.Warning);
-                returnCode = 0;
-            }
+            logger?.WriteLine($"{trimmedResult} installation found.", nameof(PythonCameraSimulatorAPI));
+            isPythonDetected = true;
         }
         else
         {
             logger?.WriteLine("Could not find 'python.exe' executable.", nameof(PythonCameraSimulatorAPI), Logger.MessageType.Error);
-            returnCode = -1;
+            isPythonDetected = false;
         }
-        return returnCode;
+        return isPythonDetected;
     }
 
     /// <summary>
