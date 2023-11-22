@@ -7,6 +7,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZPICameraSimulator", "camer
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZPICommunicationModels", "communicationModels\ZPICommunicationModels.csproj", "{D19B1192-FEEC-4B4B-91F0-AC0E1F9F14C7}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Elementy rozwiązania", "Elementy rozwiązania", "{4E5AAC59-10E3-435B-B8B1-1D65110E345A}"
+	ProjectSection(SolutionItems) = preProject
+		camera-simulator\readme.md = camera-simulator\readme.md
+	EndProjectSection
+EndProject
+
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
