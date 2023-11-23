@@ -4,7 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using static System.Windows.Forms.Design.AxImporter;
 using System.Diagnostics;
-
+using System.Drawing.Printing;
 
 namespace ZPIClient
 {
@@ -15,6 +15,7 @@ namespace ZPIClient
         private int currentSensorIndex = -1;
         private JsonSerializerOptions options = new JsonSerializerOptions();
         private int timerInterval = 30, timerElapsedTime = 30;
+        private bool debug = false;
 
 
 
@@ -26,20 +27,24 @@ namespace ZPIClient
         Label[] labelSensorStatus;
         Label[] labelSensorSegment;
 
+        TableLayoutPanel[] panelMapSensorInformation;
+        Label[] labelMapSensor;
+        PictureBox[] pictureBoxMapSensorStatus;
+
         public FormMain()
         {
             //Initialize
             InitializeComponent();
             initializeOptions();
             initializeSensors();
-            populateSensorList();
+            initializeListFormControls();
             initializeSideScroll();
             initializeMapStateDisplay();
             updateAll();
             timerRefresh.Start();
         }
 
-        public void updateSensors()
+        private void updateSensors()
         {
             List<Sensor> dataSet = readJSON();
             int i = 0;
@@ -92,9 +97,13 @@ namespace ZPIClient
         }
         #endregion
         #region Buttons
-        private void buttonMenu_Click(object sender, EventArgs e)
+        private void buttonDebug_Click(object sender, EventArgs e)
         {
-            Application.Exit();
+            if (debug)
+            {
+                buttonDebug.Text = "Debug";
+            }
+            debug = !debug;
         }
         private void buttonSwitch_Click(object sender, EventArgs e)
         {
@@ -112,12 +121,14 @@ namespace ZPIClient
             if (currentSensorIndex != -1)
             {
                 panelSensorContainer[currentSensorIndex].BackColor = SystemColors.ControlLightLight;
+                panelMapSensorInformation[currentSensorIndex].BackColor = SystemColors.Control;
             }
             Control control = (Control)sender;
             currentSensorIndex = (int)control.Tag;
             if (currentSensorIndex != -1)
             {
                 panelSensorContainer[currentSensorIndex].BackColor = Color.SkyBlue;
+                panelMapSensorInformation[currentSensorIndex].BackColor = Color.SkyBlue;
                 labelSensorName.Text = sensorList[currentSensorIndex].SensorName;
                 labelStateInfo.Text = sensorList[currentSensorIndex].StateToString();
                 labelSegmentInfo.Text = sensorList[currentSensorIndex].SensorSegment;
@@ -161,7 +172,7 @@ namespace ZPIClient
         }
         #endregion
         #region Initialize Functions
-        public void initializeSensors()
+        private void initializeSensors()
         {
             List<Sensor> dataSet = readJSON();
             foreach (var data in dataSet)
@@ -169,12 +180,16 @@ namespace ZPIClient
                 sensorList.Add(new Sensor(data.SensorX, data.SensorY, data.SensorName, data.CurrentSensorStateString, data.SensorSegment, data.SensorLocation, data.SensorTemperature, data.SensorDetails, data.SensorLastUpdate));
             }
         }
-        public void populateSensorList()
+        private void initializeListFormControls()
         {
             int panelX = panelDisplay.Location.X;
             int panelY = panelDisplay.Location.Y;
             int panelWidth = panelDisplay.Width;
-            int panelHeight = 100;
+            int panelHeight = 100; //Value in pixels
+
+            int mapPanelWidth = 100; //Value in pixels
+            int mapPanelHeight = 25; //Value in pixels
+            int mapHeaderWidth = 20; //Value in %
 
             #region Style Parameters
             int headerWidth = 15; //Value in %
@@ -193,6 +208,10 @@ namespace ZPIClient
             pictureBoxSensorStatus = new PictureBox[count];
             labelSensorStatus = new Label[count];
             labelSensorSegment = new Label[count];
+
+            panelMapSensorInformation = new TableLayoutPanel[count];
+            pictureBoxMapSensorStatus = new PictureBox[count];
+            labelMapSensor = new Label[count];
 
             for (int i = 0; i < count; i++)
             {
@@ -278,12 +297,56 @@ namespace ZPIClient
                 panelSensorInformation[i].Controls.Add(labelSensorSegment[i]);
                 #endregion
 
+                #region Map Sensor Panel Container
+                panelMapSensorInformation[i] = new TableLayoutPanel();
+                panelMapSensorInformation[i].Name = "tableLayoutPanelMapInfo" + i;
+                panelMapSensorInformation[i].Location = new Point(sensorList[i].SensorX, sensorList[i].SensorY);
+                panelMapSensorInformation[i].Width = mapPanelWidth;
+                panelMapSensorInformation[i].Height = mapPanelHeight;
+                panelMapSensorInformation[i].CellBorderStyle = TableLayoutPanelCellBorderStyle.Single;
+                panelMapSensorInformation[i].BackColor = SystemColors.Control;
+                panelMapSensorInformation[i].ColumnCount = 2;
+                panelMapSensorInformation[i].RowCount = 1;
+                panelMapSensorInformation[i].ColumnStyles.Add(new ColumnStyle(SizeType.Percent, mapHeaderWidth));
+                panelMapSensorInformation[i].ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100 - mapHeaderWidth));
+                panelMapSensorInformation[i].RowStyles.Add(new RowStyle(SizeType.Absolute, mapPanelHeight));
+                panelMapSensorInformation[i].Tag = i;
+                panelMapSensorInformation[i].Click += sensorContainer_Click;
+                panelMap.Controls.Add(panelMapSensorInformation[i]);
+                #endregion
+                #region Map Sensor Status Picture
+                pictureBoxMapSensorStatus[i] = new PictureBox();
+                pictureBoxMapSensorStatus[i].Name = "pictureBoxMapStatus" + i;
+                pictureBoxMapSensorStatus[i].Location = new Point(0, 0);
+                pictureBoxMapSensorStatus[i].Width = pictureBoxSize;
+                pictureBoxMapSensorStatus[i].Height = pictureBoxSize;
+                pictureBoxMapSensorStatus[i].Anchor = AnchorStyles.Right;
+                pictureBoxMapSensorStatus[i].BackColor = Color.Lime;
+                roundPictureBox(ref pictureBoxMapSensorStatus[i]);
+                pictureBoxMapSensorStatus[i].Tag = i;
+                pictureBoxMapSensorStatus[i].Click += sensorContainer_Click;
+                panelMapSensorInformation[i].Controls.Add(pictureBoxMapSensorStatus[i]);
+                #endregion
+                #region Map Sensor Label
+                labelMapSensor[i] = new Label();
+                labelMapSensor[i].Name = "labelMapSensor" + i;
+                labelMapSensor[i].Location = new Point(0, 0);
+                labelMapSensor[i].AutoSize = true;
+                labelMapSensor[i].Dock = DockStyle.Fill;
+                labelMapSensor[i].Anchor = AnchorStyles.None;
+                labelMapSensor[i].TextAlign = ContentAlignment.MiddleCenter;
+                labelMapSensor[i].Text = sensorList[i].SensorName;
+                labelMapSensor[i].Font = new Font(labelMapSensor[i].Font.Name, fontSize);
+                labelMapSensor[i].Tag = i;
+                labelMapSensor[i].Click += sensorContainer_Click;
+                panelMapSensorInformation[i].Controls.Add(labelMapSensor[i]);
+                #endregion
+
+
                 panelY += rowHeight * 2;
             }
-
-
         }
-        public void initializeOptions()
+        private void initializeOptions()
         {
             options.PropertyNameCaseInsensitive = true;
             options.AllowTrailingCommas = true;
@@ -324,6 +387,7 @@ namespace ZPIClient
             for (int i = 0; i < count; i++)
             {
                 pictureBoxSensorStatus[i].BackColor = sensorList[i].StateToColor();
+                pictureBoxMapSensorStatus[i].BackColor = sensorList[i].StateToColor();
             }
         }
         private void roundPictureBox(ref PictureBox pb)
@@ -339,24 +403,24 @@ namespace ZPIClient
             int stateInactive = 0; //1
             int stateAlert = 0; //2
             int stateFire = 0; //3
-            foreach(Sensor sensor in sensorList)
+            foreach (Sensor sensor in sensorList)
             {
                 switch (sensor.CurrentSensorState)
                 {
                     case Sensor.SensorState.Active:
                         stateActive++;
                         break;
-                    
-                    case Sensor.SensorState.Inactive: 
-                        stateInactive++; 
+
+                    case Sensor.SensorState.Inactive:
+                        stateInactive++;
                         break;
 
-                    case Sensor.SensorState.Alert: 
-                        stateAlert++; 
+                    case Sensor.SensorState.Alert:
+                        stateAlert++;
                         break;
 
-                    case Sensor.SensorState.Fire: 
-                        stateFire++; 
+                    case Sensor.SensorState.Fire:
+                        stateFire++;
                         break;
 
                     default:
@@ -375,6 +439,16 @@ namespace ZPIClient
             labelMapStateCount4.Text = stateCounts[3].ToString();
 
         }
+        #endregion
+        #region Debug
+        private void panelMap_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (debug)
+            {
+                buttonDebug.Text = "X: " + e.Location.X.ToString() + " Y: " + e.Location.Y.ToString();
+            }
+        }
+
         #endregion
     }
 }

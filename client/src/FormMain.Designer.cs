@@ -32,7 +32,7 @@
             panelDisplay = new Panel();
             panelNavigation = new Panel();
             buttonOverview = new Button();
-            buttonMenu = new Button();
+            buttonDebug = new Button();
             buttonSwitch = new Button();
             panelInfo = new Panel();
             buttonFire = new Button();
@@ -68,7 +68,6 @@
             labelMapStateCount1 = new Label();
             pictureBoxMapState1 = new PictureBox();
             labelMapState1 = new Label();
-            pictureBoxMap = new PictureBox();
             panelNavigation.SuspendLayout();
             panelInfo.SuspendLayout();
             panelCamera.SuspendLayout();
@@ -82,7 +81,6 @@
             ((System.ComponentModel.ISupportInitialize)pictureBoxMapState3).BeginInit();
             ((System.ComponentModel.ISupportInitialize)pictureBoxMapState2).BeginInit();
             ((System.ComponentModel.ISupportInitialize)pictureBoxMapState1).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)pictureBoxMap).BeginInit();
             SuspendLayout();
             // 
             // panelDisplay
@@ -99,7 +97,7 @@
             // 
             panelNavigation.BorderStyle = BorderStyle.FixedSingle;
             panelNavigation.Controls.Add(buttonOverview);
-            panelNavigation.Controls.Add(buttonMenu);
+            panelNavigation.Controls.Add(buttonDebug);
             panelNavigation.Controls.Add(buttonSwitch);
             panelNavigation.Location = new Point(0, 649);
             panelNavigation.Name = "panelNavigation";
@@ -117,16 +115,16 @@
             buttonOverview.UseVisualStyleBackColor = true;
             buttonOverview.Click += buttonOverview_Click;
             // 
-            // buttonMenu
+            // buttonDebug
             // 
-            buttonMenu.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point);
-            buttonMenu.Location = new Point(12, 9);
-            buttonMenu.Name = "buttonMenu";
-            buttonMenu.Size = new Size(324, 59);
-            buttonMenu.TabIndex = 1;
-            buttonMenu.Text = "Menu";
-            buttonMenu.UseVisualStyleBackColor = true;
-            buttonMenu.Click += buttonMenu_Click;
+            buttonDebug.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point);
+            buttonDebug.Location = new Point(12, 9);
+            buttonDebug.Name = "buttonDebug";
+            buttonDebug.Size = new Size(324, 59);
+            buttonDebug.TabIndex = 1;
+            buttonDebug.Text = "Debug";
+            buttonDebug.UseVisualStyleBackColor = true;
+            buttonDebug.Click += buttonDebug_Click;
             // 
             // buttonSwitch
             // 
@@ -369,15 +367,17 @@
             // panelMap
             // 
             panelMap.BackColor = SystemColors.ControlDark;
+            panelMap.BackgroundImage = Properties.Resources.Kabacki_Segment;
+            panelMap.BackgroundImageLayout = ImageLayout.Stretch;
             panelMap.BorderStyle = BorderStyle.FixedSingle;
             panelMap.Controls.Add(tableLayoutPanelSummary);
-            panelMap.Controls.Add(pictureBoxMap);
             panelMap.Enabled = false;
             panelMap.Location = new Point(0, 0);
             panelMap.Name = "panelMap";
             panelMap.Size = new Size(1017, 650);
             panelMap.TabIndex = 0;
             panelMap.Visible = false;
+            panelMap.MouseMove += panelMap_MouseMove;
             // 
             // tableLayoutPanelSummary
             // 
@@ -540,17 +540,6 @@
             labelMapState1.Text = "Aktywne";
             labelMapState1.TextAlign = ContentAlignment.MiddleCenter;
             // 
-            // pictureBoxMap
-            // 
-            pictureBoxMap.Image = Properties.Resources.Kabacki_Segment;
-            pictureBoxMap.InitialImage = null;
-            pictureBoxMap.Location = new Point(0, 0);
-            pictureBoxMap.Name = "pictureBoxMap";
-            pictureBoxMap.Size = new Size(1016, 650);
-            pictureBoxMap.SizeMode = PictureBoxSizeMode.StretchImage;
-            pictureBoxMap.TabIndex = 0;
-            pictureBoxMap.TabStop = false;
-            // 
             // FormMain
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -579,7 +568,6 @@
             ((System.ComponentModel.ISupportInitialize)pictureBoxMapState3).EndInit();
             ((System.ComponentModel.ISupportInitialize)pictureBoxMapState2).EndInit();
             ((System.ComponentModel.ISupportInitialize)pictureBoxMapState1).EndInit();
-            ((System.ComponentModel.ISupportInitialize)pictureBoxMap).EndInit();
             ResumeLayout(false);
         }
 
@@ -588,7 +576,7 @@
         private Panel panelInfo;
         private Panel panelTimer;
         private Button buttonOverview;
-        private Button buttonMenu;
+        private Button buttonDebug;
         private Button buttonSwitch;
         private Label labelTimer;
         private Button buttonFire;
@@ -610,7 +598,6 @@
         public Panel panelDisplay;
         private System.Windows.Forms.Timer timerRefresh;
         private Panel panelMap;
-        private PictureBox pictureBoxMap;
         private TableLayoutPanel tableLayoutPanelSummary;
         private PictureBox pictureBoxMapState1;
         private Label labelMapState1;
