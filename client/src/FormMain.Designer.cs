@@ -338,7 +338,6 @@
             // 
             // timerRefresh
             // 
-            timerRefresh.Interval = 1000;
             timerRefresh.Tick += timerRefresh_Tick;
             // 
             // FormMain

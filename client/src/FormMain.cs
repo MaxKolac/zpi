@@ -13,7 +13,8 @@ namespace ZPIClient
         private List<Sensor> sensorList = new List<Sensor>();
         private int currentSensorIndex = -1;
         private JsonSerializerOptions options = new JsonSerializerOptions();
-        private int timerInterval, timerElapsedTime = 30;
+        private int timerInterval = 30, timerElapsedTime = 30;
+        
 
 
         //Dynamic objects
@@ -47,7 +48,10 @@ namespace ZPIClient
             int i = 0;
             foreach (var data in dataSet)
             {
-                sensorList[i].Update(Sensor.StringToState(data.CurrentSensorStateString), data.SensorTemperature);
+                if (sensorList[i].CurrentSensorState != Sensor.StringToState(data.CurrentSensorStateString) || sensorList[i].SensorTemperature != data.SensorTemperature)
+                {
+                    sensorList[i].Update(Sensor.StringToState(data.CurrentSensorStateString), data.SensorTemperature);
+                }
                 i++;
             }
             updateColors();
@@ -242,16 +246,14 @@ namespace ZPIClient
                         buttonFire.Text = "Brak problemów";
                         break;
                 }
-
             }
-
         }
         private void timerRefresh_Tick(object sender, EventArgs e)
         {
+            incrementTimers();
             if (timerElapsedTime > 0)
             {
                 timerElapsedTime -= 1;
-                incrementTimers();
             }
             else
             {
