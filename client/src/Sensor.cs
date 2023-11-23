@@ -142,7 +142,7 @@ internal class Sensor
                 return Color.Lime;
 
             case SensorState.Inactive:
-                return Color.Lavender;
+                return Color.RoyalBlue;
 
             case SensorState.Alert:
                 return Color.Orange;

@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 using static System.Windows.Forms.Design.AxImporter;
 using System.Diagnostics;
 
+
 namespace ZPIClient
 {
     public partial class FormMain : Form
@@ -14,7 +15,7 @@ namespace ZPIClient
         private int currentSensorIndex = -1;
         private JsonSerializerOptions options = new JsonSerializerOptions();
         private int timerInterval = 30, timerElapsedTime = 30;
-        
+
 
 
         //Dynamic objects
@@ -27,21 +28,17 @@ namespace ZPIClient
 
         public FormMain()
         {
+            //Initialize
             InitializeComponent();
             initializeOptions();
             initializeSensors();
             populateSensorList();
-            updateColors();
+            initializeSideScroll();
+            initializeMapStateDisplay();
+            updateAll();
             timerRefresh.Start();
         }
-        public void initializeSensors()
-        {
-            List<Sensor> dataSet = readJSON();
-            foreach (var data in dataSet)
-            {
-                sensorList.Add(new Sensor(data.SensorX, data.SensorY, data.SensorName, data.CurrentSensorStateString, data.SensorSegment, data.SensorLocation, data.SensorTemperature, data.SensorDetails, data.SensorLastUpdate));
-            }
-        }
+
         public void updateSensors()
         {
             List<Sensor> dataSet = readJSON();
@@ -54,7 +51,123 @@ namespace ZPIClient
                 }
                 i++;
             }
+            updateAll();
+        }
+        private List<Sensor> readJSON()
+        {
+            using FileStream json = File.OpenRead(jsonPath);
+            List<Sensor> sensors = JsonSerializer.Deserialize<List<Sensor>>(json, options);
+            return sensors;
+        }
+        private void updateAll() //Updates all controls to match current data. Does not change data itself.
+        {
             updateColors();
+            updateStateCounts();
+        }
+        #region Timer Functions
+        private void timerRefresh_Tick(object sender, EventArgs e)
+        {
+            incrementTimers();
+            if (timerElapsedTime > 0)
+            {
+                timerElapsedTime -= 1;
+            }
+            else
+            {
+                timerElapsedTime = timerInterval;
+                updateSensors();
+            }
+            if (currentSensorIndex != -1)
+            {
+                labelLastUpdateInfo.Text = sensorList[currentSensorIndex].SensorLastUpdate.ToString() + " sekund temu.";
+            }
+            labelTimer.Text = "Nastêpna aktualizacja za: " + timerElapsedTime + " sekund.";
+        }
+        private void incrementTimers()
+        {
+            foreach (Sensor sensor in sensorList)
+            {
+                sensor.SensorLastUpdate += 1;
+            }
+        }
+        #endregion
+        #region Buttons
+        private void buttonMenu_Click(object sender, EventArgs e)
+        {
+            Application.Exit();
+        }
+        private void buttonSwitch_Click(object sender, EventArgs e)
+        {
+            panelDisplay.Visible = !panelDisplay.Visible;
+            panelDisplay.Enabled = !panelDisplay.Enabled;
+            panelMap.Visible = !panelMap.Visible;
+            panelMap.Enabled = !panelMap.Enabled;
+        }
+        private void buttonOverview_Click(object sender, EventArgs e)
+        {
+
+        }
+        private void sensorContainer_Click(object sender, EventArgs e)
+        {
+            if (currentSensorIndex != -1)
+            {
+                panelSensorContainer[currentSensorIndex].BackColor = SystemColors.ControlLightLight;
+            }
+            Control control = (Control)sender;
+            currentSensorIndex = (int)control.Tag;
+            if (currentSensorIndex != -1)
+            {
+                panelSensorContainer[currentSensorIndex].BackColor = Color.SkyBlue;
+                labelSensorName.Text = sensorList[currentSensorIndex].SensorName;
+                labelStateInfo.Text = sensorList[currentSensorIndex].StateToString();
+                labelSegmentInfo.Text = sensorList[currentSensorIndex].SensorSegment;
+                labelLocationInfo.Text = sensorList[currentSensorIndex].SensorLocation;
+                labelTemperatureInfo.Text = sensorList[currentSensorIndex].SensorTemperature.ToString() + "°C";
+                labelLastUpdateInfo.Text = sensorList[currentSensorIndex].SensorLastUpdate.ToString() + " sekund temu.";
+                try
+                {
+                    Image cameraImage = Image.FromFile("../../../sensors/" + sensorList[currentSensorIndex].SensorDetails);
+                    pictureBoxCamera.Image = cameraImage;
+                }
+                catch (FileNotFoundException)
+                {
+                    pictureBoxCamera.Image = pictureBoxCamera.ErrorImage;
+                }
+
+                switch (sensorList[currentSensorIndex].CurrentSensorState)
+                {
+                    case Sensor.SensorState.Alert:
+                        buttonFire.BackColor = Color.Red;
+                        buttonFire.ForeColor = Color.White;
+                        buttonFire.Enabled = true;
+                        buttonFire.Text = "PotwierdŸ po¿ar";
+                        break;
+
+                    case Sensor.SensorState.Fire:
+                        buttonFire.BackColor = Color.Red;
+                        buttonFire.ForeColor = Color.White;
+                        buttonFire.Enabled = true;
+                        buttonFire.Text = "PotwierdŸ zwalczenie po¿aru";
+                        break;
+
+                    default:
+                        buttonFire.BackColor = SystemColors.Control;
+                        buttonFire.ForeColor = SystemColors.ControlText;
+                        buttonFire.Enabled = false;
+                        buttonFire.Text = "Brak problemów";
+                        break;
+                }
+            }
+        }
+        #endregion
+        #region Initialize Functions
+        public void initializeSensors()
+        {
+            List<Sensor> dataSet = readJSON();
+            foreach (var data in dataSet)
+            {
+                sensorList.Add(new Sensor(data.SensorX, data.SensorY, data.SensorName, data.CurrentSensorStateString, data.SensorSegment, data.SensorLocation, data.SensorTemperature, data.SensorDetails, data.SensorLastUpdate));
+            }
         }
         public void populateSensorList()
         {
@@ -175,19 +288,36 @@ namespace ZPIClient
             options.PropertyNameCaseInsensitive = true;
             options.AllowTrailingCommas = true;
         }
-        private void roundPictureBox(ref PictureBox pb)
+        private void initializeSideScroll()
         {
-            System.Drawing.Drawing2D.GraphicsPath gp = new System.Drawing.Drawing2D.GraphicsPath();
-            gp.AddEllipse(0, 0, pb.Width - 3, pb.Height - 3);
-            Region rg = new Region(gp);
-            pb.Region = rg;
+            panelDisplay.AutoScroll = false;
+            panelDisplay.HorizontalScroll.Enabled = false;
+            panelDisplay.HorizontalScroll.Visible = false;
+            panelDisplay.AutoScroll = true;
         }
-        private List<Sensor> readJSON()
+        private void initializeMapStateDisplay()
         {
-            using FileStream json = File.OpenRead(jsonPath);
-            List<Sensor> sensors = JsonSerializer.Deserialize<List<Sensor>>(json, options);
-            return sensors;
+            pictureBoxMapState1.BackColor = Color.Lime;
+            pictureBoxMapState1.Width = pictureBoxMapState1.Height;
+            roundPictureBox(ref pictureBoxMapState1);
+
+            pictureBoxMapState2.BackColor = Color.RoyalBlue;
+            pictureBoxMapState2.Width = pictureBoxMapState1.Width;
+            pictureBoxMapState2.Height = pictureBoxMapState1.Height;
+            roundPictureBox(ref pictureBoxMapState2);
+
+            pictureBoxMapState3.BackColor = Color.Orange;
+            pictureBoxMapState3.Width = pictureBoxMapState1.Width;
+            pictureBoxMapState3.Height = pictureBoxMapState1.Height;
+            roundPictureBox(ref pictureBoxMapState3);
+
+            pictureBoxMapState4.BackColor = Color.Red;
+            pictureBoxMapState4.Width = pictureBoxMapState1.Width;
+            pictureBoxMapState4.Height = pictureBoxMapState1.Height;
+            roundPictureBox(ref pictureBoxMapState4);
         }
+        #endregion
+        #region Utilities
         private void updateColors()
         {
             int count = sensorList.Count;
@@ -196,82 +326,55 @@ namespace ZPIClient
                 pictureBoxSensorStatus[i].BackColor = sensorList[i].StateToColor();
             }
         }
-        private void sensorContainer_Click(object sender, EventArgs e)
+        private void roundPictureBox(ref PictureBox pb)
         {
-            if (currentSensorIndex != -1)
+            System.Drawing.Drawing2D.GraphicsPath gp = new System.Drawing.Drawing2D.GraphicsPath();
+            gp.AddEllipse(0, 0, pb.Width - 3, pb.Height - 3);
+            Region rg = new Region(gp);
+            pb.Region = rg;
+        }
+        private int[] getStateCounts()
+        {
+            int stateActive = 0; //0
+            int stateInactive = 0; //1
+            int stateAlert = 0; //2
+            int stateFire = 0; //3
+            foreach(Sensor sensor in sensorList)
             {
-                panelSensorContainer[currentSensorIndex].BackColor = SystemColors.ControlLightLight;
-            }
-            Control control = (Control)sender;
-            currentSensorIndex = (int)control.Tag;
-            if (currentSensorIndex != -1)
-            {
-                panelSensorContainer[currentSensorIndex].BackColor = Color.SkyBlue;
-                labelSensorName.Text = sensorList[currentSensorIndex].SensorName;
-                labelStateInfo.Text = sensorList[currentSensorIndex].StateToString();
-                labelSegmentInfo.Text = sensorList[currentSensorIndex].SensorSegment;
-                labelLocationInfo.Text = sensorList[currentSensorIndex].SensorLocation;
-                labelTemperatureInfo.Text = sensorList[currentSensorIndex].SensorTemperature.ToString() + "°C";
-                labelLastUpdateInfo.Text = sensorList[currentSensorIndex].SensorLastUpdate.ToString() + " sekund temu.";
-                try
+                switch (sensor.CurrentSensorState)
                 {
-                    Image cameraImage = Image.FromFile("../../../sensors/" + sensorList[currentSensorIndex].SensorDetails);
-                    pictureBoxCamera.Image = cameraImage;
-                }
-                catch (FileNotFoundException)
-                {
-                    pictureBoxCamera.Image = pictureBoxCamera.ErrorImage;
-                }
-
-                switch (sensorList[currentSensorIndex].CurrentSensorState)
-                {
-                    case Sensor.SensorState.Alert:
-                        buttonFire.BackColor = Color.Red;
-                        buttonFire.ForeColor = Color.White;
-                        buttonFire.Enabled = true;
-                        buttonFire.Text = "PotwierdŸ po¿ar";
+                    case Sensor.SensorState.Active:
+                        stateActive++;
+                        break;
+                    
+                    case Sensor.SensorState.Inactive: 
+                        stateInactive++; 
                         break;
 
-                    case Sensor.SensorState.Fire:
-                        buttonFire.BackColor = Color.Red;
-                        buttonFire.ForeColor = Color.White;
-                        buttonFire.Enabled = true;
-                        buttonFire.Text = "PotwierdŸ zwalczenie po¿aru";
+                    case Sensor.SensorState.Alert: 
+                        stateAlert++; 
+                        break;
+
+                    case Sensor.SensorState.Fire: 
+                        stateFire++; 
                         break;
 
                     default:
-                        buttonFire.BackColor = SystemColors.Control;
-                        buttonFire.ForeColor = SystemColors.ControlText;
-                        buttonFire.Enabled = false;
-                        buttonFire.Text = "Brak problemów";
+                        stateInactive++;
                         break;
                 }
             }
+            return new int[] { stateActive, stateInactive, stateAlert, stateFire };
         }
-        private void timerRefresh_Tick(object sender, EventArgs e)
+        private void updateStateCounts()
         {
-            incrementTimers();
-            if (timerElapsedTime > 0)
-            {
-                timerElapsedTime -= 1;
-            }
-            else
-            {
-                timerElapsedTime = timerInterval;
-                updateSensors();
-            }
-            if (currentSensorIndex != -1)
-            {
-                labelLastUpdateInfo.Text = sensorList[currentSensorIndex].SensorLastUpdate.ToString() + " sekund temu.";
-            }
-            labelTimer.Text = "Nastêpna aktualizacja za: " + timerElapsedTime + " sekund.";
+            int[] stateCounts = getStateCounts();
+            labelMapStateCount1.Text = stateCounts[0].ToString();
+            labelMapStateCount2.Text = stateCounts[1].ToString();
+            labelMapStateCount3.Text = stateCounts[2].ToString();
+            labelMapStateCount4.Text = stateCounts[3].ToString();
+
         }
-        private void incrementTimers()
-        {
-            foreach (Sensor sensor in sensorList)
-            {
-                sensor.SensorLastUpdate += 1;
-            }
-        }
+        #endregion
     }
 }
