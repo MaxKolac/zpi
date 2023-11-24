@@ -6,6 +6,7 @@ public class StatusCommand : Command
 {
     public const string SignalTranslatorArgument = "signaltranslator";
     public const string TcpReceiverArgument = "tcpreceiver";
+    public const string TcpSenderArgument = "tcpsender";
 
     public string? ClassArgument { get; private set; }
 
@@ -23,6 +24,7 @@ public class StatusCommand : Command
                 break;
             case SignalTranslatorArgument:
             case TcpReceiverArgument:
+            case TcpSenderArgument:
                 _logger?.WriteLine($"Status of {ClassArgument}:");
                 break;
             default:
@@ -40,10 +42,11 @@ public class StatusCommand : Command
         builder.AppendLine("Available components that can be checked are:");
         builder.AppendLine($"\t{SignalTranslatorArgument}");
         builder.AppendLine($"\t{TcpReceiverArgument}");
+        builder.AppendLine($"\t{TcpSenderArgument}");
         builder.AppendLine("Examples:");
         builder.AppendLine($"\t{Status} {SignalTranslatorArgument}");
-        builder.AppendLine($"\t{Status} {TcpHandlerArgument}");
         builder.AppendLine($"\t{Status} {TcpReceiverArgument}");
+        builder.AppendLine($"\t{Status} {TcpSenderArgument}");
         return builder.ToString();
     }
 
@@ -55,7 +58,7 @@ public class StatusCommand : Command
         if (arguments.Length == 1)
         {
             string arg = arguments[0];
-            if (arg == SignalTranslatorArgument || arg == TcpHandlerArgument)
+            if (arg == SignalTranslatorArgument || arg == TcpReceiverArgument || arg == TcpSenderArgument)
                 ClassArgument = arg;
         }
         else if (arguments.Length > 1)

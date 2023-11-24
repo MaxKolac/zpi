@@ -71,7 +71,7 @@ public class HelpCommand : Command
         builder.AppendLine($"{Db} [{DbCommand.ListAllArgument}]");
         builder.AppendLine($"{Help} [command]");
         builder.AppendLine($"{Shutdown}");
-        builder.AppendLine($"{Status} [{StatusCommand.SignalTranslatorArgument}/{StatusCommand.TcpHandlerArgument}]");
+        builder.AppendLine($"{Status} [{StatusCommand.SignalTranslatorArgument}/{StatusCommand.TcpReceiverArgument}/{StatusCommand.TcpSenderArgument}]");
         return builder.ToString();
     }
 }
