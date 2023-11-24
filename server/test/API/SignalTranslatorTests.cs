@@ -58,7 +58,7 @@ public class SignalTranslatorTests
         DatabaseSetup(HostDevice.HostType.CameraSimulator);
 
         //Prepare to send the signal
-        var handler = new TcpHandler(IPAddress.Loopback, 25565);
+        var handler = new TcpReceiver(IPAddress.Loopback, 25565);
         handler.BeginListening();
         var translator = new SignalTranslator();
         translator.BeginTranslating();
@@ -78,7 +78,7 @@ public class SignalTranslatorTests
         {
             invocations++;
         };
-        TcpHandler.OnSignalReceived += eventHandler;
+        TcpReceiver.OnSignalReceived += eventHandler;
 
         //Act
         SendSerializedJsonToLoopback(25565, JsonConvert.SerializeObject(message));
@@ -99,7 +99,7 @@ public class SignalTranslatorTests
         }
 
         //Turn things off
-        TcpHandler.OnSignalReceived -= eventHandler;
+        TcpReceiver.OnSignalReceived -= eventHandler;
         translator.StopTranslating();
         handler.StopListening();
     }
@@ -111,7 +111,7 @@ public class SignalTranslatorTests
         DatabaseSetup(HostDevice.HostType.CameraSimulator);
 
         //Prepare to send the signal
-        var handler = new TcpHandler(IPAddress.Loopback, 25565);
+        var handler = new TcpReceiver(IPAddress.Loopback, 25565);
         handler.BeginListening();
         var translator = new SignalTranslator();
         translator.BeginTranslating();
@@ -122,7 +122,7 @@ public class SignalTranslatorTests
         {
             invocations++;
         };
-        TcpHandler.OnSignalReceived += eventHandler;
+        TcpReceiver.OnSignalReceived += eventHandler;
 
         //Act
         SendSerializedJsonToLoopback(25565, JsonConvert.SerializeObject(invalidMessage));
@@ -143,7 +143,7 @@ public class SignalTranslatorTests
         }
 
         //Turn things off
-        TcpHandler.OnSignalReceived -= eventHandler;
+        TcpReceiver.OnSignalReceived -= eventHandler;
         translator.StopTranslating();
         handler.StopListening();
     }

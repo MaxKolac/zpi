@@ -4,8 +4,8 @@ namespace ZPIServer.Commands;
 
 public class StatusCommand : Command
 {
-    public const string TcpHandlerArgument = "tcphandler";
     public const string SignalTranslatorArgument = "signaltranslator";
+    public const string TcpReceiverArgument = "tcpreceiver";
 
     public string? ClassArgument { get; private set; }
 
@@ -21,8 +21,8 @@ public class StatusCommand : Command
                 _logger?.WriteLine($"{Status} requires 1 argument.");
                 _logger?.WriteLine(GetHelp());
                 break;
-            case TcpHandlerArgument:
             case SignalTranslatorArgument:
+            case TcpReceiverArgument:
                 _logger?.WriteLine($"Status of {ClassArgument}:");
                 break;
             default:
@@ -39,10 +39,11 @@ public class StatusCommand : Command
         builder.AppendLine("Show the current status of the specified server component.");
         builder.AppendLine("Available components that can be checked are:");
         builder.AppendLine($"\t{SignalTranslatorArgument}");
-        builder.AppendLine($"\t{TcpHandlerArgument}");
+        builder.AppendLine($"\t{TcpReceiverArgument}");
         builder.AppendLine("Examples:");
         builder.AppendLine($"\t{Status} {SignalTranslatorArgument}");
         builder.AppendLine($"\t{Status} {TcpHandlerArgument}");
+        builder.AppendLine($"\t{Status} {TcpReceiverArgument}");
         return builder.ToString();
     }
 

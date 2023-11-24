@@ -12,7 +12,7 @@ public class TcpHandlerTests
     [Fact]
     public static void CheckIsListening()
     {
-        var handler = new TcpHandler(IPAddress.Parse("127.0.0.1"), 25565);
+        var handler = new TcpReceiver(IPAddress.Parse("127.0.0.1"), 25565);
 
         handler.BeginListening();
         Assert.True(handler.IsListening);
@@ -32,7 +32,7 @@ public class TcpHandlerTests
         IPAddress address = IPAddress.Parse("127.0.0.1");
         Assert.Throws<ArgumentException>(() =>
         {
-            var handler = new TcpHandler(address, ports);
+            var handler = new TcpReceiver(address, ports);
         });
     }
 
@@ -44,7 +44,7 @@ public class TcpHandlerTests
         IPAddress address = IPAddress.Parse("127.0.0.1");
         var portOccupant = new TcpListener(address, 12345);
         portOccupant.Start();
-        var handler = new TcpHandler(address, ports);
+        var handler = new TcpReceiver(address, ports);
         handler.BeginListening();
 
         Assert.Equal(ports.Length - 1, handler.ActiveListenersCount());
@@ -59,7 +59,7 @@ public class TcpHandlerTests
         IPAddress address = IPAddress.Parse("127.0.0.1");
         var portOccupant = new TcpListener(address, samePort);
         portOccupant.Start();
-        var handler = new TcpHandler(address, samePort);
+        var handler = new TcpReceiver(address, samePort);
 
         Assert.Throws<IOException>(() =>
         {
@@ -71,7 +71,7 @@ public class TcpHandlerTests
     [Fact]
     public static void CheckMessagesAreComingThrough()
     {
-        var handler = new TcpHandler(IPAddress.Parse("127.0.0.1"), 25565);
+        var handler = new TcpReceiver(IPAddress.Parse("127.0.0.1"), 25565);
         handler.BeginListening();
         string messageToSend = "Hello World!";
 
@@ -92,13 +92,13 @@ public class TcpHandlerTests
                 senderPort = e.SenderPort;
                 timesInvoked++;
             };
-            TcpHandler.OnSignalReceived += eventHandler;
+            TcpReceiver.OnSignalReceived += eventHandler;
             using (var stream = clientMock.GetStream())
             {
                 byte[] message = Encoding.UTF8.GetBytes(messageToSend);
                 stream.Write(message, 0, message.Length);
             }
-            TcpHandler.OnSignalReceived -= eventHandler;
+            TcpReceiver.OnSignalReceived -= eventHandler;
         }
         handler.StopListening();
         string receivedMessage = Encoding.UTF8.GetString(receivedBytes).TrimEnd('\0');
@@ -121,8 +121,8 @@ public class TcpHandlerTests
         List<string> receivedMessages = new();
         List<(IPAddress?, int)> connectedClientInfo = new();
 
-        //Create TcpHandler
-        var handler = new TcpHandler(address, ports);
+        //Create TcpReceiver
+        var handler = new TcpReceiver(address, ports);
         handler.BeginListening();
 
         //Create one TcpClient per handler's port and connect them to the server
@@ -141,7 +141,7 @@ public class TcpHandlerTests
             connectedClientInfo.Add((e.SenderIp, e.SenderPort));
             timesInvoked++;
         };
-        TcpHandler.OnSignalReceived += eventHandler;
+        TcpReceiver.OnSignalReceived += eventHandler;
 
         //Send the bytes of messageToSend on each client
         //Message will be appended with client's port to make sure all received messages are unique.
@@ -171,7 +171,7 @@ public class TcpHandlerTests
         }
         Assert.Equal(3, timesInvoked);
 
-        TcpHandler.OnSignalReceived -= eventHandler;
+        TcpReceiver.OnSignalReceived -= eventHandler;
     }
 
     [Theory]
@@ -180,7 +180,7 @@ public class TcpHandlerTests
     [InlineData(new int[] { 25565, 25566, 25567 })]
     public static void CheckPortsAreOccupied(int[] ports)
     {
-        var handler = new TcpHandler(IPAddress.Parse("127.0.0.1"), ports);
+        var handler = new TcpReceiver(IPAddress.Parse("127.0.0.1"), ports);
         handler.BeginListening();
 
         List<int> listeningPorts = GetCurrentlyListeningTcpPorts();
@@ -202,7 +202,7 @@ public class TcpHandlerTests
             Assert.DoesNotContain(port, listeningPorts);
         }
 
-        //Check if another TcpListener could use those ports once TcpHandler stops
+        //Check if another TcpListener could use those ports once TcpReceiver stops
         foreach (var port in ports)
         {
             var anotherListener = new TcpListener(IPAddress.Parse("127.0.0.1"), port);
