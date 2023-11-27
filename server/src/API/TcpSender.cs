@@ -225,8 +225,7 @@ public class TcpSender
             _logger?.WriteLine($"Connections initialized: {_connectionsInitialized}");
             _logger?.WriteLine($"Connections successfully handled: {_connectionsSuccessfullyHandled}");
             _logger?.WriteLine("Most recently handled request: ");
-            _logger?.WriteLine($"\tClient address: {(_lastClient is null ? "null" : _lastClient.ClientAddress)}");
-            _logger?.WriteLine($"\tClient port: {(_lastClient is null ? "null" : _lastClient.ClientPort)}");
+            _logger?.WriteLine($"\tClient: {(_lastClient is null ? "null" : $"{_lastClient.ClientAddress}:{_lastClient.ClientPort}")}");
             _logger?.WriteLine($"\tServer port: {(_lastClient is null ? "null" : _lastClient.LocalPort)}");
             _logger?.WriteLine($"\tMessage size: {(_lastClient is null ? "null" : _lastClient.MessageSize)} byte(s)");
             _logger?.WriteLine($"\tWas successful?: {(_lastClient is null ? "null" : _lastClient.WasSuccesful)}");
