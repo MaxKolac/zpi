@@ -85,7 +85,7 @@ public class TcpHandlerTests
         {
             clientMock.Connect(IPAddress.Parse("127.0.0.1"), 25565);
             localClientPort = ((IPEndPoint)clientMock.Client.LocalEndPoint!).Port;
-            EventHandler<TcpHandlerEventArgs> eventHandler = (sender, e) =>
+            EventHandler<TcpReceiverEventArgs> eventHandler = (sender, e) =>
             {
                 receivedBytes = e.Data;
                 senderIp = e.SenderIp;
@@ -135,7 +135,7 @@ public class TcpHandlerTests
 
         //Subscribe to the event with a EventHandler that will fire once a full message has been received
         //This event will modify variables which will be validated with Asserts later on
-        EventHandler<TcpHandlerEventArgs> eventHandler = (sender, e) =>
+        EventHandler<TcpReceiverEventArgs> eventHandler = (sender, e) =>
         {
             receivedMessages.Add(Encoding.UTF8.GetString(e.Data));
             connectedClientInfo.Add((e.SenderIp, e.SenderPort));

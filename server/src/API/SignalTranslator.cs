@@ -64,7 +64,7 @@ public class SignalTranslator
         IsTranslating = false;
     }
 
-    void HandleReceivedSignal(object? sender, TcpHandlerEventArgs e)
+    void HandleReceivedSignal(object? sender, TcpReceiverEventArgs e)
     {
         _invocations++;
         HostDevice? datasender = null;

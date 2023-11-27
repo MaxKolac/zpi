@@ -54,7 +54,7 @@ public class TcpReceiver
     /// <summary>
     /// Wydarzenie, które jest inwokowane gdy <see cref="TcpReceiver"/> otrzyma pełny ciąg bajtów z nasłuchiwanego portu.
     /// </summary>
-    public static event EventHandler<TcpHandlerEventArgs>? OnSignalReceived;
+    public static event EventHandler<TcpReceiverEventArgs>? OnSignalReceived;
 
     public TcpReceiver(IPAddress address, int listenPort, Logger? logger = null) :
         this(address, new int[] { listenPort }, logger)
@@ -102,6 +102,7 @@ public class TcpReceiver
     ~TcpReceiver()
     {
         Command.OnExecuted -= ShowStatus;
+        StopListening();
     }
 
     /// <summary>
@@ -205,7 +206,7 @@ public class TcpReceiver
                 _logger?.WriteLine($"Received {sanitizedBuffer.Count} bytes from {clientAddress}:{clientPort} on port {listener.GetLocalPort()}.", nameof(TcpReceiver));
             }
             _logger?.WriteLine($"Closed the connection from {clientAddress}:{clientPort}.", nameof(TcpReceiver));
-            OnSignalReceived?.Invoke(this, new TcpHandlerEventArgs(clientAddress, clientPort, fullMessage.ToArray()));
+            OnSignalReceived?.Invoke(this, new TcpReceiverEventArgs(clientAddress, clientPort, fullMessage.ToArray()));
 
             await _semaphore.WaitAsync();
             _connectionsHandled++;

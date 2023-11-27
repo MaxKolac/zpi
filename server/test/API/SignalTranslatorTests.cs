@@ -74,7 +74,7 @@ public class SignalTranslatorTests
 
         //Setup a check that OnSignalReceived was invoked
         int invocations = 0;
-        EventHandler<TcpHandlerEventArgs> eventHandler = (sender, e) =>
+        EventHandler<TcpReceiverEventArgs> eventHandler = (sender, e) =>
         {
             invocations++;
         };
@@ -118,7 +118,7 @@ public class SignalTranslatorTests
 
         //Setup a check that OnSignalReceived was invoked
         int invocations = 0;
-        EventHandler<TcpHandlerEventArgs> eventHandler = (sender, e) =>
+        EventHandler<TcpReceiverEventArgs> eventHandler = (sender, e) =>
         {
             invocations++;
         };
