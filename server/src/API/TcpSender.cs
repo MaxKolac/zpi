@@ -198,6 +198,11 @@ public class TcpSender
             _lastClient.WasSuccesful = true;
             _statsSemaphore.Release();
         }
+
+        catch (Exception ex) when ((ex is OperationCanceledException || ex is SocketException) && _token.IsCancellationRequested)
+        {
+            _logger?.WriteLine($"Cancelling data send request to {recipientAddress}:{recipientPort} due to cancellation token.", nameof(TcpReceiver), Warning);
+        }
         catch (SocketException ex)
         {
             _logger?.WriteLine($"Failed to connect to {recipientAddress}:{recipientPort}. {ex.Message}.", nameof(TcpSender), Warning);
