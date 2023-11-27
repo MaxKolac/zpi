@@ -13,7 +13,8 @@ namespace ZPIServer
         static readonly CancellationTokenSource serverLifetimeToken = new();
         static readonly Logger logger = new();
 
-        static TcpReceiver? tcpHandler;
+        static TcpReceiver? tcpReceiver;
+        static TcpSender? tcpSender;
         static SignalTranslator? signalTranslator;
 
         public static int Main(string[] args)
@@ -55,8 +56,10 @@ namespace ZPIServer
             }
 
             //Server initialization
-            tcpHandler = new TcpReceiver(Settings.ServerAddress, Settings.TcpReceiverPorts, logger);
-            tcpHandler.BeginListening();
+            tcpReceiver = new TcpReceiver(Settings.ServerAddress, Settings.TcpReceiverPorts, logger);
+            tcpReceiver.BeginListening();
+            tcpSender = new TcpSender(logger);
+            tcpSender.Enable();
             signalTranslator = new SignalTranslator(logger);
             signalTranslator.BeginTranslating();
 
@@ -73,7 +76,8 @@ namespace ZPIServer
             Command.OnExecuted -= OnCommandExecuted;
 
             signalTranslator?.StopTranslating();
-            tcpHandler?.StopListening();
+            tcpSender?.Disable();
+            tcpReceiver?.StopListening();
             logger?.Stop();
         }
     }
