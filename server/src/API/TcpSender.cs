@@ -5,14 +5,22 @@ using ZPIServer.EventArgs;
 
 namespace ZPIServer.API;
 
+/// <summary>
+/// Klasa odpowiedzialna za wysyłanie wiadomości z powrotem do hostów oraz obsługę ewentualnych niepowodzeń.<br/>
+/// W przeciwieństwie do <see cref="TcpReceiver"/>, ta klasa ma dynamicznie zmieniające rozmiar listy obecnych <see cref="Task"/>ów oraz przypisanych im obiektów <see cref="TcpClient"/>. 
+/// </summary>
 public class TcpSender
 {
     private readonly CancellationTokenSource _token;
     private readonly Logger? _logger;
-    //private readonly TcpListener[] _listeners;
-    private readonly Task[] _listenerTasks;
 
-    private readonly SemaphoreSlim _semaphore;
+    /// <summary>
+    /// Semaphore used to reserve access to <see cref="_clients"/>, <see cref="_clientTasks"/>, <see cref="_connectionsInitialized"/> and <see cref="_connectionsHandled"/>.
+    /// To avoid potential IndexOutOfArray or InvalidOperation in foreach loops, use the semaphore when accessing Lists' objects.
+    /// </summary>
+    private readonly SemaphoreSlim _accessSemaphore;
+    private readonly List<TcpClient> _clients;
+    private readonly List<Task> _clientTasks;
     private int _connectionsInitialized = 0;
     private int _connectionsHandled = 0;
 
@@ -21,40 +29,13 @@ public class TcpSender
     /// </summary>
     public bool CanSendMessages { get; private set; } = false;
 
-    public TcpSender(IPAddress address, int[] listenPorts, Logger? logger = null)
+    public TcpSender(Logger? logger = null)
     {
-        if (listenPorts is null)
-            throw new ArgumentException(null, nameof(listenPorts));
-        if (listenPorts.Length == 0)
-            throw new ArgumentException($"{nameof(listenPorts)} is empty.");
-        if (listenPorts.Distinct().Count() != listenPorts.Length)
-            throw new ArgumentException($"{nameof(listenPorts)} contained duplicate port numbers.");
-        foreach (var port in listenPorts)
-        {
-            if (port < 1024 || 65535 < port)
-                throw new ArgumentException($"{nameof(listenPorts)} contained an invalid TCP port number.");
-            if (Settings.TcpSenderPorts.Contains(port))
-                throw new ArgumentException($"{nameof(listenPorts)} contained a port reserved for {nameof(TcpSender)}.");
-        }
-
         _token = new CancellationTokenSource();
-        _semaphore = new SemaphoreSlim(1, 1);
+        _accessSemaphore = new SemaphoreSlim(1, 1);
         _logger = logger;
-        _listeners = new TcpListener[listenPorts.Length];
-        _listenerTasks = new Task[listenPorts.Length];
-
-        for (int i = 0; i < listenPorts.Length; i++)
-        {
-            int index = i;
-            _listeners[index] = new TcpListener(address, listenPorts[index]);
-            _listenerTasks[index] = new Task(async () =>
-            {
-                while (!_token.IsCancellationRequested)
-                {
-                    await HandleConnectionAsync(_listeners[index]);
-                }
-            });
-        }
+        _clients = new();
+        _clientTasks = new();
 
         Command.OnExecuted += ShowStatus;
     }
@@ -62,56 +43,81 @@ public class TcpSender
     ~TcpSender()
     {
         Command.OnExecuted -= ShowStatus;
+        Disable();
     }
 
-    public void BeginListening()
+    public void Enable()
     {
         if (CanSendMessages)
             return;
 
         _logger?.WriteLine("Starting up.", nameof(TcpSender));
         CanSendMessages = true;
-        int inactiveListeners = 0;
-        for (int i = 0; i < _listeners.Length; i++)
+
+        //Subscribe to static events that will request data to be sent
+    }
+
+    /// <summary>
+    /// Oczekuje na zakończenie działania wszystkich zadań wysyłania wiadomości oraz usuwa subskrybcje do statycznych wydarzeń innych klas.
+    /// </summary>
+    public void Disable()
+    {
+        if (!CanSendMessages)
+            return;
+        
+        _accessSemaphore.Wait();
+        CanSendMessages = false;
+
+        _logger?.WriteLine("Shutting down.", nameof(TcpSender));
+        _token.Cancel();
+        foreach (var unstartedTask in _clientTasks)
         {
-            try
-            {
-                _listeners[i].Start();
-                _listenerTasks[i].Start();
-            }
-            catch (SocketException)
-            {
-                _logger?.WriteLine($"Could not start the TcpListener on port {_listeners[i].GetLocalPort()} - port already in use! {nameof(TcpSender)} won't be able to listen for connections on that port.", nameof(TcpSender), Logger.MessageType.Warning);
-                inactiveListeners++;
-            }
+            //Starting unstarted tasks after signaling cancellation through a token, so that they will immediately run into a while() condition and finish execution without ever invoking HandleConnectionAsync()
+            if (unstartedTask.Status == TaskStatus.Created)
+                unstartedTask.Start();
         }
-        if (inactiveListeners == _listeners.Length)
-        {
-            throw new IOException($"All ports {nameof(TcpSender)} was registered on were occupied!");
-        }
-        else if (inactiveListeners > 0)
-        {
-            _logger?.WriteLine($"Failed to start TcpListener on {inactiveListeners} port(s).", nameof(TcpSender), Logger.MessageType.Warning);
-        }
+        Task.WaitAll(_clientTasks.ToArray());
+        _accessSemaphore.Release();
+    }
+
+    /// <summary>
+    /// Obsługuje żądania wysyłania sygnałów inwokowane przez inne klasy. Wywołuje metodę <see cref="SendMessageAsync"/> i reaguje na zwracaną przez nią wartość. W razie potrzeby, podejmuje ponowne próby wysłania wiadomości
+    /// </summary>
+    private void HandleSendingRequest(object sender, TcpSenderEventArgs e)
+    {
+
+    }
+
+    /// <summary>
+    /// Podejmuje próbę wysłania wiadomości na podanego hosta.
+    /// </summary>
+    /// <param name="recipientAddress">Adres hosta, na który wiadomość ma być wysłana.</param>
+    /// <param name="recipientPort">Numer portu hosta, na który wiadomość ma być wysłana.</param>
+    /// <returns><c>true</c> jeśli wiadomość została przesłana oraz połączenie bezpiecznie zakończone. Jeśli jedna z tych rzeczy nie nastąpiła, zwraca <c>false</c>.</returns>
+    private async Task<bool> SendMessageAsync(IPAddress recipientAddress, int recipientPort)
+    {
+
     }
 
     private void ShowStatus(object? sender, CommandEventArgs e)
     {
         if (sender is StatusCommand command && command.ClassArgument == StatusCommand.TcpSenderArgument)
         {
+            _accessSemaphore.Wait();
             _logger?.WriteLine($"Running: {CanSendMessages}");
             _logger?.WriteLine($"Logging: {_logger is not null}");
             _logger?.WriteLine($"Connections initialized: {_connectionsInitialized}");
             _logger?.WriteLine($"Connections fully handled: {_connectionsHandled}");
-            _logger?.WriteLine($"Listeners:", null);
-            for (int i = 0; i < _listeners.Length; i++)
+            _logger?.WriteLine($"Current clients ({_clients.Count}):", null);
+            for (int i = 0; i < _clients.Count; i++)
             {
-                _logger?.WriteLine($"\tAddress: {_listeners[i].GetLocalAddress()}");
-                _logger?.WriteLine($"\tPort: {_listeners[i].GetLocalPort()}");
-                _logger?.WriteLine($"\tIsActive: {_listeners[i].IsActive()}");
-                _logger?.WriteLine($"\tTask Status: {_listenerTasks[i].Status}");
+                _logger?.WriteLine($"\tAddress: {_clients[i].GetRemoteAddress()}");
+                _logger?.WriteLine($"\tClient's Port: {_clients[i].GetRemotePort()}");
+                _logger?.WriteLine($"\tServer's Port: {_clients[i].GetLocalPort()}");
+                _logger?.WriteLine($"\tTask Status: {_clientTasks[i].Status}");
                 _logger?.WriteLine("\t --- ");
             }
+            _accessSemaphore.Release();
         }
     }
 }
