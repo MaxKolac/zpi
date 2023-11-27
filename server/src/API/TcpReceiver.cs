@@ -218,29 +218,13 @@ public class TcpReceiver
             _logger?.WriteLine($"IOException thrown on port {listener.GetLocalPort()}.", nameof(TcpReceiver), Logger.MessageType.Warning);
             _logger?.WriteLine($"{ex.Message}.", nameof(TcpReceiver), Logger.MessageType.Warning);
         }
-        catch (OperationCanceledException)
+        catch (Exception ex) when (ex is OperationCanceledException || ex is SocketException)
         {
-            if (_token.IsCancellationRequested)
-            {
-                _logger?.WriteLine($"Cancelling connection handling on port {listener.GetLocalPort()} due to cancellation token.", nameof(TcpReceiver), Logger.MessageType.Warning);
-                return;
-            }
-            else
-            {
+            if (!_token.IsCancellationRequested)
                 throw;
-            }
-        }
-        catch (SocketException)
-        {
-            if (_token.IsCancellationRequested)
-            {
-                _logger?.WriteLine($"Cancelling connection handling on port {listener.GetLocalPort()} due to cancellation token.", nameof(TcpReceiver), Logger.MessageType.Warning);
-                return;
-            }
-            else
-            {
-                throw;
-            }
+
+            _logger?.WriteLine($"Cancelling connection handling on port {listener.GetLocalPort()} due to cancellation token.", nameof(TcpReceiver), Logger.MessageType.Warning);
+            return;
         }
     }
 
