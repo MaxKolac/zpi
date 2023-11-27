@@ -23,7 +23,7 @@ public class HostDevice
         Unknown = 0,
 
         /// <summary>
-        /// HostDevice to symulator kamery stworzony do testów.
+        /// HostDevice to symulator kamery, który wysyła zserializowane instancje <see cref="Messages.CameraDataMessage"/> jako JSON.
         /// </summary>
         CameraSimulator = 1,
 
@@ -36,6 +36,12 @@ public class HostDevice
         /// HostDevice to jeden z użytkowników korzystający z aplikacji desktopowej.
         /// </summary>
         User = 3,
+
+        /// <summary>
+        /// HostDevice to symulator kamery, który wysyła zdjęcie termiczne w formie surowych bitów.<br/>
+        /// Konwertowanie odebranych ciągów na odczytywalne dane serwer deleguje do skryptu w Python'ie od Filipa.
+        /// </summary>
+        PythonCameraSimulator = 4
     }
 
 
