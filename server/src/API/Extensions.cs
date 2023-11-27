@@ -3,7 +3,7 @@ using System.Net.Sockets;
 
 namespace ZPIServer.API;
 
-public static class TcpListenerExtensions
+public static partial class Extensions
 {
     /// <summary>
     /// Gets the port of the local endpoint.
@@ -13,12 +13,34 @@ public static class TcpListenerExtensions
         return ((IPEndPoint)listener.LocalEndpoint).Port;
     }
 
+    /// <inheritdoc cref="GetLocalPort(TcpListener)"/>
+    public static int GetLocalPort(this TcpClient listener)
+    {
+        return (listener.Client.LocalEndPoint as IPEndPoint)!.Port;
+    }
+
     /// <summary>
     /// Gets the IP address of the local endpoint.
     /// </summary>
     public static IPAddress GetLocalAddress(this TcpListener listener)
     {
         return ((IPEndPoint)listener.LocalEndpoint).Address;
+    }
+
+    /// <summary>
+    /// Gets the port of the connected <see cref="TcpClient"/>.
+    /// </summary>
+    public static int GetRemotePort(this TcpClient listener)
+    {
+        return (listener.Client.RemoteEndPoint as IPEndPoint)!.Port;
+    }
+    
+    /// <summary>
+    /// Gets the IP address of the connected <see cref="TcpClient"/>.
+    /// </summary>
+    public static IPAddress GetRemoteAddress(this TcpClient listener)
+    {
+        return (listener.Client.RemoteEndPoint as IPEndPoint)!.Address;
     }
 
     /// <summary>
