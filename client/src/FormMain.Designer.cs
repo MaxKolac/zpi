@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormMain));
             panelDisplay = new Panel();
             panelNavigation = new Panel();
             buttonOverview = new Button();
@@ -68,6 +69,7 @@
             labelMapStateCount1 = new Label();
             pictureBoxMapState1 = new PictureBox();
             labelMapState1 = new Label();
+            pictureBoxMap = new PictureBox();
             panelNavigation.SuspendLayout();
             panelInfo.SuspendLayout();
             panelCamera.SuspendLayout();
@@ -81,6 +83,7 @@
             ((System.ComponentModel.ISupportInitialize)pictureBoxMapState3).BeginInit();
             ((System.ComponentModel.ISupportInitialize)pictureBoxMapState2).BeginInit();
             ((System.ComponentModel.ISupportInitialize)pictureBoxMapState1).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)pictureBoxMap).BeginInit();
             SuspendLayout();
             // 
             // panelDisplay
@@ -367,10 +370,10 @@
             // panelMap
             // 
             panelMap.BackColor = SystemColors.ControlDark;
-            panelMap.BackgroundImage = Properties.Resources.Kabacki_Segment;
             panelMap.BackgroundImageLayout = ImageLayout.Stretch;
             panelMap.BorderStyle = BorderStyle.FixedSingle;
             panelMap.Controls.Add(tableLayoutPanelSummary);
+            panelMap.Controls.Add(pictureBoxMap);
             panelMap.Enabled = false;
             panelMap.Location = new Point(0, 0);
             panelMap.Name = "panelMap";
@@ -540,6 +543,17 @@
             labelMapState1.Text = "Aktywne";
             labelMapState1.TextAlign = ContentAlignment.MiddleCenter;
             // 
+            // pictureBoxMap
+            // 
+            pictureBoxMap.BackgroundImage = Properties.Resources.Kabacki_Segment;
+            pictureBoxMap.BackgroundImageLayout = ImageLayout.Stretch;
+            pictureBoxMap.InitialImage = (Image)resources.GetObject("pictureBoxMap.InitialImage");
+            pictureBoxMap.Location = new Point(-1, -1);
+            pictureBoxMap.Name = "pictureBoxMap";
+            pictureBoxMap.Size = new Size(1018, 651);
+            pictureBoxMap.TabIndex = 2;
+            pictureBoxMap.TabStop = false;
+            // 
             // FormMain
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -568,6 +582,7 @@
             ((System.ComponentModel.ISupportInitialize)pictureBoxMapState3).EndInit();
             ((System.ComponentModel.ISupportInitialize)pictureBoxMapState2).EndInit();
             ((System.ComponentModel.ISupportInitialize)pictureBoxMapState1).EndInit();
+            ((System.ComponentModel.ISupportInitialize)pictureBoxMap).EndInit();
             ResumeLayout(false);
         }
 
@@ -611,5 +626,6 @@
         private Label labelMapState2;
         private PictureBox pictureBoxMapState2;
         private Label labelMapStateCount1;
+        private PictureBox pictureBoxMap;
     }
 }

@@ -84,9 +84,9 @@ namespace ZPIClient
             }
             if (currentSensorIndex != -1)
             {
-                labelLastUpdateInfo.Text = sensorList[currentSensorIndex].SensorLastUpdate.ToString() + " sekund temu.";
+                labelLastUpdateInfo.Text = sensorList[currentSensorIndex].SensorLastUpdate.ToString() + " sekund temu";
             }
-            labelTimer.Text = "Nastêpna aktualizacja za: " + timerElapsedTime + " sekund.";
+            labelTimer.Text = "Nastêpna aktualizacja za: " + timerElapsedTime + " sekund";
         }
         private void incrementTimers()
         {
@@ -101,9 +101,16 @@ namespace ZPIClient
         {
             if (debug)
             {
+                buttonDebug.BackColor = SystemColors.Control;
                 buttonDebug.Text = "Debug";
             }
+            else
+            {
+                buttonDebug.Text = "Skaner wspó³rzêdnych aktywny";
+                buttonDebug.BackColor = Color.SkyBlue;
+            }
             debug = !debug;
+
         }
         private void buttonSwitch_Click(object sender, EventArgs e)
         {
@@ -312,7 +319,7 @@ namespace ZPIClient
                 panelMapSensorInformation[i].RowStyles.Add(new RowStyle(SizeType.Absolute, mapPanelHeight));
                 panelMapSensorInformation[i].Tag = i;
                 panelMapSensorInformation[i].Click += sensorContainer_Click;
-                panelMap.Controls.Add(panelMapSensorInformation[i]);
+                pictureBoxMap.Controls.Add(panelMapSensorInformation[i]);
                 #endregion
                 #region Map Sensor Status Picture
                 pictureBoxMapSensorStatus[i] = new PictureBox();
