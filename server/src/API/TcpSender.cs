@@ -25,7 +25,10 @@ public class TcpSender
     /// Semafor dostępu do listy <see cref="_currentConnections"/>.
     /// </summary>
     private readonly SemaphoreSlim _tasksSemaphore;
-    private readonly List<(Task<bool>, TcpSenderEventArgs)> _currentConnections;
+    /// <summary>
+    /// Typ generyczny listy: <see cref="Task"/>, który obsługuje połączenie, <see cref="TcpSenderEventArgs"/> zawierające dane o obsługiwanym hoście, <see cref="int"/> liczba podjętych prób.
+    /// </summary>
+    private readonly List<(Task<bool>, TcpSenderEventArgs, int)> _currentConnections;
 
     /// <summary>
     /// Semafor dostępu do właściwości statystycznych: <see cref="_connectionsInitialized"/>, <see cref="_connectionsSuccessfullyHandled"/> oraz <see cref="_lastClient"/>.
@@ -108,7 +111,7 @@ public class TcpSender
         Task<bool> messageTask = SendMessageAsync(e.RecipientAddress, e.RecipientPort, e.Data);
 
         _tasksSemaphore.Wait();
-        _currentConnections.Add((messageTask, e));
+        _currentConnections.Add((messageTask, e, 0));
         messageTask.Start();
         _tasksSemaphore.Release();
     }
@@ -125,32 +128,41 @@ public class TcpSender
             //Search the current connections for tasks that are done and/or failed
             _tasksSemaphore.Wait();
             int completedTasks = 0;
+            int reattemptedTasks = 0;
             int faultedTasks = 0;
             for (int i = _currentConnections.Count - 1; i >= 0; i--)
             {
                 //Look only for tasks that are completed
-                if (_currentConnections[i].Item1.IsCompleted)
-                {
-                    //If it returned true, the task has done its job - it can be removed
-                    if (_currentConnections[i].Item1.Result)
-                    {
-                        _currentConnections.RemoveAt(i);
-                        completedTasks++;
-                    }
-                    else
-                    {
-                        //Otherwise, something went wrong. Set up a new entry on the list and try to send data again.
-                        _currentConnections[i].Item1.Dispose();
-                        var argsCopy = _currentConnections[i].Item2;
+                if (!_currentConnections[i].Item1.IsCompleted)
+                    continue;
 
-                        Task<bool> newTask = SendMessageAsync(argsCopy.RecipientAddress, argsCopy.RecipientPort, argsCopy.Data);
-                        _currentConnections[i] = new(newTask, argsCopy);
-                        newTask.Start();
-                        faultedTasks++;
-                    }
+                //If it returned true, the task has done its job - it can be removed
+                if (_currentConnections[i].Item1.Result)
+                {
+                    _currentConnections.RemoveAt(i);
+                    completedTasks++;
+                }
+                //Otherwise, something went wrong. Set up a new entry on the list and try to send data again.
+                else if (!_currentConnections[i].Item1.Result && _currentConnections[i].Item3 < 3)
+                {
+                    _currentConnections[i].Item1.Dispose();
+                    var argsCopy = _currentConnections[i].Item2;
+                    int previousAttemps = _currentConnections[i].Item3;
+
+                    Task<bool> newTask = SendMessageAsync(argsCopy.RecipientAddress, argsCopy.RecipientPort, argsCopy.Data);
+                    _currentConnections[i] = new(newTask, argsCopy, previousAttemps + 1);
+                    newTask.Start();
+                    reattemptedTasks++;
+                }
+                //If this task failed 3 times already, just drop it.
+                else
+                {
+                    _logger?.WriteLine($"Aborting the send request to {_currentConnections[i].Item2.RecipientAddress}:{_currentConnections[i].Item2.RecipientPort}. Dropping {_currentConnections[i].Item2.Data.Length} bytes of data. Too many failed attempts.", nameof(TcpSender), Error);
+                    _currentConnections.RemoveAt(i);
+                    faultedTasks++;
                 }
             }
-            _logger?.WriteLine($"Ran connections' task list routine. Completed: {completedTasks}, Faulted: {faultedTasks}", nameof(TcpSender));
+            _logger?.WriteLine($"Ran connections' task list routine. Completed: {completedTasks}, Reattempted: {reattemptedTasks}, Faulted: {faultedTasks}.", nameof(TcpSender));
             _tasksSemaphore.Release();
 
             //Wait a bit until next check
