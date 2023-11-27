@@ -7,7 +7,7 @@ public class TcpSenderEventArgs : System.EventArgs
     /// <summary>
     /// Adres IP, na który wysłana ma być wiadomość.
     /// </summary>
-    public IPAddress RecipientIp { get; private set; }
+    public IPAddress RecipientAddress { get; private set; }
     /// <summary>
     /// Numer portu TCP, na który wysłana ma być wiadomość.
     /// </summary>
@@ -19,7 +19,7 @@ public class TcpSenderEventArgs : System.EventArgs
 
     public TcpSenderEventArgs(IPAddress recipientIp, int recipientPort, byte[] data)
     {
-        RecipientIp = recipientIp;
+        RecipientAddress = recipientIp;
         RecipientPort = recipientPort;
         Data = data;
     }
