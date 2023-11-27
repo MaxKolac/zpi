@@ -128,7 +128,7 @@ public class SignalTranslatorTests
         SendSerializedJsonToLoopback(25565, JsonConvert.SerializeObject(invalidMessage));
 
         //Give SignalTranslator some time to process the message and make changes
-        await Task.Delay(2000).WaitAsync(CancellationToken.None);
+        await Task.Delay(1000);
 
         //Check that data has been written into DB
         using (var context = new DatabaseContext())

@@ -7,7 +7,7 @@ using ZPIServer.EventArgs;
 
 namespace ZPIServerTests.API;
 
-public class TcpHandlerTests
+public class TcpReceiverTests
 {
     [Fact]
     public static void CheckIsListening()
@@ -67,9 +67,8 @@ public class TcpHandlerTests
         });
     }
 
-    //Ten test działa tylko w DebugMode (nie wiem czemu??)
     [Fact]
-    public static void CheckMessagesAreComingThrough()
+    public static async Task CheckMessagesAreComingThrough()
     {
         var handler = new TcpReceiver(IPAddress.Parse("127.0.0.1"), 25565);
         handler.BeginListening();
@@ -98,6 +97,7 @@ public class TcpHandlerTests
                 byte[] message = Encoding.UTF8.GetBytes(messageToSend);
                 stream.Write(message, 0, message.Length);
             }
+            await Task.Delay(100);
             TcpReceiver.OnSignalReceived -= eventHandler;
         }
         handler.StopListening();
@@ -109,9 +109,8 @@ public class TcpHandlerTests
         Assert.Equal(1, timesInvoked);
     }
 
-    //Działa tylko podczas debugowania (nadal nie wiem czemu)
     [Fact]
-    public static void CheckManyMessagesAreComingThrough()
+    public static async void CheckManyMessagesAreComingThrough()
     {
         IPAddress address = IPAddress.Parse("127.0.0.1");
         int[] ports = new int[] { 25565, 25566, 25567 };
@@ -155,6 +154,7 @@ public class TcpHandlerTests
             byte[] message = Encoding.UTF8.GetBytes(messageToSend + mockPort);
             using var stream = mock.GetStream();
             stream.Write(message, 0, message.Length);
+            await Task.Delay(100);
         }
 
         //Signal to close the TCP connection and dispose mocks
