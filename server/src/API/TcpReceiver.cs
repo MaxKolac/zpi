@@ -73,8 +73,6 @@ public class TcpReceiver
         {
             if (port < 1024 || 65535 < port)
                 throw new ArgumentException($"{nameof(listenPorts)} contained an invalid TCP port number.");
-            if (Settings.TcpSenderPorts.Contains(port))
-                throw new ArgumentException($"{nameof(listenPorts)} contained a port reserved for {nameof(TcpSender)}.");
         }
 
         _token = new CancellationTokenSource();

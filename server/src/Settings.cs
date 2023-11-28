@@ -11,12 +11,6 @@ public static class Settings
     public static int[] TcpReceiverPorts { get; set; } = new int[] { 25565, 25566, 25567 };
 
     /// <summary>
-    /// Tabela portów, z których <see cref="API.TcpSender"/> będzie tworzyć połączenia do hostów i wysyłał im wiadomości.<br/>
-    /// Domyślne porty to 35565.
-    /// </summary>
-    public static int[] TcpSenderPorts { get; set; } = new int[] { 35565 };
-
-    /// <summary>
     /// Adres IP serwera w sieci lokalnej. Na tym adresie będą nasłuchiwane porty.<br/>
     /// Domyślna wartość to 127.0.0.1.
     /// </summary>
@@ -25,7 +19,6 @@ public static class Settings
     public static void ResetToDefault()
     {
         TcpReceiverPorts = new int[] { 25565, 25566, 25567 };
-        TcpSenderPorts = new int[] { 35565 };
         ServerAddress = IPAddress.Parse("127.0.0.1");
     }
 }
