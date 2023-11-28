@@ -16,9 +16,17 @@ public static class Settings
     /// </summary>
     public static IPAddress ServerAddress { get; set; } = IPAddress.Parse("127.0.0.1");
 
+    /// <summary>
+    /// Wskazuje, czy serwer wykrył instalację Python'a potrzebnego do <see cref="API.CameraLibraries.PythonCameraSimulatorAPI"/>.<br/>
+    /// true oznacza, że wykryto instalację Python'a.<br/>
+    /// Domyślna wartość to false.
+    /// </summary>
+    public static bool IsPythonDetected { get; set; } = false;
+
     public static void ResetToDefault()
     {
         TcpReceiverPorts = new int[] { 25565, 25566, 25567 };
         ServerAddress = IPAddress.Parse("127.0.0.1");
+        IsPythonDetected = false;
     }
 }

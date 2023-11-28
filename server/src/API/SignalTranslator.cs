@@ -84,14 +84,17 @@ public class SignalTranslator
         _invocationDictionary[datasender.Type]++;
         switch (datasender.Type)
         {
+            default:
             case HostType.Unknown:
                 _logger?.WriteLine(message + "Ignoring...", nameof(SignalTranslator));
                 break;
             case HostType.CameraSimulator:
+            case HostType.PythonCameraSimulator:
                 _logger?.WriteLine(message + $"Sender is '{datasender.Name}'. Forwarding to their respective API library.", nameof(SignalTranslator));
                 ICamera? api = datasender.Type switch
                 {
                     HostType.CameraSimulator => new CameraSimulatorAPI(),
+                    HostType.PythonCameraSimulator => new PythonCameraSimulatorAPI(_logger),
                     _ => null
                 };
 
@@ -112,6 +115,7 @@ public class SignalTranslator
                 var decodedMessage = api?.GetDecodedMessage();
                 if (decodedMessage is not null)
                 {
+                    //Apply received changes if they were succesfully decoded
                     datasender.LastKnownTemperature = decodedMessage.LargestTemperature;
                     datasender.LastImage = decodedMessage.Image;
                     datasender.LastKnownStatus = decodedMessage.Status;
