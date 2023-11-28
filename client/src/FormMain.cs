@@ -79,7 +79,7 @@ namespace ZPIClient
             }
             else
             {
-                timerElapsedTime = timerInterval;
+                timerElapsedTime = timerInterval-1;
                 updateSensors();
             }
             if (currentSensorIndex != -1)
