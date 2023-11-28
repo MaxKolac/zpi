@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Net.Sockets;
+using System.Text;
 using ZPIServer.Commands;
 using ZPIServer.EventArgs;
 using static ZPIServer.Commands.Logger.MessageType;
@@ -8,13 +9,20 @@ namespace ZPIServer.API;
 
 /// <summary>
 /// Klasa odpowiedzialna za wysyłanie wiadomości z powrotem do hostów oraz obsługę ewentualnych niepowodzeń.<br/>
-/// W przeciwieństwie do <see cref="TcpReceiver"/>, ta klasa ma dynamicznie zmieniające rozmiar listy obecnych <see cref="Task"/>ów oraz przypisanych im obiektów <see cref="TcpClient"/>. 
+/// W przeciwieństwie do <see cref="TcpReceiver"/>, ta klasa ma dynamicznie zmieniające rozmiar listy obecnych <see cref="Task"/>ów oraz przypisanych im obiektów <see cref="TcpClient"/>.
 /// </summary>
 public class TcpSender
 {
-    private record class TcpSenderLastClientInfo(IPAddress ClientAddress, int ClientPort, int LocalPort, int MessageSize)
+    private record class LastClientInfo(IPAddress ClientAddress, int ClientPort, int? LocalPort, int MessageSize, bool WasSuccesful);
+
+    /// <summary>
+    /// Do testowania.
+    /// </summary>
+    public static class TestEvents
     {
-        public bool WasSuccesful { get; set; } = false;
+        public static event EventHandler<TcpSenderEventArgs>? TestEvent1;
+
+        public static void InvokeEvent1(object? sender, TcpSenderEventArgs e) => TestEvent1?.Invoke(sender, e);
     }
 
     private readonly CancellationTokenSource _token;
@@ -36,12 +44,38 @@ public class TcpSender
     private readonly SemaphoreSlim _statsSemaphore;
     private int _connectionsInitialized = 0;
     private int _connectionsSuccessfullyHandled = 0;
-    private TcpSenderLastClientInfo? _lastClient;
+    private LastClientInfo? _lastClient;
 
     /// <summary>
     /// Wskazuje czy <see cref="TcpSender"/> został uruchomiony i może wysyłać wiadomości.
     /// </summary>
     public bool CanSendMessages { get; private set; } = false;
+    /// <summary>
+    /// Zwraca liczbę wszystkich połączeń, które <see cref="TcpSender"/> próbował obsłużyć. Wskazuje też na liczbę wszystkich żądań wysłania danych.
+    /// </summary>
+    public int ConnectionsInitialized
+    {
+        get
+        {
+            _statsSemaphore.Wait();
+            int value = _connectionsInitialized;
+            _statsSemaphore.Release();
+            return value;
+        }
+    }
+    /// <summary>
+    /// Zwraca liczbę wszystkich połączeń, które <see cref="TcpSender"/> pomyślnie i w pełni obsłużył. Pomyślnie obsłużone połączenie to takie, przez które wysłany został cały ciąg bitów oraz połączenie zostało bezpiecznie zakończone.
+    /// </summary>
+    public int ConnectionsHandled
+    {
+        get
+        {
+            _statsSemaphore.Wait();
+            int value = _connectionsSuccessfullyHandled;
+            _statsSemaphore.Release();
+            return value;
+        }
+    }
 
     public TcpSender(Logger? logger = null)
     {
@@ -49,8 +83,16 @@ public class TcpSender
         _tasksSemaphore = new SemaphoreSlim(1, 1);
         _statsSemaphore = new SemaphoreSlim(1, 1);
         _logger = logger;
+
         _currentConnections = new();
-        _managerTask = ManageCurrentTasksAsync();
+        _managerTask = new Task(() =>
+        {
+            while (!_token.IsCancellationRequested)
+            {
+                ManageCurrentTasks();
+                Task.Delay(1000).Wait();
+            }
+        });
 
         Command.OnExecuted += ShowStatus;
     }
@@ -61,6 +103,9 @@ public class TcpSender
         Disable();
     }
 
+    /// <summary>
+    /// Włącza obsługę żądań wysyłania wiadomości. Zarejestruj wydarzenia, które będą chciały wysłać dane metodą <see cref="RegisterEvent(EventHandler{TcpSenderEventArgs})"/>.
+    /// </summary>
     public void Enable()
     {
         if (CanSendMessages)
@@ -68,13 +113,15 @@ public class TcpSender
 
         _logger?.WriteLine("Starting up.", nameof(TcpSender));
         _managerTask.Start();
-        CanSendMessages = true;
 
-        //Subscribe to static events that will request data to be sent
+        //Subscribe to static events here
+        TestEvents.TestEvent1 += HandleSendingRequest;
+
+        CanSendMessages = true;
     }
 
     /// <summary>
-    /// Oczekuje na zakończenie działania wszystkich zadań wysyłania wiadomości oraz usuwa subskrybcje do statycznych wydarzeń innych klas.
+    /// Oczekuje na zakończenie działania wszystkich zadań wysyłania wiadomości oraz usuwa subskrybcje do wszystkich wydarzeń.
     /// </summary>
     public void Disable()
     {
@@ -84,7 +131,9 @@ public class TcpSender
         CanSendMessages = false;
         _logger?.WriteLine("Shutting down.", nameof(TcpSender));
 
-        //Unsubscribe from static events
+
+        //Unsubscribe from static events here
+        TestEvents.TestEvent1 -= HandleSendingRequest;
 
         //Send cancellation signal to tasks. First wait for manager task.
         _token.Cancel();
@@ -102,13 +151,13 @@ public class TcpSender
     /// <summary>
     /// Reaguje na inwokowane żądania. Tworzy i uruchamia dla nich nowy <see cref="Task"/>.
     /// </summary>
-    private void HandleSendingRequest(object sender, TcpSenderEventArgs e)
+    private void HandleSendingRequest(object? sender, TcpSenderEventArgs e)
     {
         if (!CanSendMessages)
             return;
 
-        _logger?.WriteLine($"{sender.GetType().Name} is requesting to send {e.Data.Length} byte(s) of data to {e.RecipientAddress}:{e.RecipientPort}.", nameof(TcpSender));
-        Task<bool> messageTask = SendMessageAsync(e.RecipientAddress, e.RecipientPort, e.Data);
+        _logger?.WriteLine($"{sender?.GetType().Name} is requesting to send {e.Data.Length} byte(s) of data to {e.RecipientAddress}:{e.RecipientPort}.", nameof(TcpSender));
+        var messageTask = new Task<bool>(() => SendMessageAsync(e.RecipientAddress, e.RecipientPort, e.Data).Result);
 
         _tasksSemaphore.Wait();
         _currentConnections.Add((messageTask, e, 0));
@@ -121,53 +170,47 @@ public class TcpSender
     /// Jeśli jakiś <see cref="Task"/> zakończył działanie, usuwa go z listy.<br/>
     /// Jeśli jego działanie nie zakończyło się powodzeniem, ponawia próbę.
     /// </summary>
-    private async Task ManageCurrentTasksAsync()
+    private void ManageCurrentTasks()
     {
-        while (_token.IsCancellationRequested)
+        //Search the current connections for tasks that are done and/or failed
+        _tasksSemaphore.Wait();
+        int completedTasks = 0;
+        int reattemptedTasks = 0;
+        int faultedTasks = 0;
+        for (int i = _currentConnections.Count - 1; i >= 0; i--)
         {
-            //Search the current connections for tasks that are done and/or failed
-            _tasksSemaphore.Wait();
-            int completedTasks = 0;
-            int reattemptedTasks = 0;
-            int faultedTasks = 0;
-            for (int i = _currentConnections.Count - 1; i >= 0; i--)
+            //Look only for tasks that are completed
+            if (!_currentConnections[i].Item1.IsCompleted)
+                continue;
+
+            //If it returned true, the task has done its job - it can be removed
+            if (_currentConnections[i].Item1.Result)
             {
-                //Look only for tasks that are completed
-                if (!_currentConnections[i].Item1.IsCompleted)
-                    continue;
-
-                //If it returned true, the task has done its job - it can be removed
-                if (_currentConnections[i].Item1.Result)
-                {
-                    _currentConnections.RemoveAt(i);
-                    completedTasks++;
-                }
-                //Otherwise, something went wrong. Set up a new entry on the list and try to send data again.
-                else if (!_currentConnections[i].Item1.Result && _currentConnections[i].Item3 < 3)
-                {
-                    _currentConnections[i].Item1.Dispose();
-                    var argsCopy = _currentConnections[i].Item2;
-                    int previousAttemps = _currentConnections[i].Item3;
-
-                    Task<bool> newTask = SendMessageAsync(argsCopy.RecipientAddress, argsCopy.RecipientPort, argsCopy.Data);
-                    _currentConnections[i] = new(newTask, argsCopy, previousAttemps + 1);
-                    newTask.Start();
-                    reattemptedTasks++;
-                }
-                //If this task failed 3 times already, just drop it.
-                else
-                {
-                    _logger?.WriteLine($"Aborting the send request to {_currentConnections[i].Item2.RecipientAddress}:{_currentConnections[i].Item2.RecipientPort}. Dropping {_currentConnections[i].Item2.Data.Length} bytes of data. Too many failed attempts.", nameof(TcpSender), Error);
-                    _currentConnections.RemoveAt(i);
-                    faultedTasks++;
-                }
+                _currentConnections.RemoveAt(i);
+                completedTasks++;
             }
-            _logger?.WriteLine($"Ran connections' task list routine. Completed: {completedTasks}, Reattempted: {reattemptedTasks}, Faulted: {faultedTasks}.", nameof(TcpSender));
-            _tasksSemaphore.Release();
+            //Otherwise, something went wrong. Set up a new entry on the list and try to send data again.
+            else if (!_currentConnections[i].Item1.Result && _currentConnections[i].Item3 < 3)
+            {
+                _currentConnections[i].Item1.Dispose();
+                var argsCopy = _currentConnections[i].Item2;
+                int previousAttemps = _currentConnections[i].Item3;
 
-            //Wait a bit until next check
-            await Task.Delay(1000);
+                Task<bool> newTask = new(() => SendMessageAsync(argsCopy.RecipientAddress, argsCopy.RecipientPort, argsCopy.Data).Result );
+                _currentConnections[i] = new(newTask, argsCopy, previousAttemps + 1);
+                newTask.Start();
+                reattemptedTasks++;
+            }
+            //If this task failed 3 times already, just drop it.
+            else
+            {
+                _logger?.WriteLine($"Aborting the send request to {_currentConnections[i].Item2.RecipientAddress}:{_currentConnections[i].Item2.RecipientPort}. Dropping {_currentConnections[i].Item2.Data.Length} bytes of data. Too many failed attempts.", nameof(TcpSender), Error);
+                _currentConnections.RemoveAt(i);
+                faultedTasks++;
+            }
         }
+        _logger?.WriteLine($"Ran connections' task list routine. Completed: {completedTasks}, Reattempted: {reattemptedTasks}, Faulted: {faultedTasks}.", nameof(TcpSender));
+        _tasksSemaphore.Release();
     }
 
     /// <summary>
@@ -184,6 +227,7 @@ public class TcpSender
         _connectionsInitialized++;
         _statsSemaphore.Release();
 
+        int? localServerPort = null;
         try
         {
             //Attempt to connect
@@ -191,11 +235,7 @@ public class TcpSender
             _logger?.WriteLine($"Attempting to connect to {recipientAddress}:{recipientPort}...", nameof(TcpSender));
             await client.ConnectAsync(recipientAddress, recipientPort, _token.Token);
             _logger?.WriteLine($"Established connection to {recipientAddress}:{recipientPort}.", nameof(TcpSender));
-
-            //If succesful, note the connection as the last client
-            _statsSemaphore.Wait();
-            _lastClient = new(recipientAddress, recipientPort, client.GetRemotePort(), message.Length);
-            _statsSemaphore.Release();
+            localServerPort = client.GetRemotePort();
 
             //Attempt to send data
             _logger?.WriteLine($"Attempting to send {message.Length} bytes of data...", nameof(TcpSender));
@@ -207,7 +247,6 @@ public class TcpSender
             wasSuccesful = true;
             _statsSemaphore.Wait();
             _connectionsSuccessfullyHandled++;
-            _lastClient.WasSuccesful = true;
             _statsSemaphore.Release();
         }
 
@@ -222,6 +261,12 @@ public class TcpSender
         catch (Exception ex) when (ex is IOException || ex is InvalidOperationException)
         {
             _logger?.WriteLine($"Failed to send data over to {recipientAddress}:{recipientPort}. {ex.Message}.", nameof(TcpSender), Warning);
+        }
+        finally
+        {
+            _statsSemaphore.Wait();
+            _lastClient = new(recipientAddress, recipientPort, localServerPort, message.Length, wasSuccesful);
+            _statsSemaphore.Release();
         }
 
         return wasSuccesful;
@@ -244,4 +289,10 @@ public class TcpSender
             _statsSemaphore.Release();
         }
     }
+
+    /// <summary>
+    /// Konwertuje podany tekst na ciąg bitów zakodowanych w systemie UTF8. Metoda przeciwna do <see cref="TcpReceiver.Decode(byte[])"/>.
+    /// </summary>
+    /// <param name="text">Tekst do zakodowania.</param>
+    public static byte[] Encode(string text) => Encoding.UTF8.GetBytes(text);
 }
