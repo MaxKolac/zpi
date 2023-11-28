@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using ZPIServer.EventArgs;
 
 namespace ZPIServer.Commands;
 
@@ -39,7 +38,7 @@ public class HelpCommand : Command
                 _logger?.WriteLine(GetAvailableCommands());
                 break;
         }
-        Invoke(this, new CommandEventArgs());
+        Invoke(this, System.EventArgs.Empty);
     }
 
     public override string GetHelp()

@@ -1,6 +1,4 @@
-﻿using ZPIServer.EventArgs;
-
-namespace ZPIServer.Commands;
+﻿namespace ZPIServer.Commands;
 
 public abstract class Command
 {
@@ -11,7 +9,7 @@ public abstract class Command
     public const string Shutdown = "shutdown";
     public const string Status = "status";
 
-    public static event EventHandler<CommandEventArgs>? OnExecuted;
+    public static event EventHandler<System.EventArgs>? OnExecuted;
 
     protected Command(Logger? logger)
     {
@@ -24,5 +22,5 @@ public abstract class Command
 
     public abstract void SetArguments(params string[]? arguments);
 
-    protected void Invoke(object? sender, CommandEventArgs e) => OnExecuted?.Invoke(sender, e);
+    protected void Invoke(object? sender, System.EventArgs e) => OnExecuted?.Invoke(sender, e);
 }

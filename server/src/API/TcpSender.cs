@@ -116,7 +116,7 @@ public class TcpSender
 
         //Subscribe to static events here
         TestEvents.TestEvent1 += HandleSendingRequest;
-        PingCommand.OnJsonMessageSendRequest += HandleSendingRequest;
+        Command.OnExecuted += HandleSendingRequest;
 
         CanSendMessages = true;
     }
@@ -135,7 +135,7 @@ public class TcpSender
 
         //Unsubscribe from static events here
         TestEvents.TestEvent1 -= HandleSendingRequest;
-        PingCommand.OnJsonMessageSendRequest -= HandleSendingRequest;
+        Command.OnExecuted -= HandleSendingRequest;
 
         //Send cancellation signal to tasks. First wait for manager task.
         _token.Cancel();
@@ -153,16 +153,19 @@ public class TcpSender
     /// <summary>
     /// Reaguje na inwokowane żądania. Tworzy i uruchamia dla nich nowy <see cref="Task"/>.
     /// </summary>
-    private void HandleSendingRequest(object? sender, TcpSenderEventArgs e)
+    private void HandleSendingRequest(object? sender, System.EventArgs e)
     {
         if (!CanSendMessages)
             return;
 
-        _logger?.WriteLine($"{sender?.GetType().Name} is requesting to send {e.Data.Length} byte(s) of data to {e.RecipientAddress}:{e.RecipientPort}.", nameof(TcpSender));
-        var messageTask = new Task<bool>(() => SendMessageAsync(e.RecipientAddress, e.RecipientPort, e.Data).Result);
+        if (e is not TcpSenderEventArgs args)
+            return;
+
+        _logger?.WriteLine($"{sender?.GetType().Name} is requesting to send {args.Data.Length} byte(s) of data to {args.RecipientAddress}:{args.RecipientPort}.", nameof(TcpSender));
+        var messageTask = new Task<bool>(() => SendMessageAsync(args.RecipientAddress, args.RecipientPort, args.Data).Result);
 
         _tasksSemaphore.Wait();
-        _currentConnections.Add((messageTask, e, 0));
+        _currentConnections.Add((messageTask, args, 0));
         messageTask.Start();
         _tasksSemaphore.Release();
     }
@@ -186,7 +189,7 @@ public class TcpSender
 
         int completedTasks = 0;
         int reattemptedTasks = 0;
-        int faultedTasks = 0;        
+        int faultedTasks = 0;
         for (int i = _currentConnections.Count - 1; i >= 0; i--)
         {
             //Look only for tasks that are completed
@@ -206,7 +209,7 @@ public class TcpSender
                 var argsCopy = _currentConnections[i].Item2;
                 int previousAttemps = _currentConnections[i].Item3;
 
-                Task<bool> newTask = new(() => SendMessageAsync(argsCopy.RecipientAddress, argsCopy.RecipientPort, argsCopy.Data).Result );
+                Task<bool> newTask = new(() => SendMessageAsync(argsCopy.RecipientAddress, argsCopy.RecipientPort, argsCopy.Data).Result);
                 _currentConnections[i] = new(newTask, argsCopy, previousAttemps + 1);
                 newTask.Start();
                 reattemptedTasks++;
@@ -282,7 +285,7 @@ public class TcpSender
         return wasSuccesful;
     }
 
-    private void ShowStatus(object? sender, CommandEventArgs e)
+    private void ShowStatus(object? sender, System.EventArgs e)
     {
         if (sender is StatusCommand command && command.ClassArgument == StatusCommand.TcpSenderArgument)
         {

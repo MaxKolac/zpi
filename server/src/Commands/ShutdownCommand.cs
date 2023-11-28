@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using ZPIServer.EventArgs;
 
 namespace ZPIServer.Commands;
 
@@ -11,7 +10,7 @@ public class ShutdownCommand : Command
 
     public override void Execute()
     {
-        Invoke(this, new CommandEventArgs());
+        Invoke(this, System.EventArgs.Empty);
     }
 
     public override string GetHelp()

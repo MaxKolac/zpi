@@ -14,8 +14,6 @@ public class PingCommand : Command
     public const string IcmpArgument = "icmp";
     public const string CdmJsonArgument = "cdm";
 
-    public static event EventHandler<TcpSenderEventArgs>?OnJsonMessageSendRequest;
-
     public string? FirstArg { get; private set; }
     public IPAddress? SecondArg { get; private set; }
     public int? ThirdArg { get; private set; }
@@ -67,16 +65,16 @@ public class PingCommand : Command
                 var payload = API.TcpSender.Encode(json);
                 var args = new TcpSenderEventArgs(SecondArg, (int)ThirdArg, payload);
 
-                _logger?.WriteLine($"Attempting to send an example CameraDataMessage ({payload.Length} bytes) as Json to {SecondArg}:{ThirdArg}."); 
+                _logger?.WriteLine($"Attempting to send an example CameraDataMessage ({payload.Length} bytes) as Json to {SecondArg}:{ThirdArg}.");
                 _logger?.WriteLine($"Message contents: {testMessage}.");
-                OnJsonMessageSendRequest?.Invoke(this, args);
+                Invoke(this, args);
                 break;
             default:
                 _logger?.WriteLine("Unrecognized argument.");
                 _logger?.WriteLine(GetHelp());
                 break;
         }
-        Invoke(this, new CommandEventArgs());
+        Invoke(this, System.EventArgs.Empty);
     }
 
     public override string GetHelp()

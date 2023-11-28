@@ -138,7 +138,7 @@ public class SignalTranslator
         }
     }
 
-    private void ShowStatus(object? sender, CommandEventArgs e)
+    private void ShowStatus(object? sender, System.EventArgs e)
     {
         if (sender is StatusCommand command && command.ClassArgument == StatusCommand.SignalTranslatorArgument)
         {

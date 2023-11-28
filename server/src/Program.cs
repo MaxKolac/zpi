@@ -2,7 +2,6 @@
 using System.Net;
 using ZPIServer.API;
 using ZPIServer.Commands;
-using ZPIServer.EventArgs;
 
 namespace ZPIServer
 {
@@ -30,7 +29,7 @@ namespace ZPIServer
             return 0;
         }
 
-        private static void OnCommandExecuted(object? sender, CommandEventArgs e)
+        private static void OnCommandExecuted(object? sender, System.EventArgs e)
         {
             if (sender is not null && sender is ShutdownCommand)
                 serverLifetimeToken.Cancel();

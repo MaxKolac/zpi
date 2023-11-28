@@ -254,7 +254,7 @@ public class DbCommand : Command
                 _logger?.WriteLine(GetHelp());
                 break;
         }
-        Invoke(this, new EventArgs.CommandEventArgs());
+        Invoke(this, System.EventArgs.Empty);
     }
 
     public override string GetHelp()
