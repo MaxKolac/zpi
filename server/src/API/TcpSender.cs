@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
 using ZPIServer.Commands;
@@ -161,13 +162,44 @@ public class TcpSender
         if (e is not TcpSenderEventArgs args)
             return;
 
-        _logger?.WriteLine($"{sender?.GetType().Name} is requesting to send {args.Data.Length} byte(s) of data to {args.RecipientAddress}:{args.RecipientPort}.", nameof(TcpSender));
-        var messageTask = new Task<bool>(() => SendMessageAsync(args.RecipientAddress, args.RecipientPort, args.Data).Result);
+        if (sender is PingCommand command && command.FirstArg == PingCommand.IcmpArgument)
+        {
+            //Handling for PingCommand's `ping icmp`
+            _logger?.WriteLine($"{sender?.GetType().Name} is requesting an ICMP ping to {command.SecondArg?.MapToIPv4()}.", nameof(TcpSender));
+            Task.Run(() => SendICMPMessage(command.SecondArg!.MapToIPv4(), 4));
+        }
+        else
+        {
+            _logger?.WriteLine($"{sender?.GetType().Name} is requesting to send {args.Data.Length} byte(s) of data to {args.RecipientAddress}:{args.RecipientPort}.", nameof(TcpSender));
+            var messageTask = new Task<bool>(() => SendMessageAsync(args.RecipientAddress, args.RecipientPort, args.Data).Result);
 
-        _tasksSemaphore.Wait();
-        _currentConnections.Add((messageTask, args, 0));
-        messageTask.Start();
-        _tasksSemaphore.Release();
+            _tasksSemaphore.Wait();
+            _currentConnections.Add((messageTask, args, 0));
+            messageTask.Start();
+            _tasksSemaphore.Release();
+        }
+    }
+
+    /// <summary>
+    /// Wysyła wiadomości ping protokołem ICMP i wypisuje odpowiedź.
+    /// </summary>
+    /// <param name="address">Adres IP do zpingowania.</param>
+    /// <param name="attempts">Liczba prób.</param>
+    private async Task SendICMPMessage(IPAddress address, int attempts)
+    {
+        for (int i = 0; i < attempts && !_token.IsCancellationRequested; i++)
+        {
+            _logger?.WriteLine($"[{i + 1}/{attempts}] Pinging {address}...", nameof(TcpSender));
+            try
+            {
+                var reply = await new Ping().SendPingAsync(address);
+                _logger?.WriteLine($"[{i + 1}/{attempts}] Received a reply from {reply.Address} in {reply.RoundtripTime} ms - {reply.Status}", nameof(TcpSender), reply.Status == 0 ? Normal : Warning);
+            }
+            catch (Exception ex) when (ex is PingException || ex is SocketException)
+            {
+                _logger?.WriteLine($"[{i + 1}/{attempts}] Failed to send a ping message to {address} - {ex.Message}", nameof(TcpSender), Error);
+            }
+        }
     }
 
     /// <summary>
@@ -187,6 +219,7 @@ public class TcpSender
             return;
         }
 
+        int runningTasks = 0;
         int completedTasks = 0;
         int reattemptedTasks = 0;
         int faultedTasks = 0;
@@ -194,7 +227,10 @@ public class TcpSender
         {
             //Look only for tasks that are completed
             if (!_currentConnections[i].Item1.IsCompleted)
+            {
+                runningTasks++;
                 continue;
+            }
 
             //If it returned true, the task has done its job - it can be removed
             if (_currentConnections[i].Item1.Result)
@@ -222,7 +258,8 @@ public class TcpSender
                 faultedTasks++;
             }
         }
-        _logger?.WriteLine($"Ran connections' task list routine. Completed: {completedTasks}, Reattempted: {reattemptedTasks}, Faulted: {faultedTasks}.", nameof(TcpSender));
+        if (completedTasks > 0 || reattemptedTasks > 0 || faultedTasks > 0)
+            _logger?.WriteLine($"Ran connections' task list routine. Running: {runningTasks}, Completed: {completedTasks}, Reattempted: {reattemptedTasks}, Faulted: {faultedTasks}.", nameof(TcpSender));
         _tasksSemaphore.Release();
     }
 

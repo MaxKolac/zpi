@@ -32,28 +32,14 @@ public class PingCommand : Command
                 break;
             case IcmpArgument:
                 if (SecondArg is null)
-                {
-                    _logger?.WriteLine("Invalid IP address.");
                     break;
-                }
-                else if (ThirdArg is null)
-                {
-                    _logger?.WriteLine("Invalid port number.");
-                    break;
-                }
 
+                var pingTargetArgs = new TcpSenderEventArgs(SecondArg, 0, Array.Empty<byte>());
+                Invoke(this, pingTargetArgs);
                 break;
             case CdmJsonArgument:
-                if (SecondArg is null)
-                {
-                    _logger?.WriteLine("Invalid IP address.");
+                if (SecondArg is null || ThirdArg is null)
                     break;
-                }
-                if (ThirdArg is null)
-                {
-                    _logger?.WriteLine("Invalid port number.");
-                    break;
-                }
 
                 var testMessage = new CameraDataMessage()
                 {
