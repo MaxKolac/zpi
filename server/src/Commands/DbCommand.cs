@@ -87,7 +87,8 @@ public class DbCommand : Command
                             {
                                 Name = "Kamera 1 - Optrix Model 123A",
                                 Type = HostType.CameraSimulator,
-                                Address = IPAddress.Parse("1.2.3.4"),
+                                Address = IPAddress.Parse("127.0.0.1"),
+                                Port = 12000,
                                 Sector = sectorB,
                                 LastKnownStatus = DeviceStatus.OK,
                                 LastKnownTemperature = 24.3m,
@@ -99,6 +100,7 @@ public class DbCommand : Command
                                 Name = "Kamera 2 - Optrix Model 123A",
                                 Type = HostType.CameraSimulator,
                                 Address = IPAddress.Parse("1.2.3.5"),
+                                Port = 12000,
                                 Sector = sectorA,
                                 LastKnownStatus = DeviceStatus.LowPower,
                                 LastKnownTemperature = 5.2m,
@@ -110,6 +112,7 @@ public class DbCommand : Command
                                 Name = "Kamera 3 - Optrix Model 123B",
                                 Type = HostType.CameraSimulator,
                                 Address = IPAddress.Parse("1.2.3.6"),
+                                Port = 12000,
                                 Sector = sectorC,
                                 LastKnownStatus = DeviceStatus.Unresponsive,
                                 LastKnownTemperature = 1526.2m,
@@ -120,13 +123,15 @@ public class DbCommand : Command
                             {
                                 Name = "Operator Nadleśnictwa",
                                 Type = HostType.User,
-                                Address = IPAddress.Parse("1.2.3.2")
+                                Address = IPAddress.Parse("1.2.3.2"),
+                                Port = 12000
                             };
                             HostDevice user2 = new()
                             {
                                 Name = "Operator KWPSP",
                                 Type = HostType.User,
-                                Address = IPAddress.Parse("1.2.3.3")
+                                Address = IPAddress.Parse("1.2.3.3"),
+                                Port = 12000
                             };
                             context.Sectors.Add(sectorA);
                             context.Sectors.Add(sectorB);

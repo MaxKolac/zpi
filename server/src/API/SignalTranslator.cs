@@ -75,6 +75,7 @@ public class SignalTranslator
         {
             Name = "Unknown",
             Address = e.SenderIp,
+            Port = e.SenderPort,
             Type = HostType.Unknown,
             LastKnownStatus = DeviceStatus.Unknown
         };

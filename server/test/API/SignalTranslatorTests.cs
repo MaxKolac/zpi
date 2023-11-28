@@ -36,6 +36,7 @@ public class SignalTranslatorTests
         {
             Name = "test",
             Address = IPAddress.Parse("127.0.0.1"),
+            Port = 25565,
             Type = typeToAdd
         };
         context.HostDevices.Add(hostDevice);
