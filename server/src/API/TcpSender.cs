@@ -174,9 +174,17 @@ public class TcpSender
     {
         //Search the current connections for tasks that are done and/or failed
         _tasksSemaphore.Wait();
+
+        //If there's no tasks to manage, just skip this check
+        if (_currentConnections.Count == 0)
+        {
+            _tasksSemaphore.Release();
+            return;
+        }
+
         int completedTasks = 0;
         int reattemptedTasks = 0;
-        int faultedTasks = 0;
+        int faultedTasks = 0;        
         for (int i = _currentConnections.Count - 1; i >= 0; i--)
         {
             //Look only for tasks that are completed
