@@ -34,7 +34,7 @@ public static partial class Extensions
     {
         return (listener.Client.RemoteEndPoint as IPEndPoint)!.Port;
     }
-    
+
     /// <summary>
     /// Gets the IP address of the connected <see cref="TcpClient"/>.
     /// </summary>

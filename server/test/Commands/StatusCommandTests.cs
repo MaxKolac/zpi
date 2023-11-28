@@ -1,5 +1,4 @@
 ﻿using ZPIServer.Commands;
-using ZPIServer.EventArgs;
 
 namespace ZPIServerTests.Commands;
 

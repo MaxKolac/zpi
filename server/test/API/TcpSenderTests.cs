@@ -1,5 +1,4 @@
 ﻿using System.Net;
-using System.Net.Sockets;
 using System.Text;
 using ZPIServer.API;
 using ZPIServer.EventArgs;
@@ -9,7 +8,7 @@ namespace ZPIServerTests.API;
 public class TcpSenderTests
 {
     [Fact]
-    public static async void CheckEnableMethod() 
+    public static async void CheckEnableMethod()
     {
         var sender = new TcpSender();
         TcpSender.TestEvents.InvokeEvent1(null, TcpSenderEventArgs.Empty);
@@ -153,7 +152,7 @@ public class TcpSenderTests
         TcpSender.TestEvents.InvokeEvent1(null, args1);
         TcpSender.TestEvents.InvokeEvent1(null, args2);
         TcpSender.TestEvents.InvokeEvent1(null, args3);
-        await Task.Delay(500); 
+        await Task.Delay(500);
         Assert.Equal(6, sender.ConnectionsInitialized);
         Assert.Equal(6, sender.ConnectionsHandled);
         Assert.Contains(sentMessage1, receivedMessage);

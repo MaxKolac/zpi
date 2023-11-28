@@ -15,7 +15,7 @@ public class TcpSenderEventArgs : System.EventArgs
     /// <summary>
     /// Surowy ciąg bitów do wysłania.
     /// </summary>
-    public byte[] Data {  get; private set; }
+    public byte[] Data { get; private set; }
 
     public static new TcpSenderEventArgs Empty => new(IPAddress.Any, 0, new byte[1]);
 
