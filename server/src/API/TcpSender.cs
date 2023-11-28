@@ -116,6 +116,7 @@ public class TcpSender
 
         //Subscribe to static events here
         TestEvents.TestEvent1 += HandleSendingRequest;
+        PingCommand.OnJsonMessageSendRequest += HandleSendingRequest;
 
         CanSendMessages = true;
     }
@@ -134,6 +135,7 @@ public class TcpSender
 
         //Unsubscribe from static events here
         TestEvents.TestEvent1 -= HandleSendingRequest;
+        PingCommand.OnJsonMessageSendRequest -= HandleSendingRequest;
 
         //Send cancellation signal to tasks. First wait for manager task.
         _token.Cancel();

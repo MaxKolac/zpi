@@ -24,6 +24,9 @@ public class HelpCommand : Command
             case Help:
                 _logger?.WriteLine(GetHelp());
                 break;
+            case Ping:
+                _logger?.WriteLine(new PingCommand(_logger).GetHelp());
+                break;
             case Shutdown:
                 _logger?.WriteLine(new ShutdownCommand(_logger).GetHelp());
                 break;
@@ -70,6 +73,7 @@ public class HelpCommand : Command
         var builder = new StringBuilder();
         builder.AppendLine($"{Db} [{DbCommand.ListAllArgument}]");
         builder.AppendLine($"{Help} [command]");
+        builder.AppendLine($"{Ping} [{PingCommand.IcmpArgument}/{PingCommand.CdmJsonArgument}] [address] [port]");
         builder.AppendLine($"{Shutdown}");
         builder.AppendLine($"{Status} [{StatusCommand.SignalTranslatorArgument}/{StatusCommand.TcpReceiverArgument}/{StatusCommand.TcpSenderArgument}]");
         return builder.ToString();

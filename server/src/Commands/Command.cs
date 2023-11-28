@@ -7,6 +7,7 @@ public abstract class Command
     protected readonly Logger? _logger;
     public const string Db = "db";
     public const string Help = "help";
+    public const string Ping = "ping";
     public const string Shutdown = "shutdown";
     public const string Status = "status";
 
