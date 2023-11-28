@@ -17,6 +17,8 @@ public class TcpSenderEventArgs : System.EventArgs
     /// </summary>
     public byte[] Data {  get; private set; }
 
+    public static new TcpSenderEventArgs Empty => new(IPAddress.Any, 0, new byte[1]);
+
     public TcpSenderEventArgs(IPAddress recipientIp, int recipientPort, byte[] data)
     {
         RecipientAddress = recipientIp;
