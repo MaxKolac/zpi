@@ -59,7 +59,7 @@ public class SignalTranslatorTests
 
         //Prepare to send the signal
         var handler = new TcpReceiver(IPAddress.Loopback, 25565);
-        handler.BeginListening();
+        handler.Enable();
         var translator = new SignalTranslator();
         translator.BeginTranslating();
 
@@ -101,7 +101,7 @@ public class SignalTranslatorTests
         //Turn things off
         TcpReceiver.OnSignalReceived -= eventHandler;
         translator.StopTranslating();
-        handler.StopListening();
+        handler.Disable();
     }
 
     [Theory]
@@ -112,7 +112,7 @@ public class SignalTranslatorTests
 
         //Prepare to send the signal
         var handler = new TcpReceiver(IPAddress.Loopback, 25565);
-        handler.BeginListening();
+        handler.Enable();
         var translator = new SignalTranslator();
         translator.BeginTranslating();
 
@@ -145,7 +145,7 @@ public class SignalTranslatorTests
         //Turn things off
         TcpReceiver.OnSignalReceived -= eventHandler;
         translator.StopTranslating();
-        handler.StopListening();
+        handler.Disable();
     }
 
     public static IEnumerable<object?[]> GetInvalidMessage_CameraSimulator()

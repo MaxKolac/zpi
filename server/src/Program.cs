@@ -57,7 +57,7 @@ namespace ZPIServer
 
             //Server initialization
             tcpReceiver = new TcpReceiver(Settings.ServerAddress, Settings.TcpReceiverPorts, logger);
-            tcpReceiver.BeginListening();
+            tcpReceiver.Enable();
             tcpSender = new TcpSender(logger);
             tcpSender.Enable();
             signalTranslator = new SignalTranslator(logger);
@@ -77,7 +77,7 @@ namespace ZPIServer
 
             signalTranslator?.StopTranslating();
             tcpSender?.Disable();
-            tcpReceiver?.StopListening();
+            tcpReceiver?.Disable();
             logger?.Stop();
         }
     }

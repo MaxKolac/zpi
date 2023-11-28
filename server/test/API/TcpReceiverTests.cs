@@ -14,10 +14,10 @@ public class TcpReceiverTests
     {
         var handler = new TcpReceiver(IPAddress.Parse("127.0.0.1"), 25565);
 
-        handler.BeginListening();
+        handler.Enable();
         Assert.True(handler.IsListening);
 
-        handler.StopListening();
+        handler.Disable();
         Assert.False(handler.IsListening);
     }
 
@@ -45,11 +45,11 @@ public class TcpReceiverTests
         var portOccupant = new TcpListener(address, 12345);
         portOccupant.Start();
         var handler = new TcpReceiver(address, ports);
-        handler.BeginListening();
+        handler.Enable();
 
         Assert.Equal(ports.Length - 1, handler.ActiveListenersCount());
         portOccupant.Stop();
-        handler.StopListening();
+        handler.Disable();
     }
 
     [Fact]
@@ -63,7 +63,7 @@ public class TcpReceiverTests
 
         Assert.Throws<IOException>(() =>
         {
-            handler.BeginListening();
+            handler.Enable();
         });
     }
 
@@ -71,7 +71,7 @@ public class TcpReceiverTests
     public static async Task CheckMessagesAreComingThrough()
     {
         var handler = new TcpReceiver(IPAddress.Parse("127.0.0.1"), 25565);
-        handler.BeginListening();
+        handler.Enable();
         string messageToSend = "Hello World!";
 
         int timesInvoked = 0;
@@ -100,7 +100,7 @@ public class TcpReceiverTests
             await Task.Delay(100);
             TcpReceiver.OnSignalReceived -= eventHandler;
         }
-        handler.StopListening();
+        handler.Disable();
         string receivedMessage = Encoding.UTF8.GetString(receivedBytes).TrimEnd('\0');
 
         Assert.Equal(IPAddress.Parse("127.0.0.1"), senderIp);
@@ -122,7 +122,7 @@ public class TcpReceiverTests
 
         //Create TcpReceiver
         var handler = new TcpReceiver(address, ports);
-        handler.BeginListening();
+        handler.Enable();
 
         //Create one TcpClient per handler's port and connect them to the server
         var clientMocks = new TcpClient[ports.Length];
@@ -181,7 +181,7 @@ public class TcpReceiverTests
     public static void CheckPortsAreOccupied(int[] ports)
     {
         var handler = new TcpReceiver(IPAddress.Parse("127.0.0.1"), ports);
-        handler.BeginListening();
+        handler.Enable();
 
         List<int> listeningPorts = GetCurrentlyListeningTcpPorts();
         foreach (var port in ports)
@@ -195,7 +195,7 @@ public class TcpReceiverTests
             Assert.Equal(ports.Length, handler.ListenersCount);
         }
 
-        handler.StopListening();
+        handler.Disable();
         listeningPorts = GetCurrentlyListeningTcpPorts();
         foreach (var port in ports)
         {
@@ -209,6 +209,19 @@ public class TcpReceiverTests
             anotherListener.Start();
             anotherListener.Stop();
         }
+    }
+
+    [Theory]
+    [InlineData("bruh")]
+    [InlineData("bruh2")]
+    [InlineData("bruh2     4")]
+    [InlineData("9+10=21")]
+    [InlineData("u stupid")]
+    public static void CheckEncoding(string json)
+    {
+        byte[] buffer = Encoding.UTF8.GetBytes(json);
+        string decodedMessage = TcpReceiver.Decode(buffer);
+        Assert.Equal(json, decodedMessage);
     }
 
     private static List<int> GetCurrentlyListeningTcpPorts()

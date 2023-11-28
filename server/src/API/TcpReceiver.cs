@@ -1,15 +1,15 @@
 ﻿using System.Net;
 using System.Net.Sockets;
+using System.Text;
 using ZPIServer.Commands;
 using ZPIServer.EventArgs;
 
 namespace ZPIServer.API;
 
 /// <summary>
-/// Pierwsza warstwa komunikacji serwera z jego klientami, w tym kamerami i użytkownikami.<br/>
-/// Nasłuchuje na porty ustawione w <see cref="Settings.TcpListeningPorts"/> i przekazuje wszelkie odebrane dane jako surowe ciągi bitów. W przypadku odebrania takiego ciągu, inwokuje wydarznie <see cref="OnSignalReceived"/>. Nasłuch włącza metoda <see cref="BeginListening"/>, a kończy <see cref="StopListening"/>.<br/>
+/// Nasłuchuje na porty ustawione w <see cref="Settings.TcpListeningPorts"/> i przekazuje wszelkie odebrane dane jako surowe ciągi bitów. W przypadku odebrania takiego ciągu, inwokuje wydarznie <see cref="OnSignalReceived"/>. Nasłuch włącza metoda <see cref="Enable"/>, a kończy <see cref="Disable"/>.<br/>
 /// <br/>
-/// <see cref="TcpReceiver"/> pobiera zestaw portów do nasłuchiwania tylko w momencie gdy rozpoczyna nasłuch. Aby wszelkie zmiany w <see cref="Settings.TcpListeningPorts"/> były uwzględnione w już działającym <see cref="TcpReceiver"/>, należy go najpierw zatrzymać i uruchomić ponownie.
+/// <see cref="TcpReceiver"/> pobiera zestaw portów do nasłuchiwania tylko w momencie gdy jest tworzony. Aby wszelkie zmiany w <see cref="Settings.TcpListeningPorts"/> były uwzględnione w już działającym <see cref="TcpReceiver"/>, wymagane jest utworzenie nowej instancji.
 /// <para>
 /// Użyteczne linki:
 /// <see href="https://www.youtube.com/watch?v=TAGoid4u6PY">Mastering TCPListener in C#: Building Network Applications from Scratch</see>, 
@@ -102,14 +102,14 @@ public class TcpReceiver
     ~TcpReceiver()
     {
         Command.OnExecuted -= ShowStatus;
-        StopListening();
+        Disable();
     }
 
     /// <summary>
-    /// Pobiera obecną wartość <see cref="Settings.TcpListeningPorts"/> i rozpoczyna nasłuch na podanych portach. Jeżeli jeden z portów okaże się być zajętym, <see cref="TcpReceiver"/> kontynuuje pracę bez nasłuchu na danym porcie i informuje o tym fakcie w <see cref="Logger"/>ze.<br/>
-    /// Jeżeli wszystkie porty jakie zostały pobrane okażą się zajęte, wyjątek <see cref="IOException"/> jest rzucony.
+    /// Rozpoczyna nasłuch na podanych wcześniej portach. Jeżeli jeden z portów okaże się być zajętym, <see cref="TcpReceiver"/> kontynuuje pracę bez nasłuchu na danym porcie i informuje o tym fakcie w <see cref="Logger"/>ze.<br/>
+    /// Jeżeli wszystkie porty jakie zostały pobrane okażą się zajęte, rzuci wyjątkiem <see cref="IOException"/>.
     /// </summary>
-    public void BeginListening()
+    public void Enable()
     {
         if (IsListening)
             return;
@@ -143,7 +143,7 @@ public class TcpReceiver
     /// <summary>
     /// Kończy nasłuch na zajętych portach.
     /// </summary>
-    public void StopListening()
+    public void Disable()
     {
         if (!IsListening)
             return;
@@ -162,6 +162,9 @@ public class TcpReceiver
         IsListening = false;
     }
 
+    /// <summary>
+    /// Obsługuje połączenia przychodzące na jednym obiekcie <see cref="TcpListener"/>.
+    /// </summary>
     private async Task HandleConnectionAsync(TcpListener listener)
     {
         _logger?.WriteLine($"Ready to accept connection on port {listener.GetLocalPort()}.", nameof(TcpReceiver));
@@ -247,4 +250,10 @@ public class TcpReceiver
             }
         }
     }
+
+    /// <summary>
+    /// Konwertuje podany ciąg bitów zakodowanych w systemie UTF8 na tekst. Metoda przeciwna do <see cref="TcpSender.Encode(string)"/>.
+    /// </summary>
+    /// <param name="text">Tekst do odkodowania.</param>
+    public static string Decode(byte[] message) => Encoding.UTF8.GetString(message);
 }
