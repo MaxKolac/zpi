@@ -5,19 +5,31 @@ using System.Text.Json.Serialization;
 using static System.Windows.Forms.Design.AxImporter;
 using System.Diagnostics;
 using System.Drawing.Printing;
+using ZPICommunicationModels;
+using ZPICommunicationModels.Messages;
+using ZPICommunicationModels.Models;
+using System.Net.Sockets;
 
 namespace ZPIClient
 {
     public partial class FormMain : Form
     {
+        //Path settings
         private string jsonPath = "../../../sensors/sensorData.json";
+        private string ipAddress = "127.0.0.1";
+        private int port = 25566;
+        private TcpClient tcpClient;
+        private JsonSerializerOptions options = new JsonSerializerOptions();
+
+        //Sensor variables
         private List<Sensor> sensorList = new List<Sensor>();
         private int currentSensorIndex = -1;
-        private JsonSerializerOptions options = new JsonSerializerOptions();
+
+        //Timer settings
         private int timerInterval = 30, timerElapsedTime = 30;
+
+        //Debug
         private bool debug = false;
-
-
 
         //Dynamic objects
         TableLayoutPanel[] panelSensorContainer;
@@ -35,6 +47,7 @@ namespace ZPIClient
         {
             //Initialize
             InitializeComponent();
+            connectToServer();
             initializeOptions();
             initializeSensors();
             initializeListFormControls();
@@ -43,7 +56,6 @@ namespace ZPIClient
             updateAll();
             timerRefresh.Start();
         }
-
         private void updateSensors()
         {
             List<Sensor> dataSet = readJSON();
@@ -64,11 +76,6 @@ namespace ZPIClient
             List<Sensor> sensors = JsonSerializer.Deserialize<List<Sensor>>(json, options);
             return sensors;
         }
-        private void updateAll() //Updates all controls to match current data. Does not change data itself.
-        {
-            updateColors();
-            updateStateCounts();
-        }
         #region Timer Functions
         private void timerRefresh_Tick(object sender, EventArgs e)
         {
@@ -79,7 +86,7 @@ namespace ZPIClient
             }
             else
             {
-                timerElapsedTime = timerInterval-1;
+                timerElapsedTime = timerInterval - 1;
                 updateSensors();
             }
             if (currentSensorIndex != -1)
@@ -445,6 +452,32 @@ namespace ZPIClient
             labelMapStateCount3.Text = stateCounts[2].ToString();
             labelMapStateCount4.Text = stateCounts[3].ToString();
 
+        }
+        private void updateAll() //Updates all controls to match current data. Does not change data itself.
+        {
+            updateColors();
+            updateStateCounts();
+        }
+        private void FormMain_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if(tcpClient != null)
+            {
+                tcpClient.Close();
+            }
+        }
+        #endregion
+        #region Server Connection
+        private void connectToServer()
+        {
+            try
+            {
+                tcpClient = new TcpClient();
+                tcpClient.Connect(ipAddress, port);
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show("Nie uda³o siê nawi¹zaæ po³¹czenia z serwerem (IP: "+ipAddress+", Port: "+port+").", "B³¹d po³¹czenia", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+            }
         }
         #endregion
         #region Debug

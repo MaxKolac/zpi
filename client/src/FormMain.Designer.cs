@@ -567,6 +567,7 @@
             MaximizeBox = false;
             Name = "FormMain";
             Text = "ZPI";
+            FormClosing += FormMain_FormClosing;
             panelNavigation.ResumeLayout(false);
             panelInfo.ResumeLayout(false);
             panelCamera.ResumeLayout(false);
