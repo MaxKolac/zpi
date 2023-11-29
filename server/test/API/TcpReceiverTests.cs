@@ -7,17 +7,17 @@ using ZPIServer.EventArgs;
 
 namespace ZPIServerTests.API;
 
-public class TcpHandlerTests
+public class TcpReceiverTests
 {
     [Fact]
     public static void CheckIsListening()
     {
-        var handler = new TcpHandler(IPAddress.Parse("127.0.0.1"), 25565);
+        var handler = new TcpReceiver(IPAddress.Parse("127.0.0.1"), 25565);
 
-        handler.BeginListening();
+        handler.Enable();
         Assert.True(handler.IsListening);
 
-        handler.StopListening();
+        handler.Disable();
         Assert.False(handler.IsListening);
     }
 
@@ -32,7 +32,7 @@ public class TcpHandlerTests
         IPAddress address = IPAddress.Parse("127.0.0.1");
         Assert.Throws<ArgumentException>(() =>
         {
-            var handler = new TcpHandler(address, ports);
+            var handler = new TcpReceiver(address, ports);
         });
     }
 
@@ -44,12 +44,12 @@ public class TcpHandlerTests
         IPAddress address = IPAddress.Parse("127.0.0.1");
         var portOccupant = new TcpListener(address, 12345);
         portOccupant.Start();
-        var handler = new TcpHandler(address, ports);
-        handler.BeginListening();
+        var handler = new TcpReceiver(address, ports);
+        handler.Enable();
 
         Assert.Equal(ports.Length - 1, handler.ActiveListenersCount());
         portOccupant.Stop();
-        handler.StopListening();
+        handler.Disable();
     }
 
     [Fact]
@@ -59,20 +59,19 @@ public class TcpHandlerTests
         IPAddress address = IPAddress.Parse("127.0.0.1");
         var portOccupant = new TcpListener(address, samePort);
         portOccupant.Start();
-        var handler = new TcpHandler(address, samePort);
+        var handler = new TcpReceiver(address, samePort);
 
         Assert.Throws<IOException>(() =>
         {
-            handler.BeginListening();
+            handler.Enable();
         });
     }
 
-    //Ten test działa tylko w DebugMode (nie wiem czemu??)
     [Fact]
-    public static void CheckMessagesAreComingThrough()
+    public static async Task CheckMessagesAreComingThrough()
     {
-        var handler = new TcpHandler(IPAddress.Parse("127.0.0.1"), 25565);
-        handler.BeginListening();
+        var handler = new TcpReceiver(IPAddress.Parse("127.0.0.1"), 25565);
+        handler.Enable();
         string messageToSend = "Hello World!";
 
         int timesInvoked = 0;
@@ -85,22 +84,23 @@ public class TcpHandlerTests
         {
             clientMock.Connect(IPAddress.Parse("127.0.0.1"), 25565);
             localClientPort = ((IPEndPoint)clientMock.Client.LocalEndPoint!).Port;
-            EventHandler<TcpHandlerEventArgs> eventHandler = (sender, e) =>
+            EventHandler<TcpReceiverEventArgs> eventHandler = (sender, e) =>
             {
                 receivedBytes = e.Data;
                 senderIp = e.SenderIp;
                 senderPort = e.SenderPort;
                 timesInvoked++;
             };
-            TcpHandler.OnSignalReceived += eventHandler;
+            TcpReceiver.OnSignalReceived += eventHandler;
             using (var stream = clientMock.GetStream())
             {
                 byte[] message = Encoding.UTF8.GetBytes(messageToSend);
                 stream.Write(message, 0, message.Length);
             }
-            TcpHandler.OnSignalReceived -= eventHandler;
+            await Task.Delay(100);
+            TcpReceiver.OnSignalReceived -= eventHandler;
         }
-        handler.StopListening();
+        handler.Disable();
         string receivedMessage = Encoding.UTF8.GetString(receivedBytes).TrimEnd('\0');
 
         Assert.Equal(IPAddress.Parse("127.0.0.1"), senderIp);
@@ -109,9 +109,8 @@ public class TcpHandlerTests
         Assert.Equal(1, timesInvoked);
     }
 
-    //Działa tylko podczas debugowania (nadal nie wiem czemu)
     [Fact]
-    public static void CheckManyMessagesAreComingThrough()
+    public static async void CheckManyMessagesAreComingThrough()
     {
         IPAddress address = IPAddress.Parse("127.0.0.1");
         int[] ports = new int[] { 25565, 25566, 25567 };
@@ -121,9 +120,9 @@ public class TcpHandlerTests
         List<string> receivedMessages = new();
         List<(IPAddress?, int)> connectedClientInfo = new();
 
-        //Create TcpHandler
-        var handler = new TcpHandler(address, ports);
-        handler.BeginListening();
+        //Create TcpReceiver
+        var handler = new TcpReceiver(address, ports);
+        handler.Enable();
 
         //Create one TcpClient per handler's port and connect them to the server
         var clientMocks = new TcpClient[ports.Length];
@@ -135,13 +134,13 @@ public class TcpHandlerTests
 
         //Subscribe to the event with a EventHandler that will fire once a full message has been received
         //This event will modify variables which will be validated with Asserts later on
-        EventHandler<TcpHandlerEventArgs> eventHandler = (sender, e) =>
+        EventHandler<TcpReceiverEventArgs> eventHandler = (sender, e) =>
         {
             receivedMessages.Add(Encoding.UTF8.GetString(e.Data));
             connectedClientInfo.Add((e.SenderIp, e.SenderPort));
             timesInvoked++;
         };
-        TcpHandler.OnSignalReceived += eventHandler;
+        TcpReceiver.OnSignalReceived += eventHandler;
 
         //Send the bytes of messageToSend on each client
         //Message will be appended with client's port to make sure all received messages are unique.
@@ -155,6 +154,7 @@ public class TcpHandlerTests
             byte[] message = Encoding.UTF8.GetBytes(messageToSend + mockPort);
             using var stream = mock.GetStream();
             stream.Write(message, 0, message.Length);
+            await Task.Delay(100);
         }
 
         //Signal to close the TCP connection and dispose mocks
@@ -171,7 +171,7 @@ public class TcpHandlerTests
         }
         Assert.Equal(3, timesInvoked);
 
-        TcpHandler.OnSignalReceived -= eventHandler;
+        TcpReceiver.OnSignalReceived -= eventHandler;
     }
 
     [Theory]
@@ -180,8 +180,8 @@ public class TcpHandlerTests
     [InlineData(new int[] { 25565, 25566, 25567 })]
     public static void CheckPortsAreOccupied(int[] ports)
     {
-        var handler = new TcpHandler(IPAddress.Parse("127.0.0.1"), ports);
-        handler.BeginListening();
+        var handler = new TcpReceiver(IPAddress.Parse("127.0.0.1"), ports);
+        handler.Enable();
 
         List<int> listeningPorts = GetCurrentlyListeningTcpPorts();
         foreach (var port in ports)
@@ -195,20 +195,33 @@ public class TcpHandlerTests
             Assert.Equal(ports.Length, handler.ListenersCount);
         }
 
-        handler.StopListening();
+        handler.Disable();
         listeningPorts = GetCurrentlyListeningTcpPorts();
         foreach (var port in ports)
         {
             Assert.DoesNotContain(port, listeningPorts);
         }
 
-        //Check if another TcpListener could use those ports once TcpHandler stops
+        //Check if another TcpListener could use those ports once TcpReceiver stops
         foreach (var port in ports)
         {
             var anotherListener = new TcpListener(IPAddress.Parse("127.0.0.1"), port);
             anotherListener.Start();
             anotherListener.Stop();
         }
+    }
+
+    [Theory]
+    [InlineData("bruh")]
+    [InlineData("bruh2")]
+    [InlineData("bruh2     4")]
+    [InlineData("9+10=21")]
+    [InlineData("u stupid")]
+    public static void CheckEncoding(string json)
+    {
+        byte[] buffer = Encoding.UTF8.GetBytes(json);
+        string decodedMessage = TcpReceiver.Decode(buffer);
+        Assert.Equal(json, decodedMessage);
     }
 
     private static List<int> GetCurrentlyListeningTcpPorts()

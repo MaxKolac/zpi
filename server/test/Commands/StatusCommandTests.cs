@@ -1,5 +1,4 @@
 ﻿using ZPIServer.Commands;
-using ZPIServer.EventArgs;
 
 namespace ZPIServerTests.Commands;
 
@@ -17,7 +16,7 @@ public class StatusCommandTests
 
     [Theory]
     [InlineData(StatusCommand.SignalTranslatorArgument)]
-    [InlineData(StatusCommand.TcpHandlerArgument)]
+    [InlineData(StatusCommand.TcpReceiverArgument)]
     static void CheckExecutionWithArguments(string argument)
     {
         var commandToExecute = new StatusCommand();

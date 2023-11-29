@@ -10,7 +10,7 @@ using static ZPICommunicationModels.Models.HostDevice;
 namespace ZPIServer.API;
 
 /// <summary>
-/// Klasa, która subskrybuje wydarzenie <see cref="TcpHandler.OnSignalReceived"/> i odpowiednio reaguje na jej inwokacje.
+/// Klasa, która subskrybuje wydarzenie <see cref="TcpReceiver.OnSignalReceived"/> i odpowiednio reaguje na jej inwokacje.
 /// </summary>
 public class SignalTranslator
 {
@@ -19,7 +19,7 @@ public class SignalTranslator
     private int _invocations = 0;
 
     /// <summary>
-    /// Wskazuje czy <see cref="SignalTranslator"/> został uruchomiony i obsługuje inwokacje wydarzenia <see cref="TcpHandler.OnSignalReceived"/>.
+    /// Wskazuje czy <see cref="SignalTranslator"/> został uruchomiony i obsługuje inwokacje wydarzenia <see cref="TcpReceiver.OnSignalReceived"/>.
     /// </summary>
     public bool IsTranslating { get; private set; } = false;
 
@@ -47,7 +47,7 @@ public class SignalTranslator
             return;
 
         IsTranslating = true;
-        TcpHandler.OnSignalReceived += HandleReceivedSignal;
+        TcpReceiver.OnSignalReceived += HandleReceivedSignal;
         _logger?.WriteLine("Starting up.", nameof(SignalTranslator));
     }
 
@@ -60,11 +60,11 @@ public class SignalTranslator
             return;
 
         _logger?.WriteLine("Shutting down.", nameof(SignalTranslator));
-        TcpHandler.OnSignalReceived -= HandleReceivedSignal;
+        TcpReceiver.OnSignalReceived -= HandleReceivedSignal;
         IsTranslating = false;
     }
 
-    void HandleReceivedSignal(object? sender, TcpHandlerEventArgs e)
+    void HandleReceivedSignal(object? sender, TcpReceiverEventArgs e)
     {
         _invocations++;
         HostDevice? datasender = null;
@@ -75,6 +75,7 @@ public class SignalTranslator
         {
             Name = "Unknown",
             Address = e.SenderIp,
+            Port = e.SenderPort,
             Type = HostType.Unknown,
             LastKnownStatus = DeviceStatus.Unknown
         };
@@ -141,7 +142,7 @@ public class SignalTranslator
         }
     }
 
-    private void ShowStatus(object? sender, CommandEventArgs e)
+    private void ShowStatus(object? sender, System.EventArgs e)
     {
         if (sender is StatusCommand command && command.ClassArgument == StatusCommand.SignalTranslatorArgument)
         {

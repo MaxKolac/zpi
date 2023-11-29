@@ -4,7 +4,6 @@ using ZPICommunicationModels.Models;
 using ZPIServer.API;
 using ZPIServer.API.CameraLibraries;
 using ZPIServer.Commands;
-using ZPIServer.EventArgs;
 
 namespace ZPIServer
 {
@@ -15,7 +14,8 @@ namespace ZPIServer
         static readonly CancellationTokenSource serverLifetimeToken = new();
         static readonly Logger logger = new();
 
-        static TcpHandler? tcpHandler;
+        static TcpReceiver? tcpReceiver;
+        static TcpSender? tcpSender;
         static SignalTranslator? signalTranslator;
 
         public static int Main(string[] args)
@@ -31,7 +31,7 @@ namespace ZPIServer
             return 0;
         }
 
-        private static void OnCommandExecuted(object? sender, CommandEventArgs e)
+        private static void OnCommandExecuted(object? sender, System.EventArgs e)
         {
             if (sender is not null && sender is ShutdownCommand)
                 serverLifetimeToken.Cancel();
@@ -69,8 +69,10 @@ namespace ZPIServer
             }
 
             //Components initialization
-            tcpHandler = new TcpHandler(Settings.ServerAddress, Settings.TcpListeningPort, logger);
-            tcpHandler.BeginListening();
+            tcpReceiver = new TcpReceiver(Settings.ServerAddress, Settings.TcpReceiverPorts, logger);
+            tcpReceiver.Enable();
+            tcpSender = new TcpSender(logger);
+            tcpSender.Enable();
             signalTranslator = new SignalTranslator(logger);
             signalTranslator.BeginTranslating();
 
@@ -87,7 +89,8 @@ namespace ZPIServer
             Command.OnExecuted -= OnCommandExecuted;
 
             signalTranslator?.StopTranslating();
-            tcpHandler?.StopListening();
+            tcpSender?.Disable();
+            tcpReceiver?.Disable();
             logger?.Stop();
         }
     }

@@ -96,6 +96,10 @@ public class HostDevice
     /// </summary>
     [JsonConverter(typeof(IPAddressConverter))]
     public required IPAddress Address { get; set; }
+    /// <summary>
+    /// Port, na którym urządzenie nasłuchuje przychodzących połączeń.
+    /// </summary>
+    public required int Port { get; set; }
 
     //Camera specific fields
     /// <summary>

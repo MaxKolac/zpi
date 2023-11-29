@@ -4,8 +4,9 @@ namespace ZPIServer.Commands;
 
 public class StatusCommand : Command
 {
-    public const string TcpHandlerArgument = "tcphandler";
     public const string SignalTranslatorArgument = "signaltranslator";
+    public const string TcpReceiverArgument = "tcpreceiver";
+    public const string TcpSenderArgument = "tcpsender";
 
     public string? ClassArgument { get; private set; }
 
@@ -21,8 +22,9 @@ public class StatusCommand : Command
                 _logger?.WriteLine($"{Status} requires 1 argument.");
                 _logger?.WriteLine(GetHelp());
                 break;
-            case TcpHandlerArgument:
             case SignalTranslatorArgument:
+            case TcpReceiverArgument:
+            case TcpSenderArgument:
                 _logger?.WriteLine($"Status of {ClassArgument}:");
                 break;
             default:
@@ -30,7 +32,7 @@ public class StatusCommand : Command
                 _logger?.WriteLine(GetHelp());
                 break;
         }
-        Invoke(this, new EventArgs.CommandEventArgs());
+        Invoke(this, System.EventArgs.Empty);
     }
 
     public override string GetHelp()
@@ -39,10 +41,12 @@ public class StatusCommand : Command
         builder.AppendLine("Show the current status of the specified server component.");
         builder.AppendLine("Available components that can be checked are:");
         builder.AppendLine($"\t{SignalTranslatorArgument}");
-        builder.AppendLine($"\t{TcpHandlerArgument}");
+        builder.AppendLine($"\t{TcpReceiverArgument}");
+        builder.AppendLine($"\t{TcpSenderArgument}");
         builder.AppendLine("Examples:");
         builder.AppendLine($"\t{Status} {SignalTranslatorArgument}");
-        builder.AppendLine($"\t{Status} {TcpHandlerArgument}");
+        builder.AppendLine($"\t{Status} {TcpReceiverArgument}");
+        builder.AppendLine($"\t{Status} {TcpSenderArgument}");
         return builder.ToString();
     }
 
@@ -54,7 +58,7 @@ public class StatusCommand : Command
         if (arguments.Length == 1)
         {
             string arg = arguments[0];
-            if (arg == SignalTranslatorArgument || arg == TcpHandlerArgument)
+            if (arg == SignalTranslatorArgument || arg == TcpReceiverArgument || arg == TcpSenderArgument)
                 ClassArgument = arg;
         }
         else if (arguments.Length > 1)

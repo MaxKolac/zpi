@@ -36,6 +36,7 @@ public class SignalTranslatorTests
         {
             Name = "test",
             Address = IPAddress.Parse("127.0.0.1"),
+            Port = 25565,
             Type = typeToAdd
         };
         context.HostDevices.Add(hostDevice);
@@ -58,8 +59,8 @@ public class SignalTranslatorTests
         DatabaseSetup(HostDevice.HostType.CameraSimulator);
 
         //Prepare to send the signal
-        var handler = new TcpHandler(IPAddress.Loopback, 25565);
-        handler.BeginListening();
+        var handler = new TcpReceiver(IPAddress.Loopback, 25565);
+        handler.Enable();
         var translator = new SignalTranslator();
         translator.BeginTranslating();
 
@@ -74,11 +75,11 @@ public class SignalTranslatorTests
 
         //Setup a check that OnSignalReceived was invoked
         int invocations = 0;
-        EventHandler<TcpHandlerEventArgs> eventHandler = (sender, e) =>
+        EventHandler<TcpReceiverEventArgs> eventHandler = (sender, e) =>
         {
             invocations++;
         };
-        TcpHandler.OnSignalReceived += eventHandler;
+        TcpReceiver.OnSignalReceived += eventHandler;
 
         //Act
         SendSerializedJsonToLoopback(25565, JsonConvert.SerializeObject(message));
@@ -99,9 +100,9 @@ public class SignalTranslatorTests
         }
 
         //Turn things off
-        TcpHandler.OnSignalReceived -= eventHandler;
+        TcpReceiver.OnSignalReceived -= eventHandler;
         translator.StopTranslating();
-        handler.StopListening();
+        handler.Disable();
     }
 
     [Theory]
@@ -111,24 +112,24 @@ public class SignalTranslatorTests
         DatabaseSetup(HostDevice.HostType.CameraSimulator);
 
         //Prepare to send the signal
-        var handler = new TcpHandler(IPAddress.Loopback, 25565);
-        handler.BeginListening();
+        var handler = new TcpReceiver(IPAddress.Loopback, 25565);
+        handler.Enable();
         var translator = new SignalTranslator();
         translator.BeginTranslating();
 
         //Setup a check that OnSignalReceived was invoked
         int invocations = 0;
-        EventHandler<TcpHandlerEventArgs> eventHandler = (sender, e) =>
+        EventHandler<TcpReceiverEventArgs> eventHandler = (sender, e) =>
         {
             invocations++;
         };
-        TcpHandler.OnSignalReceived += eventHandler;
+        TcpReceiver.OnSignalReceived += eventHandler;
 
         //Act
         SendSerializedJsonToLoopback(25565, JsonConvert.SerializeObject(invalidMessage));
 
         //Give SignalTranslator some time to process the message and make changes
-        await Task.Delay(2000).WaitAsync(CancellationToken.None);
+        await Task.Delay(1000);
 
         //Check that data has been written into DB
         using (var context = new DatabaseContext())
@@ -143,9 +144,9 @@ public class SignalTranslatorTests
         }
 
         //Turn things off
-        TcpHandler.OnSignalReceived -= eventHandler;
+        TcpReceiver.OnSignalReceived -= eventHandler;
         translator.StopTranslating();
-        handler.StopListening();
+        handler.Disable();
     }
 
     public static IEnumerable<object?[]> GetInvalidMessage_CameraSimulator()

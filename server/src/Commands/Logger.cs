@@ -44,6 +44,7 @@ public class Logger
         {
             Command.Db => new DbCommand(this),
             Command.Help => new HelpCommand(this),
+            Command.Ping => new PingCommand(this),
             Command.Shutdown => new ShutdownCommand(this),
             Command.Status => new StatusCommand(this),
             _ => null

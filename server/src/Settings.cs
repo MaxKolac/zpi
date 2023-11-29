@@ -5,10 +5,10 @@ namespace ZPIServer;
 public static class Settings
 {
     /// <summary>
-    /// Tabela portów, na których <see cref="API.TcpHandler"/> będzie nasłuchiwał przychodzących połączeń od kamer i użytkowników.<br/>
+    /// Tabela portów, na których <see cref="API.TcpReceiver"/> będzie nasłuchiwał przychodzących połączeń od kamer i użytkowników.<br/>
     /// Domyślne porty to 25565, 25566, 25567.
     /// </summary>
-    public static int[] TcpListeningPort { get; set; } = new int[] { 25565, 25566, 25567 };
+    public static int[] TcpReceiverPorts { get; set; } = new int[] { 25565, 25566, 25567 };
 
     /// <summary>
     /// Adres IP serwera w sieci lokalnej. Na tym adresie będą nasłuchiwane porty.<br/>
@@ -25,7 +25,7 @@ public static class Settings
 
     public static void ResetToDefault()
     {
-        TcpListeningPort = new int[] { 25565, 25566, 25567 };
+        TcpReceiverPorts = new int[] { 25565, 25566, 25567 };
         ServerAddress = IPAddress.Parse("127.0.0.1");
         IsPythonDetected = false;
     }
