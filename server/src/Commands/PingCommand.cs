@@ -3,6 +3,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Net;
 using System.Text;
+using ZPICommunicationModels;
 using ZPICommunicationModels.Messages;
 using ZPICommunicationModels.Models;
 using ZPIServer.EventArgs;
@@ -48,7 +49,7 @@ public class PingCommand : Command
                     Image = HostDevice.ToByteArray(Image.FromFile("Commands\\PingCdmImage.png"), ImageFormat.Png) ?? Array.Empty<byte>()
                 };
                 var json = JsonConvert.SerializeObject(testMessage);
-                var payload = API.TcpSender.Encode(json);
+                var payload = ZPIEncoding.GetBytes(json);
                 var args = new TcpSenderEventArgs(SecondArg, (int)ThirdArg, payload);
 
                 _logger?.WriteLine($"Attempting to send an example CameraDataMessage ({payload.Length} bytes) as Json to {SecondArg}:{ThirdArg}.");

@@ -1,5 +1,5 @@
 ﻿using System.Net;
-using System.Text;
+using ZPICommunicationModels;
 using ZPIServer.API;
 using ZPIServer.EventArgs;
 
@@ -71,13 +71,13 @@ public class TcpSenderTests
 
         //Setup an message sent invocation
         string sentMessage = "Hello world!";
-        var args = new TcpSenderEventArgs(IPAddress.Loopback, 12345, TcpSender.Encode(sentMessage));
+        var args = new TcpSenderEventArgs(IPAddress.Loopback, 12345, ZPIEncoding.GetBytes(sentMessage));
 
         //Setup an event handler to handle the received message
         string receivedMessage = string.Empty;
         EventHandler<TcpReceiverEventArgs> handler = (sender, e) =>
         {
-            receivedMessage = TcpReceiver.Decode(e.Data);
+            receivedMessage = ZPIEncoding.GetString(e.Data);
         };
         TcpReceiver.OnSignalReceived += handler;
 
@@ -107,17 +107,17 @@ public class TcpSenderTests
 
         //Setup up multiple messages to send
         string sentMessage1 = "Hello world! 1 " + port1;
-        var args1 = new TcpSenderEventArgs(IPAddress.Loopback, port1, TcpSender.Encode(sentMessage1));
+        var args1 = new TcpSenderEventArgs(IPAddress.Loopback, port1, ZPIEncoding.GetBytes(sentMessage1));
         string sentMessage2 = "Hello world! 2 " + port2;
-        var args2 = new TcpSenderEventArgs(IPAddress.Loopback, port2, TcpSender.Encode(sentMessage2));
+        var args2 = new TcpSenderEventArgs(IPAddress.Loopback, port2, ZPIEncoding.GetBytes(sentMessage2));
         string sentMessage3 = "Hello world! 3 " + port3;
-        var args3 = new TcpSenderEventArgs(IPAddress.Loopback, port3, TcpSender.Encode(sentMessage3));
+        var args3 = new TcpSenderEventArgs(IPAddress.Loopback, port3, ZPIEncoding.GetBytes(sentMessage3));
 
         //Setup an event handler to handle the received message
         string receivedMessage = string.Empty;
         EventHandler<TcpReceiverEventArgs> handler = (sender, e) =>
         {
-            receivedMessage = TcpReceiver.Decode(e.Data);
+            receivedMessage = ZPIEncoding.GetString(e.Data);
         };
         TcpReceiver.OnSignalReceived += handler;
 
@@ -145,7 +145,7 @@ public class TcpSenderTests
         TcpReceiver.OnSignalReceived -= handler;
         handler = (sender, e) =>
         {
-            receivedMessage += TcpReceiver.Decode(e.Data);
+            receivedMessage += ZPIEncoding.GetString(e.Data);
         };
         TcpReceiver.OnSignalReceived += handler;
 
@@ -174,15 +174,15 @@ public class TcpSenderTests
 
         //Setup up multiple messages to send
         string messageToFail = "Hello world! 1 " + targetPortToFail;
-        var argsToFail = new TcpSenderEventArgs(IPAddress.Loopback, targetPortToFail, TcpSender.Encode(messageToFail));
+        var argsToFail = new TcpSenderEventArgs(IPAddress.Loopback, targetPortToFail, ZPIEncoding.GetBytes(messageToFail));
         string messageToSucceed = "Hello world! 2 " + targetPortToSucceed;
-        var argsToSucceed = new TcpSenderEventArgs(IPAddress.Loopback, targetPortToSucceed, TcpSender.Encode(messageToSucceed));
+        var argsToSucceed = new TcpSenderEventArgs(IPAddress.Loopback, targetPortToSucceed, ZPIEncoding.GetBytes(messageToSucceed));
 
         //Setup an event handler to handle the received message
         string receivedMessage = string.Empty;
         EventHandler<TcpReceiverEventArgs> handler = (sender, e) =>
         {
-            receivedMessage = TcpReceiver.Decode(e.Data);
+            receivedMessage = ZPIEncoding.GetString(e.Data);
         };
         TcpReceiver.OnSignalReceived += handler;
 
@@ -204,7 +204,7 @@ public class TcpSenderTests
         TcpReceiver.OnSignalReceived -= handler;
         handler = (sender, e) =>
         {
-            receivedMessage += TcpReceiver.Decode(e.Data);
+            receivedMessage += ZPIEncoding.GetString(e.Data);
         };
         TcpReceiver.OnSignalReceived += handler;
 
@@ -223,18 +223,5 @@ public class TcpSenderTests
         //2 failed connections which were reattempted at most 3 times + 2 successful connections
         Assert.True(sender.ConnectionsInitialized <= (2 * 3) + 2);
         Assert.Equal(2, sender.ConnectionsHandled);
-    }
-
-    [Theory]
-    [InlineData("bruh")]
-    [InlineData("bruh2")]
-    [InlineData("bruh2     4")]
-    [InlineData("9+10=21")]
-    [InlineData("u stupid")]
-    public static void CheckEncoding(string json)
-    {
-        byte[] buffer = TcpSender.Encode(json);
-        string decodedMsg = Encoding.UTF8.GetString(buffer);
-        Assert.Equal(json, decodedMsg);
     }
 }

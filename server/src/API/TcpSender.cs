@@ -1,7 +1,6 @@
 ﻿using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
-using System.Text;
 using ZPIServer.Commands;
 using ZPIServer.EventArgs;
 using static ZPIServer.Commands.Logger.MessageType;
@@ -339,10 +338,4 @@ public class TcpSender
             _statsSemaphore.Release();
         }
     }
-
-    /// <summary>
-    /// Konwertuje podany tekst na ciąg bitów zakodowanych w systemie UTF8. Metoda przeciwna do <see cref="TcpReceiver.Decode(byte[])"/>.
-    /// </summary>
-    /// <param name="text">Tekst do zakodowania.</param>
-    public static byte[] Encode(string text) => Encoding.UTF8.GetBytes(text);
 }

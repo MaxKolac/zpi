@@ -1,8 +1,6 @@
-﻿using Newtonsoft.Json;
-using System.Drawing;
+﻿using System.Drawing;
 using System.Drawing.Imaging;
 using System.Net.Sockets;
-using System.Text;
 using ZPICommunicationModels.Messages;
 using ZPICommunicationModels.Models;
 
@@ -28,12 +26,10 @@ internal class CameraToServerExample
             Status = HostDevice.DeviceStatus.OK
         };
 
-        //Serializuj jako JSON i wyślij
-        //WAŻNE! - Wyślij kodując wiadomość jako UTF8, a po wysłaniu zamknij połączenie metodą server.Close()!
-        string json = JsonConvert.SerializeObject(message);
+        //Serializuj klasą ZPIEncoding i wyślij
         using (var stream = server.GetStream())
         {
-            byte[] buffer = Encoding.UTF8.GetBytes(json);
+            byte[] buffer = ZPIEncoding.Encode(message);
             stream.Write(buffer, 0, buffer.Length);
         }
         server.Close();
