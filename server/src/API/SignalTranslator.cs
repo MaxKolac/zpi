@@ -1,5 +1,5 @@
 ﻿using Newtonsoft.Json;
-using System.Text;
+using ZPICommunicationModels;
 using ZPICommunicationModels.Messages;
 using ZPICommunicationModels.Models;
 using ZPIServer.API.CameraLibraries;
@@ -22,6 +22,8 @@ public class SignalTranslator
     /// Wskazuje czy <see cref="SignalTranslator"/> został uruchomiony i obsługuje inwokacje wydarzenia <see cref="TcpReceiver.OnSignalReceived"/>.
     /// </summary>
     public bool IsTranslating { get; private set; } = false;
+
+    public static event EventHandler<TcpSenderEventArgs>? OnSendRequested;
 
     public SignalTranslator(Logger? logger = null)
     {
@@ -129,15 +131,91 @@ public class SignalTranslator
                     _logger?.WriteLine($"API of {datasender.Type} returned a null {nameof(CameraDataMessage)} object! No changes in the database were made. Marking device's record with {nameof(DeviceStatus.DataCorrupted)}.", nameof(SignalTranslator), Logger.MessageType.Warning);
                 }
                 break;
+            case HostType.User:
+                _logger?.WriteLine(message + $"User recognized: {datasender.Name}. Decoding the user request.", nameof(SignalTranslator));
+
+                //Attempt to deserialize the request itself first
+                UserRequest? request;
+                try
+                {
+                    request = ZPIEncoding.Decode<UserRequest>(e.Data);
+                }
+                catch (JsonSerializationException ex)
+                {
+                    _logger?.WriteLine($"API of {datasender.Type} failed to parse the received JSON string! {ex.Message}", nameof(SignalTranslator), Logger.MessageType.Error);
+                    break;
+                }
+
+                //Something went terribly wrong if this is still a null
+                if (request is null)
+                {
+                    _logger?.WriteLine($"Decoding the received user request resulted in a null! Discarding request.", nameof(SignalTranslator), Logger.MessageType.Error);
+                    break;
+                }
+
+                //Recognize if this request is one of those that require ModelObjectId to be non-null
+                if ((request.Request == UserRequest.RequestType.CameraDataAsJson ||
+                    request.Request == UserRequest.RequestType.SingleHostDeviceAsJson) &&
+                    request.ModelObjectId is null)
+                {
+                    //If its null, discard request
+                    _logger?.WriteLine($"User's request did not contain {nameof(UserRequest.ModelObjectId)} which {request.Request} requires! Discarding request.", nameof(SignalTranslator), Logger.MessageType.Error);
+                    break;
+                }
+
+                //Look for the object that user requested
+                string requestedClassType = request.Request switch
+                {
+                    UserRequest.RequestType.CameraDataAsJson => nameof(CameraDataMessage),
+                    UserRequest.RequestType.SingleHostDeviceAsJson => nameof(HostDevice),
+                    UserRequest.RequestType.AllHostDevicesAsJson => $"List<{nameof(HostDevice)}>",
+                    UserRequest.RequestType.SingleSectorAsJson => nameof(Sector),
+                    UserRequest.RequestType.AllSectorsAsJson => $"List<{nameof(Sector)}>"
+                };
+                object? foundObject = null;
+                if (request.Request == UserRequest.RequestType.CameraDataAsJson || request.Request == UserRequest.RequestType.SingleHostDeviceAsJson)
+                    foundObject = context.HostDevices.Where((dev) => dev.Id == request.ModelObjectId).FirstOrDefault();
+                else if (request.Request == UserRequest.RequestType.AllHostDevicesAsJson)
+                    foundObject = context.HostDevices.ToList();
+                else if (request.Request == UserRequest.RequestType.SingleSectorAsJson)
+                    foundObject = context.Sectors.Where((sector) => sector.Id == request.ModelObjectId).FirstOrDefault();
+                else if (request.Request == UserRequest.RequestType.AllSectorsAsJson)
+                    foundObject = context.Sectors.ToList();
+
+                //If the requested object doesn't exist, discard request
+                //If after all that foundObject is null, nothing matching was found
+                if (foundObject is null)
+                {
+                    _logger?.WriteLine($"User requested {request.Request} of a {requestedClassType} with ID = {request.ModelObjectId} which was not found in the database! Discarding request.", nameof(SignalTranslator), Logger.MessageType.Error);
+                    return;
+                }
+                _logger?.WriteLine($"Found {requestedClassType} with ID = {request.ModelObjectId} requested by user. Building an invocation for {nameof(TcpSender)}.", nameof(SignalTranslator));
+
+                //Depending on which exact request it is, create and encode the requested object
+                byte[] messageToSend = request.Request switch
+                {
+                    UserRequest.RequestType.CameraDataAsJson => ZPIEncoding.Encode(new CameraDataMessage()
+                    {
+                        LargestTemperature = ((HostDevice)foundObject).LastKnownTemperature,
+                        Status = ((HostDevice)foundObject).LastKnownStatus ?? DeviceStatus.Unknown,
+                        Image = ((HostDevice)foundObject).LastImage ?? Array.Empty<byte>()
+                    }),
+                    UserRequest.RequestType.SingleHostDeviceAsJson => ZPIEncoding.Encode(foundObject as HostDevice),
+                    UserRequest.RequestType.AllHostDevicesAsJson => ZPIEncoding.Encode(foundObject as List<HostDevice>),
+                    UserRequest.RequestType.SingleSectorAsJson => ZPIEncoding.Encode(foundObject as Sector),
+                    UserRequest.RequestType.AllSectorsAsJson => ZPIEncoding.Encode(foundObject as List<Sector>)
+                };
+
+                //Invoke the TcpSender
+                var args = new TcpSenderEventArgs(datasender.Address, datasender.Port, messageToSend);
+                OnSendRequested?.Invoke(this, args);
+                break;
             case HostType.PuTTYClient:
                 string rawData = string.Empty;
                 foreach (var dataByte in e.Data)
                     rawData += dataByte;
-                string decodedData = Encoding.UTF8.GetString(e.Data);
+                string decodedData = System.Text.Encoding.UTF8.GetString(e.Data);
                 _logger?.WriteLine(message + $"Raw = '{rawData}', Decoded = '{decodedData}'.", nameof(SignalTranslator));
-                break;
-            case HostType.User:
-                _logger?.WriteLine(message + $"User recognized: {datasender.Name}.", nameof(SignalTranslator));
                 break;
         }
     }

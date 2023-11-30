@@ -211,19 +211,6 @@ public class TcpReceiverTests
         }
     }
 
-    [Theory]
-    [InlineData("bruh")]
-    [InlineData("bruh2")]
-    [InlineData("bruh2     4")]
-    [InlineData("9+10=21")]
-    [InlineData("u stupid")]
-    public static void CheckEncoding(string json)
-    {
-        byte[] buffer = Encoding.UTF8.GetBytes(json);
-        string decodedMessage = TcpReceiver.Decode(buffer);
-        Assert.Equal(json, decodedMessage);
-    }
-
     private static List<int> GetCurrentlyListeningTcpPorts()
     {
         IPEndPoint[] tcpConnections = IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpListeners();

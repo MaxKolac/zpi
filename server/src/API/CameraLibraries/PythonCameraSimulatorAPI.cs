@@ -83,7 +83,7 @@ public class PythonCameraSimulatorAPI : ICamera
             "opencv-contrib-python==4.8.1.78", //requires numpy >= 1.21.2
             "python-dotenv==1.0.0"
         };
-        
+
         //Setup cmd.exe processes which will install those dependencies
         var startInfos = new ProcessStartInfo[dependencies.Length];
         for (int i = 0; i < startInfos.Length; i++)
@@ -101,7 +101,7 @@ public class PythonCameraSimulatorAPI : ICamera
 
         //Attempt to install them and redirect all the output into ZPIServer's Logger
         logger?.WriteLine("Attempting to install required dependencies.", nameof(PythonCameraSimulatorAPI));
-        foreach (var startInfo in startInfos) 
+        foreach (var startInfo in startInfos)
         {
             using var process = Process.Start(startInfo);
             using var standardReader = process!.StandardOutput;
