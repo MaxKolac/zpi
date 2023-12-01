@@ -9,6 +9,7 @@ using System.Net.Sockets;
 using ZPICommunicationModels;
 using ZPICommunicationModels.Messages;
 using ZPICommunicationModels.Models;
+using System.Net;
 
 namespace ZPIClient
 {
@@ -489,19 +490,40 @@ namespace ZPIClient
                 switch (request)
                 {
                     case RequestType.Initialize:
+                        serverRequestInitialize();
                         break;
 
                     case RequestType.Update:
+                        serverRequestUpdate();
                         break;
                 }
-
-
                 tcpClient.Close();
             }
             catch(Exception ex)
             {
-                MessageBox.Show("Nie uda³o siê nawi¹zaæ po³¹czenia z serwerem ("+ipAddress+": "+port+").", "B³¹d po³¹czenia", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                MessageBox.Show("Nie uda³o siê nawi¹zaæ po³¹czenia z serwerem ("+ipAddress+": "+port+"). "+ex.Message, "B³¹d po³¹czenia", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
             }
+        }
+        private void serverRequestInitialize()
+        {
+            var listener = new ClientListener(IPAddress.Parse(ipAddress), 12000);
+            listener.OnSignalReceived += (sender, e) =>
+            {
+                Console.WriteLine(ZPIEncoding.Decode<CameraDataMessage>(e));
+            };
+            
+            var request = new UserRequest()
+            {
+                Request = UserRequest.RequestType.AllHostDevicesAsJson
+            };
+            using (var stream = tcpClient.GetStream())
+            {
+                byte[] buffer = ZPIEncoding.Encode(request);
+            }
+        }
+        private void serverRequestUpdate()
+        {
+
         }
         #endregion
         #region Debug
