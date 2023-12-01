@@ -504,7 +504,8 @@ namespace ZPIClient
             var listener = new ClientListener(IPAddress.Parse(ipAddress), 12000);
             listener.OnSignalReceived += (sender, e) =>
             {
-                Console.WriteLine(ZPIEncoding.Decode<CameraDataMessage>(e));
+                var list = ZPIEncoding.Decode<List<HostDevice>>(e);
+                MessageBox.Show("This is a test");
             };
             var request = new UserRequest()
             {
