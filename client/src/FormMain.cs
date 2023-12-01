@@ -1,4 +1,4 @@
-using System;
+Ôªøusing System;
 using System.Windows.Forms;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -51,12 +51,12 @@ namespace ZPIClient
         {
             InitializeComponent();
             serverRequest(UserRequest.RequestType.AllHostDevicesAsJson);
-            Thread.Sleep(2000); //Program czeka 2 sekundy na serwer. Jak serwer nie zdπøy to program nie dzia≥a. Proste
             Initialize();
         }
 
         private void updateSensors()
         {
+            serverRequest(UserRequest.RequestType.SingleHostDeviceAsJson);
             updateAll();
         }
         #region Timer Functions
@@ -76,7 +76,7 @@ namespace ZPIClient
             {
                 labelLastUpdateInfo.Text = sensorList[currentSensorIndex].SensorLastUpdate.ToString() + " sekund temu";
             }
-            labelTimer.Text = "NastÍpna aktualizacja za: " + timerElapsedTime + " sekund";
+            labelTimer.Text = "Nastƒôpna aktualizacja za: " + timerElapsedTime + " sekund";
         }
         private void incrementTimers()
         {
@@ -96,7 +96,7 @@ namespace ZPIClient
             }
             else
             {
-                buttonDebug.Text = "Skaner wspÛ≥rzÍdnych aktywny";
+                buttonDebug.Text = "Skaner wsp√≥≈Çrzƒôdnych aktywny";
                 buttonDebug.BackColor = Color.SkyBlue;
             }
             debug = !debug;
@@ -157,7 +157,7 @@ namespace ZPIClient
                         LocationLatitude = device.LocationLatitude,
                         CurrentSensorState = Sensor.SensorState.Null,
                         SensorLastUpdate = 0,
-                        SensorDetails = "Ten wspania≥y sensor wisi na wysokoúci " + rnd.Next(2, 10) + " metrÛw",
+                        SensorDetails = "Ten wspania≈Çy sensor wisi na wysoko≈õci " + rnd.Next(2, 10) + " metr√≥w",
                         Override = false
                     };
                     sensor.StateFromStatus();
@@ -439,7 +439,7 @@ namespace ZPIClient
                 labelStateInfo.Text = sensorList[currentSensorIndex].StateToString();
                 labelSegmentInfo.Text = sensorList[currentSensorIndex].SectorId.ToString();
                 labelLocationInfo.Text = sensorList[currentSensorIndex].SensorDetails;
-                labelTemperatureInfo.Text = sensorList[currentSensorIndex].LastKnownTemperature.ToString() + "∞C";
+                labelTemperatureInfo.Text = sensorList[currentSensorIndex].LastKnownTemperature.ToString() + "¬∞C";
                 labelLastUpdateInfo.Text = sensorList[currentSensorIndex].SensorLastUpdate.ToString() + " sekund temu.";
                 try
                 {
@@ -456,21 +456,21 @@ namespace ZPIClient
                         buttonFire.BackColor = Color.Red;
                         buttonFire.ForeColor = Color.White;
                         buttonFire.Enabled = true;
-                        buttonFire.Text = "Potwierdü poøar";
+                        buttonFire.Text = "Potwierd≈∫ po≈ºar";
                         break;
 
                     case Sensor.SensorState.Fire:
                         buttonFire.BackColor = Color.Red;
                         buttonFire.ForeColor = Color.White;
                         buttonFire.Enabled = true;
-                        buttonFire.Text = "Potwierdü zwalczenie poøaru";
+                        buttonFire.Text = "Potwierd≈∫ zwalczenie po≈ºaru";
                         break;
 
                     default:
                         buttonFire.BackColor = SystemColors.Control;
                         buttonFire.ForeColor = SystemColors.ControlText;
                         buttonFire.Enabled = false;
-                        buttonFire.Text = "Brak problemÛw";
+                        buttonFire.Text = "Brak problem√≥w";
                         break;
                 }
             }
@@ -503,14 +503,19 @@ namespace ZPIClient
                         break;
 
                     case UserRequest.RequestType.SingleHostDeviceAsJson:
-                        serverRequestUpdate();
+                        int count = sensorList.Count;
+                        for(int i = 0; i < count; i++)
+                        {
+                            serverRequestUpdate(i);
+                        }
                         break;
                 }
                 tcpClient.Close();
+                Thread.Sleep(2000); //Program will wait 2 seceonds for server. It it's too slow it won't work. Just like that.
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Nie uda≥o siÍ nawiπzaÊ po≥πczenia z serwerem (" + ipAddress + ": " + port + "). " + ex.Message, "B≥πd po≥πczenia", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                MessageBox.Show("Nie uda≈Ço siƒô nawiƒÖzaƒá po≈ÇƒÖczenia z serwerem (" + ipAddress + ": " + port + "). " + ex.Message, "B≈ÇƒÖd po≈ÇƒÖczenia", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
             }
         }
         private void serverRequestInitialize()
@@ -530,9 +535,30 @@ namespace ZPIClient
                 stream.Write(buffer);
             }
         }
-        private void serverRequestUpdate()
+        private void serverRequestUpdate(int i)
         {
-
+            var listener = new ClientListener(IPAddress.Parse(ipAddress), 12000);
+            listener.OnSignalReceived += (sender, e) =>
+            {
+                var device = ZPIEncoding.Decode<HostDevice>(e);
+                if(device.LastKnownTemperature != sensorList[i].LastKnownTemperature || device.LastKnownStatus != sensorList[i].LastKnownStatus)
+                {
+                    sensorList[i].LastKnownTemperature = device.LastKnownTemperature;
+                    sensorList[i].LastKnownStatus = device.LastKnownStatus;
+                    sensorList[i].StateFromStatus();
+                    sensorList[i].SensorLastUpdate = 0;
+                }
+            };
+            var request = new UserRequest()
+            {
+                Request = UserRequest.RequestType.SingleHostDeviceAsJson,
+                ModelObjectId = sensorList[i].Id
+            };
+            using (var stream = tcpClient.GetStream())
+            {
+                byte[] buffer = ZPIEncoding.Encode(request);
+                stream.Write(buffer);
+            }
         }
         #endregion
         #region Debug

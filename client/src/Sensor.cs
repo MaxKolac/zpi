@@ -54,19 +54,6 @@ internal class Sensor : HostDevice
         this.SensorDetails = sensorLocation;
     }
     #endregion
-    #region UpdateInformation
-    public void Update(SensorState sensorState)
-    {
-        this.CurrentSensorState = sensorState;
-        this.SensorLastUpdate = 0;
-    }
-    public void Update(SensorState sensorState, int sensorTemperature)
-    {
-        this.CurrentSensorState = sensorState;
-        this.LastKnownTemperature = sensorTemperature;
-        this.SensorLastUpdate = 0;
-    }
-    #endregion
     #region Utilities
     public static SensorState StringToState(string inputType)
     {
