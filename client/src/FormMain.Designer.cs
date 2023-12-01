@@ -29,10 +29,11 @@
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormMain));
             panelDisplay = new Panel();
             panelNavigation = new Panel();
             buttonOverview = new Button();
-            buttonMenu = new Button();
+            buttonDebug = new Button();
             buttonSwitch = new Button();
             panelInfo = new Panel();
             buttonFire = new Button();
@@ -54,6 +55,21 @@
             panelTimer = new Panel();
             labelTimer = new Label();
             timerRefresh = new System.Windows.Forms.Timer(components);
+            panelMap = new Panel();
+            tableLayoutPanelSummary = new TableLayoutPanel();
+            labelMapStateCount4 = new Label();
+            labelMapState4 = new Label();
+            pictureBoxMapState4 = new PictureBox();
+            labelMapStateCount3 = new Label();
+            labelMapState3 = new Label();
+            pictureBoxMapState3 = new PictureBox();
+            labelMapStateCount2 = new Label();
+            labelMapState2 = new Label();
+            pictureBoxMapState2 = new PictureBox();
+            labelMapStateCount1 = new Label();
+            pictureBoxMapState1 = new PictureBox();
+            labelMapState1 = new Label();
+            pictureBoxMap = new PictureBox();
             panelNavigation.SuspendLayout();
             panelInfo.SuspendLayout();
             panelCamera.SuspendLayout();
@@ -61,6 +77,13 @@
             tableLayoutPanel.SuspendLayout();
             panelSensorName.SuspendLayout();
             panelTimer.SuspendLayout();
+            panelMap.SuspendLayout();
+            tableLayoutPanelSummary.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)pictureBoxMapState4).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)pictureBoxMapState3).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)pictureBoxMapState2).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)pictureBoxMapState1).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)pictureBoxMap).BeginInit();
             SuspendLayout();
             // 
             // panelDisplay
@@ -77,7 +100,7 @@
             // 
             panelNavigation.BorderStyle = BorderStyle.FixedSingle;
             panelNavigation.Controls.Add(buttonOverview);
-            panelNavigation.Controls.Add(buttonMenu);
+            panelNavigation.Controls.Add(buttonDebug);
             panelNavigation.Controls.Add(buttonSwitch);
             panelNavigation.Location = new Point(0, 649);
             panelNavigation.Name = "panelNavigation";
@@ -93,16 +116,18 @@
             buttonOverview.TabIndex = 3;
             buttonOverview.Text = "Podgląd zgłoszeń";
             buttonOverview.UseVisualStyleBackColor = true;
+            buttonOverview.Click += buttonOverview_Click;
             // 
-            // buttonMenu
+            // buttonDebug
             // 
-            buttonMenu.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point);
-            buttonMenu.Location = new Point(12, 9);
-            buttonMenu.Name = "buttonMenu";
-            buttonMenu.Size = new Size(324, 59);
-            buttonMenu.TabIndex = 1;
-            buttonMenu.Text = "Menu";
-            buttonMenu.UseVisualStyleBackColor = true;
+            buttonDebug.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point);
+            buttonDebug.Location = new Point(12, 9);
+            buttonDebug.Name = "buttonDebug";
+            buttonDebug.Size = new Size(324, 59);
+            buttonDebug.TabIndex = 1;
+            buttonDebug.Text = "Debug";
+            buttonDebug.UseVisualStyleBackColor = true;
+            buttonDebug.Click += buttonDebug_Click;
             // 
             // buttonSwitch
             // 
@@ -113,6 +138,7 @@
             buttonSwitch.TabIndex = 2;
             buttonSwitch.Text = "Przełącz widok";
             buttonSwitch.UseVisualStyleBackColor = true;
+            buttonSwitch.Click += buttonSwitch_Click;
             // 
             // panelInfo
             // 
@@ -341,11 +367,199 @@
             timerRefresh.Interval = 1000;
             timerRefresh.Tick += timerRefresh_Tick;
             // 
+            // panelMap
+            // 
+            panelMap.BackColor = SystemColors.ControlDark;
+            panelMap.BackgroundImageLayout = ImageLayout.Stretch;
+            panelMap.BorderStyle = BorderStyle.FixedSingle;
+            panelMap.Controls.Add(tableLayoutPanelSummary);
+            panelMap.Controls.Add(pictureBoxMap);
+            panelMap.Enabled = false;
+            panelMap.Location = new Point(0, 0);
+            panelMap.Name = "panelMap";
+            panelMap.Size = new Size(1017, 650);
+            panelMap.TabIndex = 0;
+            panelMap.Visible = false;
+            panelMap.MouseMove += panelMap_MouseMove;
+            // 
+            // tableLayoutPanelSummary
+            // 
+            tableLayoutPanelSummary.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            tableLayoutPanelSummary.AutoSize = true;
+            tableLayoutPanelSummary.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            tableLayoutPanelSummary.BackColor = SystemColors.Control;
+            tableLayoutPanelSummary.CellBorderStyle = TableLayoutPanelCellBorderStyle.Single;
+            tableLayoutPanelSummary.ColumnCount = 3;
+            tableLayoutPanelSummary.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 10F));
+            tableLayoutPanelSummary.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 65F));
+            tableLayoutPanelSummary.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25F));
+            tableLayoutPanelSummary.Controls.Add(labelMapStateCount4, 2, 3);
+            tableLayoutPanelSummary.Controls.Add(labelMapState4, 1, 3);
+            tableLayoutPanelSummary.Controls.Add(pictureBoxMapState4, 0, 3);
+            tableLayoutPanelSummary.Controls.Add(labelMapStateCount3, 2, 2);
+            tableLayoutPanelSummary.Controls.Add(labelMapState3, 1, 2);
+            tableLayoutPanelSummary.Controls.Add(pictureBoxMapState3, 0, 2);
+            tableLayoutPanelSummary.Controls.Add(labelMapStateCount2, 2, 1);
+            tableLayoutPanelSummary.Controls.Add(labelMapState2, 1, 1);
+            tableLayoutPanelSummary.Controls.Add(pictureBoxMapState2, 0, 1);
+            tableLayoutPanelSummary.Controls.Add(labelMapStateCount1, 2, 0);
+            tableLayoutPanelSummary.Controls.Add(pictureBoxMapState1, 0, 0);
+            tableLayoutPanelSummary.Controls.Add(labelMapState1, 1, 0);
+            tableLayoutPanelSummary.Location = new Point(736, 0);
+            tableLayoutPanelSummary.Name = "tableLayoutPanelSummary";
+            tableLayoutPanelSummary.RowCount = 4;
+            tableLayoutPanelSummary.RowStyles.Add(new RowStyle());
+            tableLayoutPanelSummary.RowStyles.Add(new RowStyle());
+            tableLayoutPanelSummary.RowStyles.Add(new RowStyle());
+            tableLayoutPanelSummary.RowStyles.Add(new RowStyle());
+            tableLayoutPanelSummary.Size = new Size(281, 100);
+            tableLayoutPanelSummary.TabIndex = 1;
+            // 
+            // labelMapStateCount4
+            // 
+            labelMapStateCount4.AutoSize = true;
+            labelMapStateCount4.Dock = DockStyle.Fill;
+            labelMapStateCount4.Location = new Point(213, 73);
+            labelMapStateCount4.Name = "labelMapStateCount4";
+            labelMapStateCount4.Size = new Size(64, 26);
+            labelMapStateCount4.TabIndex = 11;
+            labelMapStateCount4.Text = "0";
+            labelMapStateCount4.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // labelMapState4
+            // 
+            labelMapState4.AutoSize = true;
+            labelMapState4.Dock = DockStyle.Fill;
+            labelMapState4.Location = new Point(32, 73);
+            labelMapState4.Name = "labelMapState4";
+            labelMapState4.Size = new Size(174, 26);
+            labelMapState4.TabIndex = 10;
+            labelMapState4.Text = "Pożar";
+            labelMapState4.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // pictureBoxMapState4
+            // 
+            pictureBoxMapState4.BackColor = Color.Red;
+            pictureBoxMapState4.Dock = DockStyle.Right;
+            pictureBoxMapState4.Location = new Point(4, 76);
+            pictureBoxMapState4.Name = "pictureBoxMapState4";
+            pictureBoxMapState4.Size = new Size(21, 20);
+            pictureBoxMapState4.TabIndex = 9;
+            pictureBoxMapState4.TabStop = false;
+            // 
+            // labelMapStateCount3
+            // 
+            labelMapStateCount3.AutoSize = true;
+            labelMapStateCount3.Dock = DockStyle.Fill;
+            labelMapStateCount3.Location = new Point(213, 49);
+            labelMapStateCount3.Name = "labelMapStateCount3";
+            labelMapStateCount3.Size = new Size(64, 23);
+            labelMapStateCount3.TabIndex = 8;
+            labelMapStateCount3.Text = "0";
+            labelMapStateCount3.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // labelMapState3
+            // 
+            labelMapState3.AutoSize = true;
+            labelMapState3.Dock = DockStyle.Fill;
+            labelMapState3.Location = new Point(32, 49);
+            labelMapState3.Name = "labelMapState3";
+            labelMapState3.Size = new Size(174, 23);
+            labelMapState3.TabIndex = 7;
+            labelMapState3.Text = "Wysłano odczyt";
+            labelMapState3.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // pictureBoxMapState3
+            // 
+            pictureBoxMapState3.BackColor = Color.Orange;
+            pictureBoxMapState3.Dock = DockStyle.Right;
+            pictureBoxMapState3.Location = new Point(4, 52);
+            pictureBoxMapState3.Name = "pictureBoxMapState3";
+            pictureBoxMapState3.Size = new Size(21, 17);
+            pictureBoxMapState3.TabIndex = 6;
+            pictureBoxMapState3.TabStop = false;
+            // 
+            // labelMapStateCount2
+            // 
+            labelMapStateCount2.AutoSize = true;
+            labelMapStateCount2.Dock = DockStyle.Fill;
+            labelMapStateCount2.Location = new Point(213, 25);
+            labelMapStateCount2.Name = "labelMapStateCount2";
+            labelMapStateCount2.Size = new Size(64, 23);
+            labelMapStateCount2.TabIndex = 5;
+            labelMapStateCount2.Text = "0";
+            labelMapStateCount2.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // labelMapState2
+            // 
+            labelMapState2.AutoSize = true;
+            labelMapState2.Dock = DockStyle.Fill;
+            labelMapState2.Location = new Point(32, 25);
+            labelMapState2.Name = "labelMapState2";
+            labelMapState2.Size = new Size(174, 23);
+            labelMapState2.TabIndex = 4;
+            labelMapState2.Text = "Nieaktywne";
+            labelMapState2.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // pictureBoxMapState2
+            // 
+            pictureBoxMapState2.BackColor = Color.RoyalBlue;
+            pictureBoxMapState2.Dock = DockStyle.Right;
+            pictureBoxMapState2.Location = new Point(4, 28);
+            pictureBoxMapState2.Name = "pictureBoxMapState2";
+            pictureBoxMapState2.Size = new Size(21, 17);
+            pictureBoxMapState2.TabIndex = 3;
+            pictureBoxMapState2.TabStop = false;
+            // 
+            // labelMapStateCount1
+            // 
+            labelMapStateCount1.AutoSize = true;
+            labelMapStateCount1.Dock = DockStyle.Fill;
+            labelMapStateCount1.Location = new Point(213, 1);
+            labelMapStateCount1.Name = "labelMapStateCount1";
+            labelMapStateCount1.Size = new Size(64, 23);
+            labelMapStateCount1.TabIndex = 2;
+            labelMapStateCount1.Text = "0";
+            labelMapStateCount1.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // pictureBoxMapState1
+            // 
+            pictureBoxMapState1.BackColor = Color.Lime;
+            pictureBoxMapState1.Dock = DockStyle.Right;
+            pictureBoxMapState1.Location = new Point(4, 4);
+            pictureBoxMapState1.Name = "pictureBoxMapState1";
+            pictureBoxMapState1.Size = new Size(21, 17);
+            pictureBoxMapState1.TabIndex = 0;
+            pictureBoxMapState1.TabStop = false;
+            // 
+            // labelMapState1
+            // 
+            labelMapState1.AutoSize = true;
+            labelMapState1.Dock = DockStyle.Fill;
+            labelMapState1.Location = new Point(32, 1);
+            labelMapState1.Name = "labelMapState1";
+            labelMapState1.Size = new Size(174, 23);
+            labelMapState1.TabIndex = 1;
+            labelMapState1.Text = "Aktywne";
+            labelMapState1.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // pictureBoxMap
+            // 
+            pictureBoxMap.BackgroundImage = Properties.Resources.Kabacki_Segment;
+            pictureBoxMap.BackgroundImageLayout = ImageLayout.Stretch;
+            pictureBoxMap.InitialImage = (Image)resources.GetObject("pictureBoxMap.InitialImage");
+            pictureBoxMap.Location = new Point(-1, -1);
+            pictureBoxMap.Name = "pictureBoxMap";
+            pictureBoxMap.Size = new Size(1018, 651);
+            pictureBoxMap.TabIndex = 2;
+            pictureBoxMap.TabStop = false;
+            // 
             // FormMain
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1350, 729);
+            Controls.Add(panelMap);
             Controls.Add(panelTimer);
             Controls.Add(panelInfo);
             Controls.Add(panelNavigation);
@@ -353,6 +567,7 @@
             MaximizeBox = false;
             Name = "FormMain";
             Text = "ZPI";
+            FormClosing += FormMain_FormClosing;
             panelNavigation.ResumeLayout(false);
             panelInfo.ResumeLayout(false);
             panelCamera.ResumeLayout(false);
@@ -360,6 +575,15 @@
             tableLayoutPanel.ResumeLayout(false);
             panelSensorName.ResumeLayout(false);
             panelTimer.ResumeLayout(false);
+            panelMap.ResumeLayout(false);
+            panelMap.PerformLayout();
+            tableLayoutPanelSummary.ResumeLayout(false);
+            tableLayoutPanelSummary.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)pictureBoxMapState4).EndInit();
+            ((System.ComponentModel.ISupportInitialize)pictureBoxMapState3).EndInit();
+            ((System.ComponentModel.ISupportInitialize)pictureBoxMapState2).EndInit();
+            ((System.ComponentModel.ISupportInitialize)pictureBoxMapState1).EndInit();
+            ((System.ComponentModel.ISupportInitialize)pictureBoxMap).EndInit();
             ResumeLayout(false);
         }
 
@@ -368,7 +592,7 @@
         private Panel panelInfo;
         private Panel panelTimer;
         private Button buttonOverview;
-        private Button buttonMenu;
+        private Button buttonDebug;
         private Button buttonSwitch;
         private Label labelTimer;
         private Button buttonFire;
@@ -389,5 +613,20 @@
         private Label labelSensorName;
         public Panel panelDisplay;
         private System.Windows.Forms.Timer timerRefresh;
+        private Panel panelMap;
+        private TableLayoutPanel tableLayoutPanelSummary;
+        private PictureBox pictureBoxMapState1;
+        private Label labelMapState1;
+        private Label labelMapStateCount4;
+        private Label labelMapState4;
+        private PictureBox pictureBoxMapState4;
+        private Label labelMapStateCount3;
+        private Label labelMapState3;
+        private PictureBox pictureBoxMapState3;
+        private Label labelMapStateCount2;
+        private Label labelMapState2;
+        private PictureBox pictureBoxMapState2;
+        private Label labelMapStateCount1;
+        private PictureBox pictureBoxMap;
     }
 }
