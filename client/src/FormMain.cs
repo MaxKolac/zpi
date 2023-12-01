@@ -17,7 +17,6 @@ namespace ZPIClient
     {
         //Path settings
         private string jsonPath = "../../../sensors/sensorData.json";
-        private JsonSerializerOptions options = new JsonSerializerOptions();
 
         //Connection settings
         private string ipAddress = "127.0.0.1";
@@ -50,21 +49,14 @@ namespace ZPIClient
 
         public FormMain()
         {
-            //Initialize
             InitializeComponent();
             serverRequest(UserRequest.RequestType.AllHostDevicesAsJson);
-            initializeOptions();
-            initializeSensors();
-            initializeListFormControls();
-            initializeSideScroll();
-            initializeMapStateDisplay();
-            updateAll();
-            timerRefresh.Start();
+            Thread.Sleep(2000); //Program czeka 2 sekundy na serwer. Jak serwer nie zd¹¿y to program nie dzia³a. Proste
+            Initialize();
         }
-        
+
         private void updateSensors()
         {
-            int i = 0;
             updateAll();
         }
         #region Timer Functions
@@ -137,30 +129,36 @@ namespace ZPIClient
         }
         #endregion
         #region Initialize Functions
-        /*
-        private void initializeSensors()
+        private void InitializeSensors()
         {
-            List<Sensor> dataSet = readJSON();
-            foreach (var data in dataSet)
+            foreach (HostDevice device in devices)
             {
-                sensorList.Add(new Sensor(data.SensorX, data.SensorY, data.SensorName, data.CurrentSensorStateString, data.SensorSegment, data.SensorLocation, data.SensorTemperature, data.SensorDetails, data.SensorLastUpdate));
-            }
-        }
-        */
-        private void initializeSensors()
-        {
-            int i = 0;
-            foreach(HostDevice device in devices)
-            {
-                if(device.Type == HostDevice.HostType.PythonCameraSimulator || device.Type == HostDevice.HostType.CameraSimulator)
+                if (device.Type == HostDevice.HostType.PythonCameraSimulator || device.Type == HostDevice.HostType.CameraSimulator)
                 {
-                    sensorList.Add((Sensor)device);
-                    sensorList[i].StateFromStatus();
-                    i++;
+                    Random rnd = new Random();
+                    Sensor sensor = new Sensor
+                    {
+                        Id = device.Id,
+                        Name = device.Name,
+                        Type = device.Type,
+                        Address = device.Address,
+                        Port = device.Port,
+                        SectorId = device.SectorId,
+                        LastKnownStatus = device.LastKnownStatus,
+                        LastKnownTemperature = device.LastKnownTemperature,
+                        LocationAltitude = device.LocationAltitude,
+                        LocationLatitude = device.LocationLatitude,
+                        CurrentSensorState = Sensor.SensorState.Null,
+                        SensorLastUpdate = 0,
+                        SensorDetails = "Ten wspania³y sensor wisi na wysokoœci "+rnd.Next(2,10)+" metrów",
+                        Override = false
+                    };
+                    sensor.StateFromStatus();
+                    sensorList.Add(sensor);
                 }
             }
         }
-        private void initializeListFormControls()
+        private void InitializeListFormControls()
         {
             int panelX = panelDisplay.Location.X;
             int panelY = panelDisplay.Location.Y;
@@ -181,6 +179,7 @@ namespace ZPIClient
             #endregion
 
             int count = sensorList.Count;
+
 
             panelSensorContainer = new TableLayoutPanel[count];
             labelSensor = new Label[count];
@@ -271,7 +270,7 @@ namespace ZPIClient
                 labelSensorSegment[i].Height = panelSensorInformation[i].Height;
                 labelSensorSegment[i].Font = new Font(labelSensorSegment[i].Font.Name, fontSize);
                 labelSensorSegment[i].TextAlign = ContentAlignment.MiddleLeft;
-                labelSensorSegment[i].Text = "Segment: " + sensorList[i].Sector.ToString();
+                labelSensorSegment[i].Text = "Segment: " + sensorList[i].SectorId;
                 labelSensorSegment[i].Tag = i;
                 labelSensorSegment[i].Click += sensorContainer_Click;
                 panelSensorInformation[i].Controls.Add(labelSensorSegment[i]);
@@ -326,19 +325,14 @@ namespace ZPIClient
                 panelY += rowHeight * 2;
             }
         }
-        private void initializeOptions()
-        {
-            options.PropertyNameCaseInsensitive = true;
-            options.AllowTrailingCommas = true;
-        }
-        private void initializeSideScroll()
+        private void InitializeSideScroll()
         {
             panelDisplay.AutoScroll = false;
             panelDisplay.HorizontalScroll.Enabled = false;
             panelDisplay.HorizontalScroll.Visible = false;
             panelDisplay.AutoScroll = true;
         }
-        private void initializeMapStateDisplay()
+        private void InitializeMapStateDisplay()
         {
             pictureBoxMapState1.BackColor = Color.Lime;
             pictureBoxMapState1.Width = pictureBoxMapState1.Height;
@@ -358,6 +352,15 @@ namespace ZPIClient
             pictureBoxMapState4.Width = pictureBoxMapState1.Width;
             pictureBoxMapState4.Height = pictureBoxMapState1.Height;
             roundPictureBox(ref pictureBoxMapState4);
+        }
+        private void Initialize()
+        {
+            InitializeSensors();
+            InitializeListFormControls();
+            InitializeSideScroll();
+            InitializeMapStateDisplay();
+            updateAll();
+            timerRefresh.Start();
         }
         #endregion
         #region Utilities
@@ -425,13 +428,12 @@ namespace ZPIClient
             panelMapSensorInformation[currentSensorIndex].BackColor = Color.SkyBlue;
             labelSensorName.Text = sensorList[currentSensorIndex].Name;
             labelStateInfo.Text = sensorList[currentSensorIndex].StateToString();
-            labelSegmentInfo.Text = sensorList[currentSensorIndex].Sector.ToString();
+            labelSegmentInfo.Text = sensorList[currentSensorIndex].SectorId.ToString();
             labelLocationInfo.Text = sensorList[currentSensorIndex].SensorDetails;
             labelTemperatureInfo.Text = sensorList[currentSensorIndex].LastKnownTemperature.ToString() + "°C";
             labelLastUpdateInfo.Text = sensorList[currentSensorIndex].SensorLastUpdate.ToString() + " sekund temu.";
             try
             {
-                //Image cameraImage = Image.FromFile("../../../sensors/" + sensorList[currentSensorIndex].LastImage);
                 Image cameraImage = HostDevice.ToImage(sensorList[currentSensorIndex].LastImage);
                 pictureBoxCamera.Image = cameraImage;
             }
@@ -470,7 +472,7 @@ namespace ZPIClient
         }
         private void FormMain_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if(tcpClient != null)
+            if (tcpClient != null)
             {
                 tcpClient.Close();
             }
@@ -495,9 +497,9 @@ namespace ZPIClient
                 }
                 tcpClient.Close();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                MessageBox.Show("Nie uda³o siê nawi¹zaæ po³¹czenia z serwerem ("+ipAddress+": "+port+"). "+ex.Message, "B³¹d po³¹czenia", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                MessageBox.Show("Nie uda³o siê nawi¹zaæ po³¹czenia z serwerem (" + ipAddress + ": " + port + "). " + ex.Message, "B³¹d po³¹czenia", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
             }
         }
         private void serverRequestInitialize()
@@ -528,6 +530,13 @@ namespace ZPIClient
             if (debug)
             {
                 buttonDebug.Text = "X: " + e.Location.X.ToString() + " Y: " + e.Location.Y.ToString();
+            }
+        }
+        private void ShowAllSensors()
+        {
+            foreach (Sensor sensor in sensorList)
+            {
+                MessageBox.Show(sensor.ToString());
             }
         }
         #endregion
