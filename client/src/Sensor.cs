@@ -5,10 +5,11 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using Windows.ApplicationModel.VoiceCommands;
+using ZPICommunicationModels.Models;
 
 namespace ZPIClient;
-[Obsolete]
-internal class Sensor
+internal class Sensor : HostDevice
 {
     public enum SensorState
     {
@@ -18,64 +19,39 @@ internal class Sensor
         Fire,
         Null
     }
-
-    public int SensorX { get; set; }
-    public int SensorY { get; set; }
-    public string SensorName { get; set; }
-    public string CurrentSensorStateString { get; set; }
     internal SensorState CurrentSensorState { get; set; }
-    public string SensorSegment { get; set; }
-    public string SensorLocation { get; set; }
-    public float SensorTemperature { get; set; }
-    public string SensorDetails { get; set; }
     public int SensorLastUpdate { get; set; }
+    public string SensorDetails {  get; set; }
+    public bool Override { get; set; }
 
     #region Constructor
-    public Sensor()
+    public Sensor() : base()
     {
-        this.SensorX = 0;
-        this.SensorY = 0;
-        this.SensorName = string.Empty;
         this.CurrentSensorState = SensorState.Null;
-        this.SensorSegment = string.Empty;
-        this.SensorLocation = string.Empty;
-        this.SensorTemperature = 0;
-        this.SensorDetails = string.Empty;
         this.SensorLastUpdate = 0;
-    }
-    public Sensor(int sensorX, int sensorY, string sensorName, string currentSensorStateString, string sensorSegment, string sensorLocation, float sensorTemperature, string sensorDetails, int sensorLastUpdate)
-    {
-        this.SensorX = sensorX;
-        this.SensorY = sensorY;
-        this.SensorName = sensorName;
-        this.CurrentSensorStateString = currentSensorStateString;
-        this.CurrentSensorState = StringToState(currentSensorStateString);
-        this.SensorSegment = sensorSegment;
-        this.SensorLocation = sensorLocation;
-        this.SensorTemperature = sensorTemperature;
-        this.SensorDetails = sensorDetails;
-        this.SensorLastUpdate = sensorLastUpdate;
+        this.SensorDetails = String.Empty;
+        this.Override = false;
     }
     #endregion
     #region ChangeLocation
     public void SensorChangeLocation(int sensorX, int sensorY)
     {
-        this.SensorX = sensorX;
-        this.SensorY = sensorY;
+        this.LocationLatitude = sensorX;
+        this.LocationAltitude = sensorY;
     }
-    public void SensorChangeLocation(string sensorName, string sensorSector, string sensorLocation)
+    public void SensorChangeLocation(string sensorName, Sector sensorSector, string sensorLocation)
     {
-        this.SensorName = sensorName;
-        this.SensorSegment = sensorSector;
-        this.SensorLocation = sensorLocation;
+        this.Name = sensorName;
+        this.Sector = sensorSector;
+        this.SensorDetails = sensorLocation;
     }
-    public void SensorChangeLocation(int sensorX, int sensorY, string sensorName, string sensorSector, string sensorLocation)
+    public void SensorChangeLocation(int sensorX, int sensorY, string sensorName, Sector sensorSector, string sensorLocation)
     {
-        this.SensorX = sensorX;
-        this.SensorY = sensorY;
-        this.SensorName = sensorName;
-        this.SensorSegment = sensorSector;
-        this.SensorLocation = sensorLocation;
+        this.LocationAltitude = sensorX;
+        this.LocationLatitude = sensorY;
+        this.Name = sensorName;
+        this.Sector = sensorSector;
+        this.SensorDetails = sensorLocation;
     }
     #endregion
     #region UpdateInformation
@@ -84,10 +60,10 @@ internal class Sensor
         this.CurrentSensorState = sensorState;
         this.SensorLastUpdate = 0;
     }
-    public void Update(SensorState sensorState, float sensorTemperature)
+    public void Update(SensorState sensorState, int sensorTemperature)
     {
         this.CurrentSensorState = sensorState;
-        this.SensorTemperature = sensorTemperature;
+        this.LastKnownTemperature = sensorTemperature;
         this.SensorLastUpdate = 0;
     }
     #endregion
@@ -112,7 +88,6 @@ internal class Sensor
                 return SensorState.Null;
         }
     }
-    
     public string StateToString()
     {
         switch (CurrentSensorState)
@@ -133,7 +108,6 @@ internal class Sensor
                 return "Null";
         }
     }
-
     public Color StateToColor()
     {
         switch (CurrentSensorState)
@@ -152,6 +126,29 @@ internal class Sensor
 
             default:
                 return Color.Lavender;
+        }
+    }
+    public void StateFromStatus()
+    {
+        if (Override)
+        {
+            CurrentSensorState = SensorState.Fire;
+            return;
+        }
+        if(LastKnownStatus == DeviceStatus.OK)
+        {
+            if(LastKnownTemperature > 40)
+            {
+                CurrentSensorState = SensorState.Alert;
+                return;
+            }
+            CurrentSensorState = SensorState.Active;
+            return;
+        }
+        else
+        {
+            CurrentSensorState = SensorState.Inactive;
+            return;
         }
     }
     #endregion

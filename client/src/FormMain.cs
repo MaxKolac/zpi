@@ -17,12 +17,16 @@ namespace ZPIClient
     {
         //Path settings
         private string jsonPath = "../../../sensors/sensorData.json";
+        private JsonSerializerOptions options = new JsonSerializerOptions();
+
+        //Connection settings
         private string ipAddress = "127.0.0.1";
         private int port = 25566;
         private TcpClient tcpClient;
-        private JsonSerializerOptions options = new JsonSerializerOptions();
+        private List<HostDevice> devices;
 
         //Sensor variables
+        //private List<Sensor> sensorList = new List<Sensor>();
         private List<Sensor> sensorList = new List<Sensor>();
         private int currentSensorIndex = -1;
 
@@ -57,30 +61,11 @@ namespace ZPIClient
             updateAll();
             timerRefresh.Start();
         }
+        
         private void updateSensors()
         {
-            List<Sensor> dataSet = readJSON();
             int i = 0;
-            foreach (var data in dataSet)
-            {
-                if (sensorList[i].CurrentSensorState != Sensor.StringToState(data.CurrentSensorStateString) || sensorList[i].SensorTemperature != data.SensorTemperature)
-                {
-                    sensorList[i].Update(Sensor.StringToState(data.CurrentSensorStateString), data.SensorTemperature);
-                    labelSensorStatus[i].Text = "Status: " + data.CurrentSensorStateString;
-                    if(i == currentSensorIndex)
-                    {
-                        updateInfoPanel();
-                    }
-                }
-                i++;
-            }
             updateAll();
-        }
-        private List<Sensor> readJSON()
-        {
-            using FileStream json = File.OpenRead(jsonPath);
-            List<Sensor> sensors = JsonSerializer.Deserialize<List<Sensor>>(json, options);
-            return sensors;
         }
         #region Timer Functions
         private void timerRefresh_Tick(object sender, EventArgs e)
@@ -152,12 +137,27 @@ namespace ZPIClient
         }
         #endregion
         #region Initialize Functions
+        /*
         private void initializeSensors()
         {
             List<Sensor> dataSet = readJSON();
             foreach (var data in dataSet)
             {
                 sensorList.Add(new Sensor(data.SensorX, data.SensorY, data.SensorName, data.CurrentSensorStateString, data.SensorSegment, data.SensorLocation, data.SensorTemperature, data.SensorDetails, data.SensorLastUpdate));
+            }
+        }
+        */
+        private void initializeSensors()
+        {
+            int i = 0;
+            foreach(HostDevice device in devices)
+            {
+                if(device.Type == HostDevice.HostType.PythonCameraSimulator || device.Type == HostDevice.HostType.CameraSimulator)
+                {
+                    sensorList.Add((Sensor)device);
+                    sensorList[i].StateFromStatus();
+                    i++;
+                }
             }
         }
         private void initializeListFormControls()
@@ -219,7 +219,7 @@ namespace ZPIClient
                 labelSensor[i].AutoSize = false;
                 labelSensor[i].TextAlign = ContentAlignment.MiddleCenter;
                 labelSensor[i].Dock = DockStyle.Fill;
-                labelSensor[i].Text = sensorList[i].SensorName;
+                labelSensor[i].Text = sensorList[i].Name;
                 labelSensor[i].Tag = i;
                 labelSensor[i].Click += sensorContainer_Click;
                 panelSensorContainer[i].Controls.Add(labelSensor[i]);
@@ -271,7 +271,7 @@ namespace ZPIClient
                 labelSensorSegment[i].Height = panelSensorInformation[i].Height;
                 labelSensorSegment[i].Font = new Font(labelSensorSegment[i].Font.Name, fontSize);
                 labelSensorSegment[i].TextAlign = ContentAlignment.MiddleLeft;
-                labelSensorSegment[i].Text = "Segment: " + sensorList[i].SensorSegment;
+                labelSensorSegment[i].Text = "Segment: " + sensorList[i].Sector.ToString();
                 labelSensorSegment[i].Tag = i;
                 labelSensorSegment[i].Click += sensorContainer_Click;
                 panelSensorInformation[i].Controls.Add(labelSensorSegment[i]);
@@ -280,7 +280,7 @@ namespace ZPIClient
                 #region Map Sensor Panel Container
                 panelMapSensorInformation[i] = new TableLayoutPanel();
                 panelMapSensorInformation[i].Name = "tableLayoutPanelMapInfo" + i;
-                panelMapSensorInformation[i].Location = new Point(sensorList[i].SensorX, sensorList[i].SensorY);
+                panelMapSensorInformation[i].Location = new Point((int)sensorList[i].LocationLatitude, (int)sensorList[i].LocationAltitude);
                 panelMapSensorInformation[i].Width = mapPanelWidth;
                 panelMapSensorInformation[i].Height = mapPanelHeight;
                 panelMapSensorInformation[i].CellBorderStyle = TableLayoutPanelCellBorderStyle.Single;
@@ -315,7 +315,7 @@ namespace ZPIClient
                 labelMapSensor[i].Dock = DockStyle.Fill;
                 labelMapSensor[i].Anchor = AnchorStyles.None;
                 labelMapSensor[i].TextAlign = ContentAlignment.MiddleCenter;
-                labelMapSensor[i].Text = sensorList[i].SensorName;
+                labelMapSensor[i].Text = sensorList[i].Name;
                 labelMapSensor[i].Font = new Font(labelMapSensor[i].Font.Name, fontSize);
                 labelMapSensor[i].Tag = i;
                 labelMapSensor[i].Click += sensorContainer_Click;
@@ -423,18 +423,19 @@ namespace ZPIClient
         {
             panelSensorContainer[currentSensorIndex].BackColor = Color.SkyBlue;
             panelMapSensorInformation[currentSensorIndex].BackColor = Color.SkyBlue;
-            labelSensorName.Text = sensorList[currentSensorIndex].SensorName;
+            labelSensorName.Text = sensorList[currentSensorIndex].Name;
             labelStateInfo.Text = sensorList[currentSensorIndex].StateToString();
-            labelSegmentInfo.Text = sensorList[currentSensorIndex].SensorSegment;
-            labelLocationInfo.Text = sensorList[currentSensorIndex].SensorLocation;
-            labelTemperatureInfo.Text = sensorList[currentSensorIndex].SensorTemperature.ToString() + "°C";
+            labelSegmentInfo.Text = sensorList[currentSensorIndex].Sector.ToString();
+            labelLocationInfo.Text = sensorList[currentSensorIndex].SensorDetails;
+            labelTemperatureInfo.Text = sensorList[currentSensorIndex].LastKnownTemperature.ToString() + "°C";
             labelLastUpdateInfo.Text = sensorList[currentSensorIndex].SensorLastUpdate.ToString() + " sekund temu.";
             try
             {
-                Image cameraImage = Image.FromFile("../../../sensors/" + sensorList[currentSensorIndex].SensorDetails);
+                //Image cameraImage = Image.FromFile("../../../sensors/" + sensorList[currentSensorIndex].LastImage);
+                Image cameraImage = HostDevice.ToImage(sensorList[currentSensorIndex].LastImage);
                 pictureBoxCamera.Image = cameraImage;
             }
-            catch (FileNotFoundException)
+            catch (Exception)
             {
                 pictureBoxCamera.Image = pictureBoxCamera.ErrorImage;
             }
@@ -504,34 +505,16 @@ namespace ZPIClient
             var listener = new ClientListener(IPAddress.Parse(ipAddress), 12000);
             listener.OnSignalReceived += (sender, e) =>
             {
-                var list = ZPIEncoding.Decode<List<HostDevice>>(e);
-                MessageBox.Show("This is a test");
+                devices = ZPIEncoding.Decode<List<HostDevice>>(e);
             };
             var request = new UserRequest()
             {
                 Request = UserRequest.RequestType.AllHostDevicesAsJson
             };
-            /*
-            var request = new UserRequest()
-            {
-                Request = UserRequest.RequestType.CameraDataAsJson,
-                ModelObjectId = 1
-            };
-            */
             using (var stream = tcpClient.GetStream())
             {
                 byte[] buffer = ZPIEncoding.Encode(request);
                 stream.Write(buffer);
-
-                /*
-                string message = "";
-                foreach(char b in buffer)
-                {
-                    message += b;
-                }
-                MessageBox.Show(message);
-                */
-
             }
         }
         private void serverRequestUpdate()
