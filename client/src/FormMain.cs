@@ -48,7 +48,7 @@ namespace ZPIClient
         {
             //Initialize
             InitializeComponent();
-            serverRequest(RequestType.Initialize);
+            serverRequest(UserRequest.RequestType.AllHostDevicesAsJson);
             initializeOptions();
             initializeSensors();
             initializeListFormControls();
@@ -476,12 +476,7 @@ namespace ZPIClient
         }
         #endregion
         #region Server Connection
-        private enum RequestType
-        {
-            Initialize,
-            Update,
-        }
-        private void serverRequest(RequestType request)
+        private void serverRequest(UserRequest.RequestType request)
         {
             try
             {
@@ -489,11 +484,11 @@ namespace ZPIClient
                 tcpClient.Connect(ipAddress, port);
                 switch (request)
                 {
-                    case RequestType.Initialize:
+                    case UserRequest.RequestType.AllHostDevicesAsJson:
                         serverRequestInitialize();
                         break;
 
-                    case RequestType.Update:
+                    case UserRequest.RequestType.SingleHostDeviceAsJson:
                         serverRequestUpdate();
                         break;
                 }
@@ -511,14 +506,31 @@ namespace ZPIClient
             {
                 Console.WriteLine(ZPIEncoding.Decode<CameraDataMessage>(e));
             };
-            
             var request = new UserRequest()
             {
                 Request = UserRequest.RequestType.AllHostDevicesAsJson
             };
+            /*
+            var request = new UserRequest()
+            {
+                Request = UserRequest.RequestType.CameraDataAsJson,
+                ModelObjectId = 1
+            };
+            */
             using (var stream = tcpClient.GetStream())
             {
                 byte[] buffer = ZPIEncoding.Encode(request);
+                stream.Write(buffer);
+
+                /*
+                string message = "";
+                foreach(char b in buffer)
+                {
+                    message += b;
+                }
+                MessageBox.Show(message);
+                */
+
             }
         }
         private void serverRequestUpdate()
