@@ -1,6 +1,4 @@
-﻿using Xunit.Abstractions;
-using ZPIServer.Commands;
-using ZPIServer.EventArgs;
+﻿using ZPIServer.Commands;
 
 namespace ZPIServerTests.Commands;
 
@@ -18,7 +16,7 @@ public class StatusCommandTests
 
     [Theory]
     [InlineData(StatusCommand.SignalTranslatorArgument)]
-    [InlineData(StatusCommand.TcpHandlerArgument)]
+    [InlineData(StatusCommand.TcpReceiverArgument)]
     static void CheckExecutionWithArguments(string argument)
     {
         var commandToExecute = new StatusCommand();
@@ -39,6 +37,7 @@ public class StatusCommandTests
         Assert.Equal(commandToExecute, receivedCommand);
         Assert.Null(receivedCommand?.ClassArgument);
     }
+
     private static StatusCommand? PerformExecution(StatusCommand commandToExecute, string[]? arguments)
     {
         StatusCommand? receivedCommand = null;

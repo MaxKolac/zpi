@@ -1,14 +1,19 @@
-﻿namespace ZPIServer.API.CameraLibraries;
+﻿using ZPICommunicationModels;
+using ZPICommunicationModels.Messages;
+
+namespace ZPIServer.API.CameraLibraries;
 
 public class CameraSimulatorAPI : ICamera
 {
-    public void DecodePicture()
+    private CameraDataMessage? _message;
+
+    public void DecodeReceivedBytes(byte[]? bytes)
     {
-        throw new NotImplementedException();
+        if (bytes is null || bytes.Length == 0)
+            throw new ArgumentException("Received bytes were empty or null");
+
+        _message = ZPIEncoding.Decode<CameraDataMessage>(bytes);
     }
 
-    public void RequestPicture()
-    {
-        throw new NotImplementedException();
-    }
+    public CameraDataMessage? GetDecodedMessage() => _message;
 }

@@ -1,5 +1,4 @@
 ﻿using ZPIServer.Commands;
-using ZPIServer.EventArgs;
 
 namespace ZPIServerTests.Commands;
 
@@ -16,8 +15,10 @@ public class HelpCommandTests
     }
 
     [Theory]
+    [InlineData(Command.Db)]
     [InlineData(Command.Help)]
     [InlineData(Command.Shutdown)]
+    [InlineData(Command.Status)]
     static void CheckExecutionWithArguments(string argument)
     {
         var commandToExecute = new HelpCommand();

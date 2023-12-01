@@ -1,19 +1,21 @@
 ﻿using System.Diagnostics;
 using System.Net;
+using ZPICommunicationModels.Models;
 using ZPIServer.API;
+using ZPIServer.API.CameraLibraries;
 using ZPIServer.Commands;
-using ZPIServer.EventArgs;
 
 namespace ZPIServer
 {
     public static class Program
     {
-        const string ServerConsolePrefix = "SERVER";
+        const string ServerPrefix = "SERVER";
 
         static readonly CancellationTokenSource serverLifetimeToken = new();
         static readonly Logger logger = new();
 
-        static TcpHandler? tcpHandler;
+        static TcpReceiver? tcpReceiver;
+        static TcpSender? tcpSender;
         static SignalTranslator? signalTranslator;
 
         public static int Main(string[] args)
@@ -29,7 +31,7 @@ namespace ZPIServer
             return 0;
         }
 
-        private static void OnCommandExecuted(object? sender, CommandEventArgs e)
+        private static void OnCommandExecuted(object? sender, System.EventArgs e)
         {
             if (sender is not null && sender is ShutdownCommand)
                 serverLifetimeToken.Cancel();
@@ -46,17 +48,31 @@ namespace ZPIServer
                 try
                 {
                     Settings.ServerAddress = IPAddress.Parse(args[0]);
-                    logger.WriteLine($"Server will listen on IP address {args[0]}.", ServerConsolePrefix);
+                    logger.WriteLine($"Server will listen on IP address {args[0]}.", ServerPrefix);
                 }
                 catch (FormatException)
                 {
-                    logger.WriteLine($"WARNING! Failed to format argument 0 to IPAddress. Server will launch on default value of 127.0.0.1.", ServerConsolePrefix);
+                    logger.WriteLine($"Failed to format argument 0 to IPAddress. Server will launch on default value of 127.0.0.1.", ServerPrefix, Logger.MessageType.Warning);
                 }
             }
 
-            //Server initialization
-            tcpHandler = new TcpHandler(Settings.ServerAddress, Settings.TcpListeningPort, logger);
-            tcpHandler.BeginListening();
+            //Getting Python and dependencies for PythonCameraSimulatorApi
+            Settings.IsPythonDetected = PythonCameraSimulatorAPI.CheckPythonInstallation(logger);
+            if (Settings.IsPythonDetected)
+            {
+                logger.WriteLine($"Python installation detected. Checking that neccesary dependencies are also present.", ServerPrefix);
+                PythonCameraSimulatorAPI.CheckPythonPackagesInstallation(logger);
+            }
+            else
+            {
+                logger.WriteLine($"Until Python is properly installed and server restarted, server will ignore messages from {HostDevice.HostType.PythonCameraSimulator} devices!", ServerPrefix, Logger.MessageType.Warning);
+            }
+
+            //Components initialization
+            tcpReceiver = new TcpReceiver(Settings.ServerAddress, Settings.TcpReceiverPorts, logger);
+            tcpReceiver.Enable();
+            tcpSender = new TcpSender(logger);
+            tcpSender.Enable();
             signalTranslator = new SignalTranslator(logger);
             signalTranslator.BeginTranslating();
 
@@ -69,11 +85,12 @@ namespace ZPIServer
         private static void StopServer()
         {
             logger?.WriteLine("Shutting the server down.");
-            
+
             Command.OnExecuted -= OnCommandExecuted;
 
             signalTranslator?.StopTranslating();
-            tcpHandler?.StopListening();
+            tcpSender?.Disable();
+            tcpReceiver?.Disable();
             logger?.Stop();
         }
     }

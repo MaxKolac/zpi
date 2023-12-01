@@ -2,7 +2,7 @@
 
 namespace ZPIServer.EventArgs;
 
-public class TcpHandlerEventArgs : System.EventArgs
+public class TcpReceiverEventArgs : System.EventArgs
 {
     /// <summary>
     /// Adres IP urządzenia, od którego otrzymano dane.
@@ -20,7 +20,7 @@ public class TcpHandlerEventArgs : System.EventArgs
     ///<summary></summary>
     /// <param name="senderIp">Adres IP urządzenia, od którego otrzymano dane.</param>
     /// <param name="data">Otrzymany surowy ciąg bajtów.</param>
-    public TcpHandlerEventArgs(IPAddress senderIp, int senderPort, byte[] data) : base()
+    public TcpReceiverEventArgs(IPAddress senderIp, int senderPort, byte[] data) : base()
     {
         SenderIp = senderIp;
         SenderPort = senderPort;
