@@ -122,9 +122,16 @@ namespace ZPIClient
             }
             Control control = (Control)sender;
             currentSensorIndex = (int)control.Tag;
+            updateInfoPanel();
+        }
+        private void buttonFire_Click(object sender, EventArgs e)
+        {
             if (currentSensorIndex != -1)
             {
-                updateInfoPanel();
+                sensorList[currentSensorIndex].Override = !sensorList[currentSensorIndex].Override;
+                sensorList[currentSensorIndex].StateFromStatus();
+                labelSensorStatus[currentSensorIndex].Text = "Stan: " + sensorList[currentSensorIndex].StateToString();
+                updateAll();
             }
         }
         #endregion
@@ -150,7 +157,7 @@ namespace ZPIClient
                         LocationLatitude = device.LocationLatitude,
                         CurrentSensorState = Sensor.SensorState.Null,
                         SensorLastUpdate = 0,
-                        SensorDetails = "Ten wspania³y sensor wisi na wysokoœci "+rnd.Next(2,10)+" metrów",
+                        SensorDetails = "Ten wspania³y sensor wisi na wysokoœci " + rnd.Next(2, 10) + " metrów",
                         Override = false
                     };
                     sensor.StateFromStatus();
@@ -424,51 +431,55 @@ namespace ZPIClient
         }
         private void updateInfoPanel()
         {
-            panelSensorContainer[currentSensorIndex].BackColor = Color.SkyBlue;
-            panelMapSensorInformation[currentSensorIndex].BackColor = Color.SkyBlue;
-            labelSensorName.Text = sensorList[currentSensorIndex].Name;
-            labelStateInfo.Text = sensorList[currentSensorIndex].StateToString();
-            labelSegmentInfo.Text = sensorList[currentSensorIndex].SectorId.ToString();
-            labelLocationInfo.Text = sensorList[currentSensorIndex].SensorDetails;
-            labelTemperatureInfo.Text = sensorList[currentSensorIndex].LastKnownTemperature.ToString() + "°C";
-            labelLastUpdateInfo.Text = sensorList[currentSensorIndex].SensorLastUpdate.ToString() + " sekund temu.";
-            try
+            if(currentSensorIndex != -1)
             {
-                Image cameraImage = HostDevice.ToImage(sensorList[currentSensorIndex].LastImage);
-                pictureBoxCamera.Image = cameraImage;
-            }
-            catch (Exception)
-            {
-                pictureBoxCamera.Image = pictureBoxCamera.ErrorImage;
-            }
-            switch (sensorList[currentSensorIndex].CurrentSensorState)
-            {
-                case Sensor.SensorState.Alert:
-                    buttonFire.BackColor = Color.Red;
-                    buttonFire.ForeColor = Color.White;
-                    buttonFire.Enabled = true;
-                    buttonFire.Text = "PotwierdŸ po¿ar";
-                    break;
+                panelSensorContainer[currentSensorIndex].BackColor = Color.SkyBlue;
+                panelMapSensorInformation[currentSensorIndex].BackColor = Color.SkyBlue;
+                labelSensorName.Text = sensorList[currentSensorIndex].Name;
+                labelStateInfo.Text = sensorList[currentSensorIndex].StateToString();
+                labelSegmentInfo.Text = sensorList[currentSensorIndex].SectorId.ToString();
+                labelLocationInfo.Text = sensorList[currentSensorIndex].SensorDetails;
+                labelTemperatureInfo.Text = sensorList[currentSensorIndex].LastKnownTemperature.ToString() + "°C";
+                labelLastUpdateInfo.Text = sensorList[currentSensorIndex].SensorLastUpdate.ToString() + " sekund temu.";
+                try
+                {
+                    Image cameraImage = HostDevice.ToImage(sensorList[currentSensorIndex].LastImage);
+                    pictureBoxCamera.Image = cameraImage;
+                }
+                catch (Exception)
+                {
+                    pictureBoxCamera.Image = pictureBoxCamera.ErrorImage;
+                }
+                switch (sensorList[currentSensorIndex].CurrentSensorState)
+                {
+                    case Sensor.SensorState.Alert:
+                        buttonFire.BackColor = Color.Red;
+                        buttonFire.ForeColor = Color.White;
+                        buttonFire.Enabled = true;
+                        buttonFire.Text = "PotwierdŸ po¿ar";
+                        break;
 
-                case Sensor.SensorState.Fire:
-                    buttonFire.BackColor = Color.Red;
-                    buttonFire.ForeColor = Color.White;
-                    buttonFire.Enabled = true;
-                    buttonFire.Text = "PotwierdŸ zwalczenie po¿aru";
-                    break;
+                    case Sensor.SensorState.Fire:
+                        buttonFire.BackColor = Color.Red;
+                        buttonFire.ForeColor = Color.White;
+                        buttonFire.Enabled = true;
+                        buttonFire.Text = "PotwierdŸ zwalczenie po¿aru";
+                        break;
 
-                default:
-                    buttonFire.BackColor = SystemColors.Control;
-                    buttonFire.ForeColor = SystemColors.ControlText;
-                    buttonFire.Enabled = false;
-                    buttonFire.Text = "Brak problemów";
-                    break;
+                    default:
+                        buttonFire.BackColor = SystemColors.Control;
+                        buttonFire.ForeColor = SystemColors.ControlText;
+                        buttonFire.Enabled = false;
+                        buttonFire.Text = "Brak problemów";
+                        break;
+                }
             }
         }
         private void updateAll() //Updates all controls to match current data. Does not change data itself.
         {
             updateColors();
             updateStateCounts();
+            updateInfoPanel();
         }
         private void FormMain_FormClosing(object sender, FormClosingEventArgs e)
         {
