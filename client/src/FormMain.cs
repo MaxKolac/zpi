@@ -5,10 +5,10 @@ using System.Text.Json.Serialization;
 using static System.Windows.Forms.Design.AxImporter;
 using System.Diagnostics;
 using System.Drawing.Printing;
+using System.Net.Sockets;
 using ZPICommunicationModels;
 using ZPICommunicationModels.Messages;
 using ZPICommunicationModels.Models;
-using System.Net.Sockets;
 
 namespace ZPIClient
 {
@@ -47,7 +47,7 @@ namespace ZPIClient
         {
             //Initialize
             InitializeComponent();
-            connectToServer();
+            serverRequest(RequestType.Initialize);
             initializeOptions();
             initializeSensors();
             initializeListFormControls();
@@ -65,6 +65,11 @@ namespace ZPIClient
                 if (sensorList[i].CurrentSensorState != Sensor.StringToState(data.CurrentSensorStateString) || sensorList[i].SensorTemperature != data.SensorTemperature)
                 {
                     sensorList[i].Update(Sensor.StringToState(data.CurrentSensorStateString), data.SensorTemperature);
+                    labelSensorStatus[i].Text = "Status: " + data.CurrentSensorStateString;
+                    if(i == currentSensorIndex)
+                    {
+                        updateInfoPanel();
+                    }
                 }
                 i++;
             }
@@ -141,47 +146,7 @@ namespace ZPIClient
             currentSensorIndex = (int)control.Tag;
             if (currentSensorIndex != -1)
             {
-                panelSensorContainer[currentSensorIndex].BackColor = Color.SkyBlue;
-                panelMapSensorInformation[currentSensorIndex].BackColor = Color.SkyBlue;
-                labelSensorName.Text = sensorList[currentSensorIndex].SensorName;
-                labelStateInfo.Text = sensorList[currentSensorIndex].StateToString();
-                labelSegmentInfo.Text = sensorList[currentSensorIndex].SensorSegment;
-                labelLocationInfo.Text = sensorList[currentSensorIndex].SensorLocation;
-                labelTemperatureInfo.Text = sensorList[currentSensorIndex].SensorTemperature.ToString() + "°C";
-                labelLastUpdateInfo.Text = sensorList[currentSensorIndex].SensorLastUpdate.ToString() + " sekund temu.";
-                try
-                {
-                    Image cameraImage = Image.FromFile("../../../sensors/" + sensorList[currentSensorIndex].SensorDetails);
-                    pictureBoxCamera.Image = cameraImage;
-                }
-                catch (FileNotFoundException)
-                {
-                    pictureBoxCamera.Image = pictureBoxCamera.ErrorImage;
-                }
-
-                switch (sensorList[currentSensorIndex].CurrentSensorState)
-                {
-                    case Sensor.SensorState.Alert:
-                        buttonFire.BackColor = Color.Red;
-                        buttonFire.ForeColor = Color.White;
-                        buttonFire.Enabled = true;
-                        buttonFire.Text = "PotwierdŸ po¿ar";
-                        break;
-
-                    case Sensor.SensorState.Fire:
-                        buttonFire.BackColor = Color.Red;
-                        buttonFire.ForeColor = Color.White;
-                        buttonFire.Enabled = true;
-                        buttonFire.Text = "PotwierdŸ zwalczenie po¿aru";
-                        break;
-
-                    default:
-                        buttonFire.BackColor = SystemColors.Control;
-                        buttonFire.ForeColor = SystemColors.ControlText;
-                        buttonFire.Enabled = false;
-                        buttonFire.Text = "Brak problemów";
-                        break;
-                }
+                updateInfoPanel();
             }
         }
         #endregion
@@ -453,6 +418,49 @@ namespace ZPIClient
             labelMapStateCount4.Text = stateCounts[3].ToString();
 
         }
+        private void updateInfoPanel()
+        {
+            panelSensorContainer[currentSensorIndex].BackColor = Color.SkyBlue;
+            panelMapSensorInformation[currentSensorIndex].BackColor = Color.SkyBlue;
+            labelSensorName.Text = sensorList[currentSensorIndex].SensorName;
+            labelStateInfo.Text = sensorList[currentSensorIndex].StateToString();
+            labelSegmentInfo.Text = sensorList[currentSensorIndex].SensorSegment;
+            labelLocationInfo.Text = sensorList[currentSensorIndex].SensorLocation;
+            labelTemperatureInfo.Text = sensorList[currentSensorIndex].SensorTemperature.ToString() + "°C";
+            labelLastUpdateInfo.Text = sensorList[currentSensorIndex].SensorLastUpdate.ToString() + " sekund temu.";
+            try
+            {
+                Image cameraImage = Image.FromFile("../../../sensors/" + sensorList[currentSensorIndex].SensorDetails);
+                pictureBoxCamera.Image = cameraImage;
+            }
+            catch (FileNotFoundException)
+            {
+                pictureBoxCamera.Image = pictureBoxCamera.ErrorImage;
+            }
+            switch (sensorList[currentSensorIndex].CurrentSensorState)
+            {
+                case Sensor.SensorState.Alert:
+                    buttonFire.BackColor = Color.Red;
+                    buttonFire.ForeColor = Color.White;
+                    buttonFire.Enabled = true;
+                    buttonFire.Text = "PotwierdŸ po¿ar";
+                    break;
+
+                case Sensor.SensorState.Fire:
+                    buttonFire.BackColor = Color.Red;
+                    buttonFire.ForeColor = Color.White;
+                    buttonFire.Enabled = true;
+                    buttonFire.Text = "PotwierdŸ zwalczenie po¿aru";
+                    break;
+
+                default:
+                    buttonFire.BackColor = SystemColors.Control;
+                    buttonFire.ForeColor = SystemColors.ControlText;
+                    buttonFire.Enabled = false;
+                    buttonFire.Text = "Brak problemów";
+                    break;
+            }
+        }
         private void updateAll() //Updates all controls to match current data. Does not change data itself.
         {
             updateColors();
@@ -467,16 +475,32 @@ namespace ZPIClient
         }
         #endregion
         #region Server Connection
-        private void connectToServer()
+        private enum RequestType
+        {
+            Initialize,
+            Update,
+        }
+        private void serverRequest(RequestType request)
         {
             try
             {
                 tcpClient = new TcpClient();
                 tcpClient.Connect(ipAddress, port);
+                switch (request)
+                {
+                    case RequestType.Initialize:
+                        break;
+
+                    case RequestType.Update:
+                        break;
+                }
+
+
+                tcpClient.Close();
             }
             catch(Exception ex)
             {
-                MessageBox.Show("Nie uda³o siê nawi¹zaæ po³¹czenia z serwerem (IP: "+ipAddress+", Port: "+port+").", "B³¹d po³¹czenia", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                MessageBox.Show("Nie uda³o siê nawi¹zaæ po³¹czenia z serwerem ("+ipAddress+": "+port+").", "B³¹d po³¹czenia", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
             }
         }
         #endregion
@@ -488,7 +512,6 @@ namespace ZPIClient
                 buttonDebug.Text = "X: " + e.Location.X.ToString() + " Y: " + e.Location.Y.ToString();
             }
         }
-
         #endregion
     }
 }
