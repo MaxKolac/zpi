@@ -406,3 +406,6 @@ FodyWeavers.xsd
 
 # Archives
 *.zip
+
+# Project specific files
+thermalImageParser/constants.py
