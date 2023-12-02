@@ -1,48 +1,37 @@
-from sys import argv
-from thermalImageParser import find_hottest_pixel
-from os.path import isfile, realpath, dirname, join as path_join
-from dotenv import dotenv_values
-from json import dumps as to_json
+import constants
+import utils
+from sys import stderr
+from thermalImageParser import main as find_danger_percentage
+from os.path import isfile
 from requests import post as post_request
 
-env_file = path_join(dirname(realpath(__file__)), '.env')
-required_keys = {
-    'ENDPOINT_URL': str,
-    'API_KEY': str,
-    'TEMP_MIN': float,
-    'TEMP_MAX': float,
-    'RADIUS': int
+arg_flags = ['send', 'filename', 'save']
+flags_shortened = {
+    'S': 'send',
+    'F': 'filename',
+    'V': 'save'
 }
-allowed_NoneTypes = ['TEMP_MIN', 'TEMP_MAX']
-thermal_images_extensions = ['tiff']
-target_save_file = 'output.json'
 
-def is_thermal_file(filepath: str):
-    for ext in thermal_images_extensions:
-        if filepath.endswith('.' + ext):
-            return True
-    return False
-
-def get_filepath_from_args():
+def get_filepath_from_args(args: list) -> dict:
     ret = {
         'ok': True,
         'error msg': '',
         'filepath': None
     }
-    if len(argv) < 2:
+    if len(args) < 1:
         ret['ok'] = False
         ret['error msg'] = 'No parameter provided'
         return ret
-    ret['filepath'] = argv[1]
+    ret['filepath'] = args[0]
     verify_filepath(ret)
     return ret
 
-def verify_filepath(parsing_dict: dict):
+def verify_filepath(parsing_dict: dict) -> None:
     if not isfile(parsing_dict['filepath']):
         parsing_dict['ok'] = False
         parsing_dict['error msg'] = 'File \"{}\" not found'.format(parsing_dict['filepath'])
 
-def get_filepath_from_input():
+def get_filepath_from_input() -> dict:
     ret = {
         'ok': True,
         'error msg': '',
@@ -53,65 +42,54 @@ def get_filepath_from_input():
     verify_filepath(ret)
     return ret
 
-def parse_dotenv(env_values: dict, req_keys: dict = required_keys):
-    ret = {
-        'ok': True,
-        'error msg': ''
-    }
-    for key, type in req_keys.items():
-        if key not in env_values.keys():
-            ret['ok'] = False
-            ret['error msg'] = 'Required key {} not found in environmental values'.format(key)
-            return ret
-        if env_values[key] == '' and key in allowed_NoneTypes:
-            env_values[key] = None
-        else:
-            try:
-                env_values[key] = type(env_values[key])
-            except ValueError:
-                ret['ok'] = False
-                ret['error msg'] = 'Couldn\'t convert \"{}\" to type {}'.format(env_values[key], type)
-                return ret
-    return ret
-
-def save_output_as_file(output: dict, filename: str):
+def save_output_as_file(output: float, filename: str) -> None:
     try:
         file = open(filename, 'w')
     except IOError:
-        print('Error while trying to save file')
+        print('Error while trying to save file', file = stderr)
         return
-    file.write(to_json(output))
+    file.write(str(output))
     file.close()
 
-def send_output_with_request(output: dict, endpoint_url: str, api_key: str):
+def send_output_with_request(output: float, endpoint_url: str, api_key: str) -> None:
     data = {
-        'api_key': api_key,
-        'data': output
+        'data': output,
+        'api key': api_key
     }
     post_request(url = endpoint_url, data = data) # Można ewentualnie sprawdzić czy poprawnie się wysłało
 
 def main():
+    args, errs, flags = utils.parse_argv(arg_flags, flags_shortened)
+    for err in errs:
+        print('Error:\n\tUnrecognized flag \"{}\"'.format(err), file = stderr)
+    if len(errs) > 0:
+        return 
     # Pobranie danych na dwa sposoby, zależy od potrzeb
-    input_data = get_filepath_from_args()
-    # input_data = get_filepath_from_input()
+    if flags['filename']:
+        input_data = get_filepath_from_args(args)
+    else:
+        input_data = get_filepath_from_input()
     if not input_data['ok']:
-        print('Error: {}'.format(input_data['error msg']))
+        print('Error:\n\t{}'.format(input_data['error msg']), file = stderr)
         return
-    env_values = dotenv_values(env_file)
-    check = parse_dotenv(env_values)
-    if not check['ok']:
-        print('Environmental values error: {}'.format(check['error msg']))
-        return
-    output = find_hottest_pixel(
-        image_fp = input_data['filepath'],
-        thermal_file = is_thermal_file(input_data['filepath']),
-        temp_min = env_values['TEMP_MIN'],
-        temp_max = env_values['TEMP_MAX'],
-        radius = env_values['RADIUS']
+    output = find_danger_percentage(
+        filename = input_data['filepath'],
+        image_size = constants.IMAGE_SIZE,
+        palette_bounds = constants.PALETTE_BOUNDS,
+        danger_level = constants.DANGER_LEVEL,
+        work_areas = constants.WORK_AREAS,
+        show_image = constants.SHOW_IMAGES,
+        print_result = False,
+        save_image = constants.SAVE_IMAGES,
+        rounding = constants.ROUNDING
     )
     # Wysłanie danych na dwa sposoby, zależnie od potrzeb
-    save_output_as_file(output, target_save_file)
-    # send_output_with_request(output, env_values['ENDPOINT_URL'], env_values['API_KEY'])
+    if flags['send']:
+        send_output_with_request(output, constants.ENDPOINT_URL, constants.API_KEY)
+    if flags['save']:
+        save_output_as_file(output, constants.OUPUT_SAVE_FILE)
+    if not (flags['send'] or flags['save']):
+        print(output)
 
 if __name__ == '__main__':
     main()
