@@ -160,6 +160,11 @@ public class HostDevice
     /// </summary>
     public decimal LocationLatitude { get; set; }
     /// <summary>
+    /// Właściwość tylko dla kamer.<br/>
+    /// Szczegółowy opis miejsca zamontowania kamery.
+    /// </summary>
+    public string? LocationDescription { get; set; }
+    /// <summary>
     /// Właściwość tylko dla kamer. <b>Tą właściwość serwer będzie próbował odczytać.</b><br/>
     /// EF Core nie może przechowywać <see cref="Image"/> jako kolumny. Użyj <see cref="ToImage(byte[]?)"/> i <see cref="ToByteArray(Image?, ImageFormat)"/> aby konwertować obraz na ciąg bitów i vice versa.
     /// </summary>
