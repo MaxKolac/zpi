@@ -15,9 +15,6 @@ namespace ZPIClient
 {
     public partial class FormMain : Form
     {
-        //Path settings
-        private string jsonPath = "../../../sensors/sensorData.json";
-
         //Connection settings
         private string ipAddress = "127.0.0.1";
         private int port = 25566;
@@ -28,6 +25,7 @@ namespace ZPIClient
         //Sensor variables
         //private List<Sensor> sensorList = new List<Sensor>();
         private List<Sensor> sensorList = new List<Sensor>();
+        private List<int> sensorTimerList = new List<int>();
         private int currentSensorIndex = -1;
 
         //Timer settings
@@ -75,15 +73,16 @@ namespace ZPIClient
             }
             if (currentSensorIndex != -1)
             {
-                labelLastUpdateInfo.Text = sensorList[currentSensorIndex].SensorLastUpdate.ToString() + " sekund temu";
+                labelLastUpdateInfo.Text = sensorTimerList[currentSensorIndex].ToString() + " sekund temu";
             }
             labelTimer.Text = "Następna aktualizacja za: " + timerElapsedTime + " sekund";
         }
         private void incrementTimers()
         {
-            foreach (Sensor sensor in sensorList)
+            int count = sensorTimerList.Count;
+            for(int i = 0; i < count; i++) 
             {
-                sensor.SensorLastUpdate += 1;
+                sensorTimerList[i] += 1;
             }
         }
         #endregion
@@ -129,7 +128,6 @@ namespace ZPIClient
         {
             if (currentSensorIndex != -1)
             {
-                sensorList[currentSensorIndex].Override = !sensorList[currentSensorIndex].Override;
                 labelSensorStatus[currentSensorIndex].Text = "Stan: " + sensorList[currentSensorIndex].StateToString();
                 updateAll();
             }
@@ -138,7 +136,7 @@ namespace ZPIClient
         #region Initialize Functions
         private void InitializeSensors()
         {
-            try
+            if(devices != null)
             {
                 foreach (HostDevice device in devices)
                 {
@@ -158,18 +156,12 @@ namespace ZPIClient
                             LocationLatitude = device.LocationLatitude,
                             LocationDescription = device.LocationDescription,
                             LastDeviceStatus = device.LastDeviceStatus,
-
-                            SensorLastUpdate = 0,
-                            Override = false
                         };
                         sensorList.Add(sensor);
+                        sensorTimerList.Add(0);
                     }
                 }
-            }catch (Exception ex) 
-            {
-                MessageBox.Show("Nie znaleziono danych czujnika. " + ex.Message, "Brak danych", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
             }
-           
         }
         private void InitializeListFormControls()
         {
@@ -442,11 +434,12 @@ namespace ZPIClient
                 labelSegmentInfo.Text = sensorList[currentSensorIndex].SectorId.ToString();
                 labelLocationInfo.Text = sensorList[currentSensorIndex].LocationDescription;
                 labelTemperatureInfo.Text = sensorList[currentSensorIndex].LastKnownTemperature.ToString() + "°C";
-                labelLastUpdateInfo.Text = sensorList[currentSensorIndex].SensorLastUpdate.ToString() + " sekund temu.";
+                labelLastUpdateInfo.Text = sensorTimerList[currentSensorIndex].ToString() + " sekund temu.";
                 try
                 {
                     Image cameraImage = HostDevice.ToImage(sensorList[currentSensorIndex].LastImage);
                     pictureBoxCamera.Image = cameraImage;
+                    pictureBoxCamera.Refresh();
                 }
                 catch (Exception)
                 {
@@ -538,7 +531,6 @@ namespace ZPIClient
         }
         private void serverRequestUpdate(int i)
         {
-            var listener = new ClientListener(IPAddress.Parse(ipAddress), 12000);
             listener.OnSignalReceived += (sender, e) =>
             {
                 var device = ZPIEncoding.Decode<HostDevice>(e);
@@ -546,7 +538,7 @@ namespace ZPIClient
                 {
                     sensorList[i].LastKnownTemperature = device.LastKnownTemperature;
                     sensorList[i].LastFireStatus = device.LastFireStatus;
-                    sensorList[i].SensorLastUpdate = 0;
+                    sensorTimerList[i] = 0;
                 }
             };
             var request = new UserRequest()

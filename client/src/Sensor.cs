@@ -9,73 +9,40 @@ using Windows.ApplicationModel.VoiceCommands;
 using ZPICommunicationModels.Models;
 
 namespace ZPIClient;
-internal class Sensor : HostDevice
+public static class HostDeviceExtensions
 {
-    public int SensorLastUpdate { get; set; }
-    public bool Override { get; set; }
-
-    #region Constructor
-    public Sensor() : base()
+    public static string StateToString(this HostDevice hostDevice)
     {
-        this.SensorLastUpdate = 0;
-        this.Override = false;
-    }
-    #endregion
-    #region ChangeLocation
-    public void SensorChangeLocation(int sensorX, int sensorY)
-    {
-        this.LocationLatitude = sensorX;
-        this.LocationAltitude = sensorY;
-    }
-    public void SensorChangeLocation(string sensorName, Sector sensorSector, string sensorLocation)
-    {
-        this.Name = sensorName;
-        this.Sector = sensorSector;
-        this.LocationDescription = sensorLocation;
-    }
-    public void SensorChangeLocation(int sensorX, int sensorY, string sensorName, Sector sensorSector, string sensorLocation)
-    {
-        this.LocationAltitude = sensorX;
-        this.LocationLatitude = sensorY;
-        this.Name = sensorName;
-        this.Sector = sensorSector;
-        this.LocationDescription = sensorLocation;
-    }
-    #endregion
-    #region Utilities
-    public string StateToString()
-    {
-        switch (LastFireStatus)
+        switch (hostDevice.LastFireStatus)
         {
-            case FireStatus.OK:
+            case HostDevice.FireStatus.OK:
                 return "Active";
 
-            case FireStatus.Suspected:
+            case HostDevice.FireStatus.Suspected:
                 return "Alert";
 
-            case FireStatus.Confirmed:
+            case HostDevice.FireStatus.Confirmed:
                 return "Fire";
 
             default:
                 return "Null";
         }
     }
-    public Color StateToColor()
+    public static Color StateToColor(this HostDevice hostDevice)
     {
-        switch (LastFireStatus)
+        switch (hostDevice.LastFireStatus)
         {
-            case FireStatus.OK:
+            case HostDevice.FireStatus.OK:
                 return Color.Lime;
 
-            case FireStatus.Suspected:
+            case HostDevice.FireStatus.Suspected:
                 return Color.Orange;
 
-            case FireStatus.Confirmed:
+            case HostDevice.FireStatus.Confirmed:
                 return Color.Red;
 
             default:
                 return Color.RoyalBlue;
         }
     }
-    #endregion
 }
