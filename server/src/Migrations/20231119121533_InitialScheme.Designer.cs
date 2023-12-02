@@ -33,7 +33,7 @@ namespace ZPIServer.Migrations
                     b.Property<string>("ExactLocation")
                         .HasColumnType("TEXT");
 
-                    b.Property<int?>("LastDeviceStatus")
+                    b.Property<int?>("LastKnownStatus")
                         .HasColumnType("INTEGER");
 
                     b.Property<decimal?>("LastTemperature")

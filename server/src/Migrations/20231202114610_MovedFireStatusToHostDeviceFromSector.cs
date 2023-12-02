@@ -19,6 +19,19 @@ namespace ZPIServer.Migrations
                 table: "HostDevices",
                 type: "INTEGER",
                 nullable: true);
+
+            //Manual fix
+            migrationBuilder.AddColumn<int>(
+                name: "LastDeviceStatus",
+                table: "HostDevices",
+                type: "INTEGER",
+                nullable: true
+                );
+
+            migrationBuilder.DropColumn(
+                name: "LastKnownStatus",
+                table: "HostDevices"
+                );
         }
 
         /// <inheritdoc />
@@ -34,6 +47,18 @@ namespace ZPIServer.Migrations
                 type: "INTEGER",
                 nullable: false,
                 defaultValue: 0);
+
+            //Manual fix
+            migrationBuilder.DropColumn(
+                name: "LastDeviceStatus",
+                table: "HostDevices");
+
+            migrationBuilder.AddColumn<int>(
+                name: "LastKnownStatus",
+                table: "HostDevices",
+                type: "INTEGER",
+                nullable: true
+                );
         }
     }
 }

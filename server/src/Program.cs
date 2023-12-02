@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using Microsoft.EntityFrameworkCore;
+using System.Diagnostics;
 using System.Net;
 using ZPICommunicationModels.Models;
 using ZPIServer.API;
@@ -66,6 +67,11 @@ namespace ZPIServer
             else
             {
                 logger.WriteLine($"Until Python is properly installed and server restarted, server will ignore messages from {HostDevice.HostType.PythonCameraSimulator} devices!", ServerPrefix, Logger.MessageType.Warning);
+            }
+
+            using (var context = new DatabaseContext())
+            {
+                context.Database.Migrate();
             }
 
             //Components initialization
