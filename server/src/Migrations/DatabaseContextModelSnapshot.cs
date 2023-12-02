@@ -65,7 +65,7 @@ namespace ZPIServer.Migrations
 
                     b.HasIndex("SectorId");
 
-                    b.ToTable("HostDevices");
+                    b.ToTable("HostDevices", (string)null);
                 });
 
             modelBuilder.Entity("ZPICommunicationModels.Models.Sector", b =>
@@ -83,7 +83,7 @@ namespace ZPIServer.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Sectors");
+                    b.ToTable("Sectors", (string)null);
                 });
 
             modelBuilder.Entity("ZPICommunicationModels.Models.HostDevice", b =>
