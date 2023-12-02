@@ -204,6 +204,7 @@ public class HostDevice
         builder.Append(nameof(LastKnownTemperature) + $": {LastKnownTemperature} | ");
         builder.Append(nameof(LocationAltitude) + $": {LocationAltitude} | ");
         builder.Append(nameof(LocationLatitude) + $": {LocationLatitude} | ");
+        builder.Append(nameof(LocationDescription) + $": {LocationDescription} | ");
         builder.Append(nameof(LastImage) + $": {(LastImage is null ? 0 : LastImage.Length)} byte(s) ");
         builder.Append(')');
         return builder.ToString();
