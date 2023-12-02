@@ -149,6 +149,7 @@ namespace ZPIClient
                 {
                     sensorList[currentSensorIndex].LastFireStatus = HostDevice.FireStatus.Suspected;
                 }
+                serverRequest(UserRequest.RequestType.UpdateFireStatusFromJson);
                 updateAll();
             }
         }
@@ -516,6 +517,11 @@ namespace ZPIClient
                         serverRequestUpdate();
                         Thread.Sleep(100); //Program will wait 100 miliseconds for server. It it's too slow it won't work. Just like that.
                         break;
+
+                    case UserRequest.RequestType.UpdateFireStatusFromJson:
+                        serverRequestStatusChange();
+                        Thread.Sleep(100); //Program will wait 100 miliseconds for server. It it's too slow it won't work. Just like that.
+                        break;
                 }
                 tcpClient.Close();
             }
@@ -549,6 +555,20 @@ namespace ZPIClient
             var request = new UserRequest()
             {
                 Request = UserRequest.RequestType.AllHostDevicesAsJson
+            };
+            using (var stream = tcpClient.GetStream())
+            {
+                byte[] buffer = ZPIEncoding.Encode(request);
+                stream.Write(buffer);
+            }
+        }
+        private void serverRequestStatusChange()
+        {
+            var request = new UserRequest()
+            {
+                Request = UserRequest.RequestType.UpdateFireStatusFromJson,
+                ModelObjectId = sensorList[currentSensorIndex].Id,
+                NewStatus = sensorList[currentSensorIndex].LastFireStatus
             };
             using (var stream = tcpClient.GetStream())
             {
