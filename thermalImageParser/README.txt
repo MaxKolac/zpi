@@ -2,8 +2,8 @@ Wersja pythona użyta przy programowaniu: 3.11.4
 
 Wymagane moduły: Pillow, numpy
 Wersje modułów użyte podczas programowania:
-   Pillow 10.0.0
-   numpy 1.25.0
+   Pillow 10.1.0
+   numpy 1.26.2
 
 Aby użyć communicator.py należy skopiować "constants.template.py" do pliku o nazwie "constants.py" i edytować/zmienić odpowiednio potrzebne zmienne
 
