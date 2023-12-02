@@ -27,11 +27,14 @@ namespace ZPIServer.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("LastDeviceStatus")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("LastFireStatus")
+                        .HasColumnType("INTEGER");
+
                     b.Property<byte[]>("LastImage")
                         .HasColumnType("BLOB");
-
-                    b.Property<int?>("LastKnownStatus")
-                        .HasColumnType("INTEGER");
 
                     b.Property<decimal>("LastKnownTemperature")
                         .HasColumnType("TEXT");
@@ -70,9 +73,6 @@ namespace ZPIServer.Migrations
 
                     b.Property<string>("Description")
                         .HasColumnType("TEXT");
-
-                    b.Property<int>("LastStatus")
-                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")
                         .IsRequired()

@@ -79,7 +79,7 @@ public class SignalTranslator
             Address = e.SenderIp,
             Port = e.SenderPort,
             Type = HostType.Unknown,
-            LastKnownStatus = DeviceStatus.Unknown
+            LastDeviceStatus = DeviceStatus.Unknown
         };
 
         string message = $"Received {e.Data.Length} bytes of data from {datasender.Type} device. Address = {e.SenderIp}:{e.SenderPort}. ";
@@ -120,13 +120,13 @@ public class SignalTranslator
                     //Apply received changes if they were succesfully decoded
                     datasender.LastKnownTemperature = decodedMessage.LargestTemperature;
                     datasender.LastImage = decodedMessage.Image;
-                    datasender.LastKnownStatus = decodedMessage.Status;
+                    datasender.LastDeviceStatus = decodedMessage.Status;
                     context.SaveChanges();
-                    _logger?.WriteLine($"{datasender.Name} ({nameof(HostDevice.Id)}: {datasender.Id}) updated with new temperature and image. Status set to {datasender.LastKnownStatus}.", nameof(SignalTranslator));
+                    _logger?.WriteLine($"{datasender.Name} ({nameof(HostDevice.Id)}: {datasender.Id}) updated with new temperature and image. Status set to {datasender.LastDeviceStatus}.", nameof(SignalTranslator));
                 }
                 else
                 {
-                    datasender.LastKnownStatus = DeviceStatus.DataCorrupted;
+                    datasender.LastDeviceStatus = DeviceStatus.DataCorrupted;
                     context.SaveChanges();
                     _logger?.WriteLine($"API of {datasender.Type} returned a null {nameof(CameraDataMessage)} object! No changes in the database were made. Marking device's record with {nameof(DeviceStatus.DataCorrupted)}.", nameof(SignalTranslator), Logger.MessageType.Warning);
                 }
@@ -197,7 +197,7 @@ public class SignalTranslator
                     UserRequest.RequestType.CameraDataAsJson => ZPIEncoding.Encode(new CameraDataMessage()
                     {
                         LargestTemperature = ((HostDevice)foundObject).LastKnownTemperature,
-                        Status = ((HostDevice)foundObject).LastKnownStatus ?? DeviceStatus.Unknown,
+                        Status = ((HostDevice)foundObject).LastDeviceStatus ?? DeviceStatus.Unknown,
                         Image = ((HostDevice)foundObject).LastImage ?? Array.Empty<byte>()
                     }),
                     UserRequest.RequestType.SingleHostDeviceAsJson => ZPIEncoding.Encode(foundObject as HostDevice),

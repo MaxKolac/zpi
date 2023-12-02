@@ -4,15 +4,15 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using ZPICommunicationModels;
+using ZPIServer;
 
 #nullable disable
 
 namespace ZPIServer.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20231120072353_AddedImageAndSeparateGeoLocationProperties")]
-    partial class AddedImageAndSeparateGeoLocationProperties
+    [Migration("20231202114610_MovedFireStatusToHostDeviceFromSector")]
+    partial class MovedFireStatusToHostDeviceFromSector
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -20,7 +20,7 @@ namespace ZPIServer.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "7.0.14");
 
-            modelBuilder.Entity("ZPIServer.Models.HostDevice", b =>
+            modelBuilder.Entity("ZPICommunicationModels.Models.HostDevice", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -30,11 +30,14 @@ namespace ZPIServer.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<byte[]>("LastImage")
-                        .HasColumnType("BLOB");
-
                     b.Property<int?>("LastDeviceStatus")
                         .HasColumnType("INTEGER");
+
+                    b.Property<int?>("LastFireStatus")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<byte[]>("LastImage")
+                        .HasColumnType("BLOB");
 
                     b.Property<decimal>("LastKnownTemperature")
                         .HasColumnType("TEXT");
@@ -49,6 +52,9 @@ namespace ZPIServer.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("Port")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int?>("SectorId")
                         .HasColumnType("INTEGER");
 
@@ -62,7 +68,7 @@ namespace ZPIServer.Migrations
                     b.ToTable("HostDevices");
                 });
 
-            modelBuilder.Entity("ZPIServer.Models.Sector", b =>
+            modelBuilder.Entity("ZPICommunicationModels.Models.Sector", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -70,9 +76,6 @@ namespace ZPIServer.Migrations
 
                     b.Property<string>("Description")
                         .HasColumnType("TEXT");
-
-                    b.Property<int>("LastStatus")
-                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -83,16 +86,16 @@ namespace ZPIServer.Migrations
                     b.ToTable("Sectors");
                 });
 
-            modelBuilder.Entity("ZPIServer.Models.HostDevice", b =>
+            modelBuilder.Entity("ZPICommunicationModels.Models.HostDevice", b =>
                 {
-                    b.HasOne("ZPIServer.Models.Sector", "Sector")
+                    b.HasOne("ZPICommunicationModels.Models.Sector", "Sector")
                         .WithMany("HostDevices")
                         .HasForeignKey("SectorId");
 
                     b.Navigation("Sector");
                 });
 
-            modelBuilder.Entity("ZPIServer.Models.Sector", b =>
+            modelBuilder.Entity("ZPICommunicationModels.Models.Sector", b =>
                 {
                     b.Navigation("HostDevices");
                 });

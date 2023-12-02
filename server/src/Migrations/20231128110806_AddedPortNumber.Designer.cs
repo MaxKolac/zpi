@@ -33,7 +33,7 @@ namespace ZPIServer.Migrations
                     b.Property<byte[]>("LastImage")
                         .HasColumnType("BLOB");
 
-                    b.Property<int?>("LastKnownStatus")
+                    b.Property<int?>("LastDeviceStatus")
                         .HasColumnType("INTEGER");
 
                     b.Property<decimal>("LastKnownTemperature")

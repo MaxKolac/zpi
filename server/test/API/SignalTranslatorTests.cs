@@ -95,7 +95,7 @@ public class SignalTranslatorTests
             Assert.NotNull(record);
             Assert.Equal(1, invocations);
             Assert.Equal(message.LargestTemperature, record.LastKnownTemperature);
-            Assert.Equal(message.Status, record.LastKnownStatus);
+            Assert.Equal(message.Status, record.LastDeviceStatus);
             Assert.Equal(bitmap.Length, record.LastImage?.Length);
         }
 
@@ -139,7 +139,7 @@ public class SignalTranslatorTests
             Assert.NotNull(record);
             Assert.Equal(1, invocations);
             Assert.Equal(0.0m, record.LastKnownTemperature);
-            Assert.Equal(HostDevice.DeviceStatus.DataCorrupted, record.LastKnownStatus);
+            Assert.Equal(HostDevice.DeviceStatus.DataCorrupted, record.LastDeviceStatus);
             Assert.Null(record.LastImage);
         }
 
