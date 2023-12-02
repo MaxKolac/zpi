@@ -10,6 +10,7 @@ using ZPICommunicationModels;
 using ZPICommunicationModels.Messages;
 using ZPICommunicationModels.Models;
 using System.Net;
+using Windows.ApplicationModel.Background;
 
 namespace ZPIClient
 {
@@ -23,8 +24,7 @@ namespace ZPIClient
         private ClientListener listener = new ClientListener(IPAddress.Parse("127.0.0.1"), 12000);
 
         //Sensor variables
-        //private List<Sensor> sensorList = new List<Sensor>();
-        private List<Sensor> sensorList = new List<Sensor>();
+        private List<HostDevice> sensorList = new List<HostDevice>();
         private List<int> sensorTimerList = new List<int>();
         private int currentSensorIndex = -1;
 
@@ -56,6 +56,19 @@ namespace ZPIClient
         private void updateSensors()
         {
             serverRequest(UserRequest.RequestType.SingleHostDeviceAsJson);
+            foreach (HostDevice device in devices)
+            {
+                if (device.Type == HostDevice.HostType.CameraSimulator || device.Type == HostDevice.HostType.PythonCameraSimulator)
+                {
+                    int index = sensorList.FindIndex(a => a.Id == device.Id);
+                    if (sensorList[index].LastFireStatus != device.LastFireStatus || sensorList[index].LastKnownTemperature != device.LastKnownTemperature)
+                    {
+                        sensorList[index] = device;
+                        sensorTimerList[index] = 0;
+                    }
+                }
+
+            }
             updateAll();
         }
         #region Timer Functions
@@ -80,7 +93,7 @@ namespace ZPIClient
         private void incrementTimers()
         {
             int count = sensorTimerList.Count;
-            for(int i = 0; i < count; i++) 
+            for (int i = 0; i < count; i++)
             {
                 sensorTimerList[i] += 1;
             }
@@ -128,7 +141,14 @@ namespace ZPIClient
         {
             if (currentSensorIndex != -1)
             {
-                labelSensorStatus[currentSensorIndex].Text = "Stan: " + sensorList[currentSensorIndex].StateToString();
+                if (sensorList[currentSensorIndex].LastFireStatus == HostDevice.FireStatus.Suspected)
+                {
+                    sensorList[currentSensorIndex].LastFireStatus = HostDevice.FireStatus.Confirmed;
+                }
+                else
+                {
+                    sensorList[currentSensorIndex].LastFireStatus = HostDevice.FireStatus.Suspected;
+                }
                 updateAll();
             }
         }
@@ -136,28 +156,13 @@ namespace ZPIClient
         #region Initialize Functions
         private void InitializeSensors()
         {
-            if(devices != null)
+            if (devices != null)
             {
                 foreach (HostDevice device in devices)
                 {
                     if (device.Type == HostDevice.HostType.PythonCameraSimulator || device.Type == HostDevice.HostType.CameraSimulator)
                     {
-                        Sensor sensor = new Sensor
-                        {
-                            Id = device.Id,
-                            Name = device.Name,
-                            Type = device.Type,
-                            Address = device.Address,
-                            Port = device.Port,
-                            SectorId = device.SectorId,
-                            LastFireStatus = device.LastFireStatus,
-                            LastKnownTemperature = device.LastKnownTemperature,
-                            LocationAltitude = device.LocationAltitude,
-                            LocationLatitude = device.LocationLatitude,
-                            LocationDescription = device.LocationDescription,
-                            LastDeviceStatus = device.LastDeviceStatus,
-                        };
-                        sensorList.Add(sensor);
+                        sensorList.Add(device);
                         sensorTimerList.Add(0);
                     }
                 }
@@ -391,7 +396,7 @@ namespace ZPIClient
             int stateInactive = 0; //1
             int stateAlert = 0; //2
             int stateFire = 0; //3
-            foreach (Sensor sensor in sensorList)
+            foreach (HostDevice sensor in sensorList)
             {
                 switch (sensor.LastFireStatus)
                 {
@@ -425,7 +430,7 @@ namespace ZPIClient
         }
         private void updateInfoPanel()
         {
-            if(currentSensorIndex != -1)
+            if (currentSensorIndex != -1)
             {
                 panelSensorContainer[currentSensorIndex].BackColor = Color.SkyBlue;
                 panelMapSensorInformation[currentSensorIndex].BackColor = Color.SkyBlue;
@@ -470,11 +475,20 @@ namespace ZPIClient
                 }
             }
         }
+        private void updateStateList()
+        {
+            int count = sensorList.Count;
+            for (int i = 0; i < count; i++)
+            {
+                labelSensorStatus[i].Text = "Status: " + sensorList[i].StateToString();
+            }
+        }
         private void updateAll() //Updates all controls to match current data. Does not change data itself.
         {
             updateColors();
             updateStateCounts();
             updateInfoPanel();
+            updateStateList();
         }
         private void FormMain_FormClosing(object sender, FormClosingEventArgs e)
         {
@@ -495,18 +509,15 @@ namespace ZPIClient
                 {
                     case UserRequest.RequestType.AllHostDevicesAsJson:
                         serverRequestInitialize();
+                        Thread.Sleep(2000); //Program will wait 2 seceonds for server. It it's too slow it won't work. Just like that.
                         break;
 
                     case UserRequest.RequestType.SingleHostDeviceAsJson:
-                        int count = sensorList.Count;
-                        for(int i = 0; i < count; i++)
-                        {
-                            serverRequestUpdate(i);
-                        }
+                        serverRequestUpdate();
+                        Thread.Sleep(100); //Program will wait 100 miliseconds for server. It it's too slow it won't work. Just like that.
                         break;
                 }
                 tcpClient.Close();
-                Thread.Sleep(2000); //Program will wait 2 seceonds for server. It it's too slow it won't work. Just like that.
             }
             catch (Exception ex)
             {
@@ -529,22 +540,15 @@ namespace ZPIClient
                 stream.Write(buffer);
             }
         }
-        private void serverRequestUpdate(int i)
+        private void serverRequestUpdate()
         {
             listener.OnSignalReceived += (sender, e) =>
             {
-                var device = ZPIEncoding.Decode<HostDevice>(e);
-                if(device.LastKnownTemperature != sensorList[i].LastKnownTemperature || device.LastFireStatus != sensorList[i].LastFireStatus)
-                {
-                    sensorList[i].LastKnownTemperature = device.LastKnownTemperature;
-                    sensorList[i].LastFireStatus = device.LastFireStatus;
-                    sensorTimerList[i] = 0;
-                }
+                devices = ZPIEncoding.Decode<List<HostDevice>>(e);
             };
             var request = new UserRequest()
             {
-                Request = UserRequest.RequestType.SingleHostDeviceAsJson,
-                ModelObjectId = sensorList[i].Id
+                Request = UserRequest.RequestType.AllHostDevicesAsJson
             };
             using (var stream = tcpClient.GetStream())
             {
@@ -559,13 +563,6 @@ namespace ZPIClient
             if (debug)
             {
                 buttonDebug.Text = "X: " + e.Location.X.ToString() + " Y: " + e.Location.Y.ToString();
-            }
-        }
-        private void ShowAllSensors()
-        {
-            foreach (Sensor sensor in sensorList)
-            {
-                MessageBox.Show(sensor.ToString());
             }
         }
         #endregion
