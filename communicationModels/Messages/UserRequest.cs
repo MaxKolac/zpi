@@ -33,7 +33,12 @@ public class UserRequest
         /// Klient prosi o listę wszystkich rekordów klasy <see cref="Sector"/> jakie serwer ma w swojej bazie danych.
         /// Serwer wyśle odpowiedź w formie listy List&lt;<see cref="Sector"/>&gt; zserializowanej w formacie Json.
         /// </summary>
-        AllSectorsAsJson
+        AllSectorsAsJson,
+        /// <summary>
+        /// Klient prosi o aktualizację rekordu <see cref="HostDevice"/> o danym ID <see cref="ModelObjectId"/> o nową wartość <see cref="HostDevice.LastFireStatus"/>.
+        /// TODO: Co serwer ma wysłać jako odpowiedź?
+        /// </summary>
+        UpdateFireStatusFromJson
     }
 
     /// <summary>
@@ -46,4 +51,10 @@ public class UserRequest
     /// Mówi serwerowi jaką wartość ID ma kamera/sektor, o którego dane klient wysłał zapytanie.
     /// </summary>
     public int? ModelObjectId { get; set; }
+
+    /// <summary>
+    /// Używane tylko dla <see cref="RequestType.UpdateFireStatusFromJson"/>.
+    /// Mówi serwerowi na jaką wartośc ustawić pole <see cref="HostDevice.LastFireStatus"/> danego rekordu <see cref="HostDevice"/>.
+    /// </summary>
+    public HostDevice.FireStatus? NewStatus { get; set; }
 }

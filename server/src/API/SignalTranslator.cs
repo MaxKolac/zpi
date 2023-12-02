@@ -161,6 +161,7 @@ public class SignalTranslator
                     UserRequest.RequestType.AllHostDevicesAsJson => HandleAllHostDevicesRequest(request),
                     UserRequest.RequestType.SingleSectorAsJson => HandleSingleSectorRequest(request),
                     UserRequest.RequestType.AllSectorsAsJson => HandleAllSectorsRequest(request),
+                    UserRequest.RequestType.UpdateFireStatusFromJson => HandleUpdateFireStatusRequest(request),
                     _ => throw new NotImplementedException($"{request.Request}")
                 };
 
@@ -259,6 +260,39 @@ public class SignalTranslator
         else
             _logger?.WriteLine($"Found {allSectors} record(s) in {nameof(DatabaseContext.HostDevices)} table.");
         return ZPIEncoding.Encode(allSectors ?? new List<Sector>());
+    }
+
+    /// <summary>
+    /// Handling for <see cref="UserRequest.RequestType.AllSectorsAsJson"/>.
+    /// </summary>
+    private byte[] HandleUpdateFireStatusRequest(UserRequest request)
+    {
+        if (request.ModelObjectId is null)
+        {
+            _logger?.WriteLine($"User's request did not contain {nameof(UserRequest.ModelObjectId)} which {request.Request} requires! Discarding request.", nameof(SignalTranslator), Logger.MessageType.Error);
+            return Array.Empty<byte>();
+        }
+        if (request.NewStatus is null)
+        {
+            _logger?.WriteLine($"User's request did not contain {nameof(UserRequest.NewStatus)} which {request.Request} requires! Discarding request.", nameof(SignalTranslator), Logger.MessageType.Error);
+            return Array.Empty<byte>();
+        }
+
+        using (var context = new DatabaseContext())
+        {
+            var foundDevice = context.HostDevices.Where((device) => device.Id == request.ModelObjectId).FirstOrDefault(); 
+            if (foundDevice is null)
+            {
+                _logger?.WriteLine($"User requested {request.Request} of a {nameof(HostDevice)} with ID = {request.ModelObjectId} which was not found in the database! Discarding request.", nameof(SignalTranslator), Logger.MessageType.Error);
+                return Array.Empty<byte>();
+            }
+            _logger?.WriteLine($"Found {nameof(HostDevice)} with ID = {request.ModelObjectId} to update, as per user's request.", nameof(SignalTranslator));
+            foundDevice.LastFireStatus = request.NewStatus;
+            context.SaveChanges();
+            _logger?.WriteLine($"Changed {nameof(HostDevice)}.{nameof(HostDevice.LastFireStatus)} with ID = {request.ModelObjectId} to {foundDevice.LastFireStatus}.", nameof(SignalTranslator));
+        }
+
+        return Array.Empty<byte>();
     }
     #endregion
 
