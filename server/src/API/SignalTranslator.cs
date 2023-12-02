@@ -153,57 +153,15 @@ public class SignalTranslator
                     break;
                 }
 
-                //Recognize if this request is one of those that require ModelObjectId to be non-null
-                if ((request.Request == UserRequest.RequestType.CameraDataAsJson ||
-                    request.Request == UserRequest.RequestType.SingleHostDeviceAsJson) &&
-                    request.ModelObjectId is null)
-                {
-                    //If its null, discard request
-                    _logger?.WriteLine($"User's request did not contain {nameof(UserRequest.ModelObjectId)} which {request.Request} requires! Discarding request.", nameof(SignalTranslator), Logger.MessageType.Error);
-                    break;
-                }
-
-                //Look for the object that user requested
-                string requestedClassType = request.Request switch
-                {
-                    UserRequest.RequestType.CameraDataAsJson => nameof(CameraDataMessage),
-                    UserRequest.RequestType.SingleHostDeviceAsJson => nameof(HostDevice),
-                    UserRequest.RequestType.AllHostDevicesAsJson => $"List<{nameof(HostDevice)}>",
-                    UserRequest.RequestType.SingleSectorAsJson => nameof(Sector),
-                    UserRequest.RequestType.AllSectorsAsJson => $"List<{nameof(Sector)}>"
-                };
-                object? foundObject = null;
-                if (request.Request == UserRequest.RequestType.CameraDataAsJson || request.Request == UserRequest.RequestType.SingleHostDeviceAsJson)
-                    foundObject = context.HostDevices.Where((dev) => dev.Id == request.ModelObjectId).FirstOrDefault();
-                else if (request.Request == UserRequest.RequestType.AllHostDevicesAsJson)
-                    foundObject = context.HostDevices.ToList();
-                else if (request.Request == UserRequest.RequestType.SingleSectorAsJson)
-                    foundObject = context.Sectors.Where((sector) => sector.Id == request.ModelObjectId).FirstOrDefault();
-                else if (request.Request == UserRequest.RequestType.AllSectorsAsJson)
-                    foundObject = context.Sectors.ToList();
-
-                //If the requested object doesn't exist, discard request
-                //If after all that foundObject is null, nothing matching was found
-                if (foundObject is null)
-                {
-                    _logger?.WriteLine($"User requested {request.Request} of a {requestedClassType} with ID = {request.ModelObjectId} which was not found in the database! Discarding request.", nameof(SignalTranslator), Logger.MessageType.Error);
-                    return;
-                }
-                _logger?.WriteLine($"Found {requestedClassType} with ID = {request.ModelObjectId} requested by user. Building an invocation for {nameof(TcpSender)}.", nameof(SignalTranslator));
-
                 //Depending on which exact request it is, create and encode the requested object
                 byte[] messageToSend = request.Request switch
                 {
-                    UserRequest.RequestType.CameraDataAsJson => ZPIEncoding.Encode(new CameraDataMessage()
-                    {
-                        LargestTemperature = ((HostDevice)foundObject).LastKnownTemperature,
-                        Status = ((HostDevice)foundObject).LastDeviceStatus ?? DeviceStatus.Unknown,
-                        Image = ((HostDevice)foundObject).LastImage ?? Array.Empty<byte>()
-                    }),
-                    UserRequest.RequestType.SingleHostDeviceAsJson => ZPIEncoding.Encode(foundObject as HostDevice),
-                    UserRequest.RequestType.AllHostDevicesAsJson => ZPIEncoding.Encode(foundObject as List<HostDevice>),
-                    UserRequest.RequestType.SingleSectorAsJson => ZPIEncoding.Encode(foundObject as Sector),
-                    UserRequest.RequestType.AllSectorsAsJson => ZPIEncoding.Encode(foundObject as List<Sector>)
+                    UserRequest.RequestType.CameraDataAsJson => HandleSingleHostDeviceRequest(request),
+                    UserRequest.RequestType.SingleHostDeviceAsJson => HandleSingleHostDeviceRequest(request),
+                    UserRequest.RequestType.AllHostDevicesAsJson => HandleAllHostDevicesRequest(request),
+                    UserRequest.RequestType.SingleSectorAsJson => HandleSingleSectorRequest(request),
+                    UserRequest.RequestType.AllSectorsAsJson => HandleAllSectorsRequest(request),
+                    _ => throw new NotImplementedException($"{request.Request}")
                 };
 
                 //Invoke the TcpSender
@@ -220,6 +178,10 @@ public class SignalTranslator
         }
     }
 
+    #region UserRequest handling methods
+    /// <summary>
+    /// Handling for <see cref="UserRequest.RequestType.SingleHostDeviceAsJson"/> and <see cref="UserRequest.RequestType.CameraDataAsJson"/>.
+    /// </summary>
     private byte[] HandleSingleHostDeviceRequest(UserRequest request)
     {
         if (request.ModelObjectId is null)
@@ -236,9 +198,46 @@ public class SignalTranslator
         }
         _logger?.WriteLine($"Found {nameof(HostDevice)} with ID = {request.ModelObjectId} requested by user.", nameof(SignalTranslator));
 
-        return ZPIEncoding.Encode(foundHost);
+        if (request.Request == UserRequest.RequestType.SingleHostDeviceAsJson)
+            return ZPIEncoding.Encode(foundHost);
+        else if (request.Request == UserRequest.RequestType.CameraDataAsJson)
+            return ZPIEncoding.Encode(new CameraDataMessage()
+            {
+                Status = foundHost.LastDeviceStatus ?? DeviceStatus.Unknown,
+                Image = foundHost.LastImage ?? Array.Empty<byte>(),
+                LargestTemperature = foundHost.LastKnownTemperature
+            });
+        else
+        {
+            throw new Exception("Attempted to handle a wrong type of UserRequest.");
+        }
     }
 
+    /// <summary>
+    /// Handling for <see cref="UserRequest.RequestType.SingleSectorAsJson"/>.
+    /// </summary>
+    private byte[] HandleSingleSectorRequest(UserRequest request)
+    {
+        if (request.ModelObjectId is null)
+        {
+            _logger?.WriteLine($"User's request did not contain {nameof(UserRequest.ModelObjectId)} which {request.Request} requires! Discarding request.", nameof(SignalTranslator), Logger.MessageType.Error);
+            return Array.Empty<byte>();
+        }
+
+        var foundSector = new DatabaseContext().Sectors.Where((host) => host.Id == request.ModelObjectId).FirstOrDefault();
+        if (foundSector is null)
+        {
+            _logger?.WriteLine($"User requested {request.Request} of a {nameof(Sector)} with ID = {request.ModelObjectId} which was not found in the database! Discarding request.", nameof(SignalTranslator), Logger.MessageType.Error);
+            return Array.Empty<byte>();
+        }
+        _logger?.WriteLine($"Found {nameof(Sector)} with ID = {request.ModelObjectId} requested by user.", nameof(SignalTranslator));
+
+        return ZPIEncoding.Encode(foundSector);
+    }
+
+    /// <summary>
+    /// Handling for <see cref="UserRequest.RequestType.AllHostDevicesAsJson"/>.
+    /// </summary>
     private byte[] HandleAllHostDevicesRequest(UserRequest request)
     {
         var allDevices = new DatabaseContext().HostDevices.ToList();
@@ -248,6 +247,20 @@ public class SignalTranslator
             _logger?.WriteLine($"Found {allDevices} record(s) in {nameof(DatabaseContext.HostDevices)} table.");
         return ZPIEncoding.Encode(allDevices ?? new List<HostDevice>());
     }
+    
+    /// <summary>
+    /// Handling for <see cref="UserRequest.RequestType.AllSectorsAsJson"/>.
+    /// </summary>
+    private byte[] HandleAllSectorsRequest(UserRequest request)
+    {
+        var allSectors = new DatabaseContext().Sectors.ToList();
+        if (allSectors is null || allSectors.Count == 0)
+            _logger?.WriteLine($"User requested {request.Request} while database has no records in this table. Response will be empty!", nameof(SignalTranslator), Logger.MessageType.Warning);
+        else
+            _logger?.WriteLine($"Found {allSectors} record(s) in {nameof(DatabaseContext.HostDevices)} table.");
+        return ZPIEncoding.Encode(allSectors ?? new List<Sector>());
+    }
+    #endregion
 
     private void ShowStatus(object? sender, System.EventArgs e)
     {
