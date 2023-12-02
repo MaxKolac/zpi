@@ -23,6 +23,7 @@ namespace ZPIClient
         private int port = 25566;
         private TcpClient tcpClient;
         private List<HostDevice> devices;
+        private ClientListener listener = new ClientListener(IPAddress.Parse("127.0.0.1"), 12000);
 
         //Sensor variables
         //private List<Sensor> sensorList = new List<Sensor>();
@@ -129,7 +130,6 @@ namespace ZPIClient
             if (currentSensorIndex != -1)
             {
                 sensorList[currentSensorIndex].Override = !sensorList[currentSensorIndex].Override;
-                sensorList[currentSensorIndex].StateFromStatus();
                 labelSensorStatus[currentSensorIndex].Text = "Stan: " + sensorList[currentSensorIndex].StateToString();
                 updateAll();
             }
@@ -138,32 +138,38 @@ namespace ZPIClient
         #region Initialize Functions
         private void InitializeSensors()
         {
-            foreach (HostDevice device in devices)
+            try
             {
-                if (device.Type == HostDevice.HostType.PythonCameraSimulator || device.Type == HostDevice.HostType.CameraSimulator)
+                foreach (HostDevice device in devices)
                 {
-                    Random rnd = new Random();
-                    Sensor sensor = new Sensor
+                    if (device.Type == HostDevice.HostType.PythonCameraSimulator || device.Type == HostDevice.HostType.CameraSimulator)
                     {
-                        Id = device.Id,
-                        Name = device.Name,
-                        Type = device.Type,
-                        Address = device.Address,
-                        Port = device.Port,
-                        SectorId = device.SectorId,
-                        LastKnownStatus = device.LastKnownStatus,
-                        LastKnownTemperature = device.LastKnownTemperature,
-                        LocationAltitude = device.LocationAltitude,
-                        LocationLatitude = device.LocationLatitude,
-                        CurrentSensorState = Sensor.SensorState.Null,
-                        SensorLastUpdate = 0,
-                        SensorDetails = "Ten wspaniały sensor wisi na wysokości " + rnd.Next(2, 10) + " metrów",
-                        Override = false
-                    };
-                    sensor.StateFromStatus();
-                    sensorList.Add(sensor);
+                        Sensor sensor = new Sensor
+                        {
+                            Id = device.Id,
+                            Name = device.Name,
+                            Type = device.Type,
+                            Address = device.Address,
+                            Port = device.Port,
+                            SectorId = device.SectorId,
+                            LastFireStatus = device.LastFireStatus,
+                            LastKnownTemperature = device.LastKnownTemperature,
+                            LocationAltitude = device.LocationAltitude,
+                            LocationLatitude = device.LocationLatitude,
+                            LocationDescription = device.LocationDescription,
+                            LastDeviceStatus = device.LastDeviceStatus,
+
+                            SensorLastUpdate = 0,
+                            Override = false
+                        };
+                        sensorList.Add(sensor);
+                    }
                 }
+            }catch (Exception ex) 
+            {
+                MessageBox.Show("Nie znaleziono danych czujnika. " + ex.Message, "Brak danych", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
             }
+           
         }
         private void InitializeListFormControls()
         {
@@ -395,21 +401,17 @@ namespace ZPIClient
             int stateFire = 0; //3
             foreach (Sensor sensor in sensorList)
             {
-                switch (sensor.CurrentSensorState)
+                switch (sensor.LastFireStatus)
                 {
-                    case Sensor.SensorState.Active:
+                    case HostDevice.FireStatus.OK:
                         stateActive++;
                         break;
 
-                    case Sensor.SensorState.Inactive:
-                        stateInactive++;
-                        break;
-
-                    case Sensor.SensorState.Alert:
+                    case HostDevice.FireStatus.Suspected:
                         stateAlert++;
                         break;
 
-                    case Sensor.SensorState.Fire:
+                    case HostDevice.FireStatus.Confirmed:
                         stateFire++;
                         break;
 
@@ -438,7 +440,7 @@ namespace ZPIClient
                 labelSensorName.Text = sensorList[currentSensorIndex].Name;
                 labelStateInfo.Text = sensorList[currentSensorIndex].StateToString();
                 labelSegmentInfo.Text = sensorList[currentSensorIndex].SectorId.ToString();
-                labelLocationInfo.Text = sensorList[currentSensorIndex].SensorDetails;
+                labelLocationInfo.Text = sensorList[currentSensorIndex].LocationDescription;
                 labelTemperatureInfo.Text = sensorList[currentSensorIndex].LastKnownTemperature.ToString() + "°C";
                 labelLastUpdateInfo.Text = sensorList[currentSensorIndex].SensorLastUpdate.ToString() + " sekund temu.";
                 try
@@ -450,16 +452,16 @@ namespace ZPIClient
                 {
                     pictureBoxCamera.Image = pictureBoxCamera.ErrorImage;
                 }
-                switch (sensorList[currentSensorIndex].CurrentSensorState)
+                switch (sensorList[currentSensorIndex].LastFireStatus)
                 {
-                    case Sensor.SensorState.Alert:
+                    case HostDevice.FireStatus.Suspected:
                         buttonFire.BackColor = Color.Red;
                         buttonFire.ForeColor = Color.White;
                         buttonFire.Enabled = true;
                         buttonFire.Text = "Potwierdź pożar";
                         break;
 
-                    case Sensor.SensorState.Fire:
+                    case HostDevice.FireStatus.Confirmed:
                         buttonFire.BackColor = Color.Red;
                         buttonFire.ForeColor = Color.White;
                         buttonFire.Enabled = true;
@@ -520,7 +522,6 @@ namespace ZPIClient
         }
         private void serverRequestInitialize()
         {
-            var listener = new ClientListener(IPAddress.Parse(ipAddress), 12000);
             listener.OnSignalReceived += (sender, e) =>
             {
                 devices = ZPIEncoding.Decode<List<HostDevice>>(e);
@@ -541,11 +542,10 @@ namespace ZPIClient
             listener.OnSignalReceived += (sender, e) =>
             {
                 var device = ZPIEncoding.Decode<HostDevice>(e);
-                if(device.LastKnownTemperature != sensorList[i].LastKnownTemperature || device.LastKnownStatus != sensorList[i].LastKnownStatus)
+                if(device.LastKnownTemperature != sensorList[i].LastKnownTemperature || device.LastFireStatus != sensorList[i].LastFireStatus)
                 {
                     sensorList[i].LastKnownTemperature = device.LastKnownTemperature;
-                    sensorList[i].LastKnownStatus = device.LastKnownStatus;
-                    sensorList[i].StateFromStatus();
+                    sensorList[i].LastFireStatus = device.LastFireStatus;
                     sensorList[i].SensorLastUpdate = 0;
                 }
             };
