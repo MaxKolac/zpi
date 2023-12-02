@@ -220,6 +220,35 @@ public class SignalTranslator
         }
     }
 
+    private byte[] HandleSingleHostDeviceRequest(UserRequest request)
+    {
+        if (request.ModelObjectId is null)
+        {
+            _logger?.WriteLine($"User's request did not contain {nameof(UserRequest.ModelObjectId)} which {request.Request} requires! Discarding request.", nameof(SignalTranslator), Logger.MessageType.Error);
+            return Array.Empty<byte>();
+        }
+
+        var foundHost = new DatabaseContext().HostDevices.Where((host) => host.Id == request.ModelObjectId).FirstOrDefault();
+        if (foundHost is null)
+        {
+            _logger?.WriteLine($"User requested {request.Request} of a {nameof(HostDevice)} with ID = {request.ModelObjectId} which was not found in the database! Discarding request.", nameof(SignalTranslator), Logger.MessageType.Error);
+            return Array.Empty<byte>();
+        }
+        _logger?.WriteLine($"Found {nameof(HostDevice)} with ID = {request.ModelObjectId} requested by user.", nameof(SignalTranslator));
+
+        return ZPIEncoding.Encode(foundHost);
+    }
+
+    private byte[] HandleAllHostDevicesRequest(UserRequest request)
+    {
+        var allDevices = new DatabaseContext().HostDevices.ToList();
+        if (allDevices is null || allDevices.Count == 0)
+            _logger?.WriteLine($"User requested {request.Request} while database has no records in this table. Response will be empty!", nameof(SignalTranslator), Logger.MessageType.Warning);
+        else
+            _logger?.WriteLine($"Found {allDevices} record(s) in {nameof(DatabaseContext.HostDevices)} table.");
+        return ZPIEncoding.Encode(allDevices ?? new List<HostDevice>());
+    }
+
     private void ShowStatus(object? sender, System.EventArgs e)
     {
         if (sender is StatusCommand command && command.ClassArgument == StatusCommand.SignalTranslatorArgument)
