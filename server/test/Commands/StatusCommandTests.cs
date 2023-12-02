@@ -41,7 +41,7 @@ public class StatusCommandTests
     private static StatusCommand? PerformExecution(StatusCommand commandToExecute, string[]? arguments)
     {
         StatusCommand? receivedCommand = null;
-        EventHandler<CommandEventArgs> handler = (sender, e) =>
+        EventHandler<EventArgs> handler = (sender, e) =>
         {
             receivedCommand = sender as StatusCommand;
         };

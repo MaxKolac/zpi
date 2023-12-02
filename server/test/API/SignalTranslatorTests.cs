@@ -65,11 +65,13 @@ public class SignalTranslatorTests
         translator.BeginTranslating();
 
         //Prepare a message to send
+#pragma warning disable CA1416
         var bitmap = HostDevice.ToByteArray(new Bitmap(100, 100), ImageFormat.Bmp);
+#pragma warning restore CA1416
         var message = new CameraDataMessage()
         {
             LargestTemperature = 1234.56m,
-            Image = bitmap,
+            Image = bitmap ?? Array.Empty<byte>(),
             Status = HostDevice.DeviceStatus.OK
         };
 
@@ -165,7 +167,9 @@ public class SignalTranslatorTests
         var messageWrongEncoding = new CameraDataMessage()
         {
             LargestTemperature = 1234.56m,
-            Image = HostDevice.ToByteArray(new Bitmap(10, 10), ImageFormat.Png),
+#pragma warning disable CA1416
+            Image = HostDevice.ToByteArray(new Bitmap(10, 10), ImageFormat.Png) ?? Array.Empty<byte>(),
+#pragma warning restore CA1416
             Status = HostDevice.DeviceStatus.OK
         };
         yield return new object?[] { Encoding.UTF8.GetString(Encoding.UTF32.GetBytes(JsonConvert.SerializeObject(messageWrongEncoding))) };
