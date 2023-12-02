@@ -1,6 +1,6 @@
 from sys import argv
 
-def parse_argv(arg_flags: list, flags_shortened: dict) -> tuple[list[str], list[str], dict]:
+def parse_argv(arg_flags: list = [], flags_shortened: dict = {}) -> tuple[list[str], list[str], dict]:
     params = []
     flags_not_found = []
     flags = {}

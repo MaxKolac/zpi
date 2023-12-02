@@ -409,4 +409,4 @@ FodyWeavers.xsd
 
 # Project specific files
 thermalImageParser/constants.py
-thermalImageParser/output
+thermalImageParser/output.json

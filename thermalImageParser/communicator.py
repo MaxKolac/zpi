@@ -4,6 +4,7 @@ from sys import stderr
 from thermalImageParser import main as find_danger_percentage
 from os.path import isfile
 from requests import post as post_request
+from json import dumps as to_json
 
 arg_flags = ['send', 'filename', 'save']
 flags_shortened = {
@@ -42,20 +43,18 @@ def get_filepath_from_input() -> dict:
     verify_filepath(ret)
     return ret
 
-def save_output_as_file(output: float, filename: str) -> None:
+def save_output_as_file(output: dict, filename: str) -> None:
     try:
         file = open(filename, 'w')
     except IOError:
         print('Error while trying to save file', file = stderr)
         return
-    file.write(str(output))
+    file.write(to_json(output))
     file.close()
 
-def send_output_with_request(output: float, endpoint_url: str, api_key: str) -> None:
-    data = {
-        'data': output,
-        'api key': api_key
-    }
+def send_output_with_request(output: dict, endpoint_url: str, api_key: str) -> None:
+    data = output.copy()
+    data['api key'] = api_key
     post_request(url = endpoint_url, data = data) # Można ewentualnie sprawdzić czy poprawnie się wysłało
 
 def main():
@@ -76,7 +75,9 @@ def main():
         filename = input_data['filepath'],
         image_size = constants.IMAGE_SIZE,
         palette_bounds = constants.PALETTE_BOUNDS,
-        danger_level = constants.DANGER_LEVEL,
+        temp_min = constants.TEMP_MIN,
+        temp_max = constants.TEMP_MAX,
+        danger_temp = constants.DANGER_TEMP,
         work_areas = constants.WORK_AREAS,
         show_image = constants.SHOW_IMAGES,
         print_result = False,

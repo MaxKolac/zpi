@@ -16,4 +16,4 @@ gdzie python to plik wykonawczy pythona, a [flagi] to opcjonalnie jedna lub kilk
 jeśli nie zostanie podana flaga --send lub flaga --save, to wyjście zostanie wypisane na standardowe wyjście (konsola)
 
 Na wejściu znajduje się zdjęcie w orientacji poziomej (najlepiej 640x480) ze skalą po prawej stronie tak jak w obrazach w folderze ExampleImages
-Na wyjściu znajduje się procent pikseli które w obszarach roboczych zajmują gorące piksele
+Na wyjściu znajduje się słownik zawierający procent pikseli które w obszarach roboczych zajmują gorące piksele oraz szacowaną największą temperaturę
