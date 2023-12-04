@@ -1,65 +1,63 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+﻿using System.Diagnostics;
 using System.Text;
-using System.Threading.Tasks;
 using System.Drawing;
 
 namespace ZPIServer.API;
-internal class ImageExtracter
+
+public static class ImageExtracter
 {
-    static String exiftoolLocation = "exiftool.exe";
-    public static Task<Image?> getTrueImage(String filename)
+    private static readonly string exiftoolLocation = "exiftool.exe";
+
+    public static Task<Image?> GetTrueImage(string filename)
     {
-        byte[]? ImageBytes = getImageBytes(filename);
-        if (ImageBytes == null)
+#pragma warning disable CA1416
+        byte[]? imageBytes = GetImageBytes(filename);
+        if (imageBytes == null)
         {
             return Task.FromResult<Image?>(null);
         }
-        using (MemoryStream ms = new MemoryStream(ImageBytes))
-        {
-            return Task.FromResult<Image?>(Image.FromStream(ms));
-        }
+        using var memoryStream = new MemoryStream(imageBytes);
+        return Task.FromResult<Image?>(Image.FromStream(memoryStream));
+#pragma warning restore CA1416
     }
-    public static byte[]? getImageBytes(String filename)
+
+    public static byte[]? GetImageBytes(string filename)
     {
-        String errData;
+        string errData;
         StreamReader outData;
-        String[] flags = {
+        string[] flags =
+        {
             "s3",
             "b",
             "EmbeddedImage"
         };
+
         (outData, errData) = RunExiftool(flags, filename);
-        if (IsError(errData))
+        if (IsError(errData) || outData.BaseStream is not FileStream baseStream)
         {
             return null;
         }
+
         byte[] imageBytes;
-        FileStream? baseStream = outData.BaseStream as FileStream;
-        if (baseStream is null)
-        {
-            return null;
-        }
         int lastRead;
-        using (MemoryStream ms = new MemoryStream())
+        using (var memoryStream = new MemoryStream())
         {
             byte[] buffer = new byte[4096];
             do
             {
                 lastRead = baseStream.Read(buffer, 0, buffer.Length);
-                ms.Write(buffer, 0, lastRead);
-            } while (lastRead > 0);
-            imageBytes = ms.ToArray();
+                memoryStream.Write(buffer, 0, lastRead);
+            }
+            while (lastRead > 0);
+            imageBytes = memoryStream.ToArray();
         }
         return imageBytes;
     }
 
     static bool IsError(string errData)
     {
-        String[] lines = errData.Split('\n');
-        foreach (String line in lines)
+        string[] lines = errData.Split('\n');
+        foreach (string line in lines)
         {
             if (!line.StartsWith("Warning: ") && !(line.Length == 0))
             {
@@ -69,25 +67,28 @@ internal class ImageExtracter
         return false;
     }
 
-    static (StreamReader, string) RunExiftool(String[] flags, String filename)
+    static (StreamReader, string) RunExiftool(string[] flags, string filename)
     {
-        Process cmd = new Process();
-        StringBuilder errData = new StringBuilder();
-        String command = exiftoolLocation;
-        foreach (String flag in flags)
+        var process = new Process();
+        var errData = new StringBuilder();
+
+        string command = exiftoolLocation;
+        foreach (string flag in flags)
         {
             command += " -" + flag;
         }
         command += " " + filename;
-        cmd.StartInfo.FileName = "cmd.exe";
-        cmd.StartInfo.Arguments = "/C " + command;
-        cmd.StartInfo.CreateNoWindow = true;
-        cmd.StartInfo.UseShellExecute = false;
-        cmd.StartInfo.RedirectStandardOutput = true;
-        cmd.StartInfo.RedirectStandardError = true;
-        cmd.ErrorDataReceived += (sender, args) => errData.Append(args.Data ?? String.Empty);
-        cmd.Start();
-        cmd.BeginErrorReadLine();
-        return (cmd.StandardOutput, errData.ToString());
+
+        process.StartInfo.FileName = "cmd.exe";
+        process.StartInfo.Arguments = "/C " + command;
+        process.StartInfo.CreateNoWindow = true;
+        process.StartInfo.UseShellExecute = false;
+        process.StartInfo.RedirectStandardOutput = true;
+        process.StartInfo.RedirectStandardError = true;
+        process.ErrorDataReceived += (sender, args) => errData.Append(args.Data ?? string.Empty);
+        process.Start();
+        process.BeginErrorReadLine();
+
+        return (process.StandardOutput, errData.ToString());
     }
 }
