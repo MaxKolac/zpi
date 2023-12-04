@@ -68,19 +68,16 @@ public class DbCommand : Command
                             Sector sectorA = new()
                             {
                                 Name = "Sektor A",
-                                LastStatus = Sector.FireStatus.OK,
                                 Description = "Przykładowy opis 123"
                             };
                             Sector sectorB = new()
                             {
                                 Name = "Sektor B",
-                                LastStatus = Sector.FireStatus.Suspected,
                                 Description = "Przykładowy opis 123"
                             };
                             Sector sectorC = new()
                             {
                                 Name = "Sektor C",
-                                LastStatus = Sector.FireStatus.Confirmed,
                                 Description = "Zgłosiła Jadwiga Hymel"
                             };
                             HostDevice camera1 = new()
@@ -90,7 +87,8 @@ public class DbCommand : Command
                                 Address = IPAddress.Parse("127.0.0.1"),
                                 Port = 12000,
                                 Sector = sectorB,
-                                LastKnownStatus = DeviceStatus.OK,
+                                LastDeviceStatus = DeviceStatus.OK,
+                                LastFireStatus = FireStatus.Confirmed,
                                 LastKnownTemperature = 24.3m,
                                 LocationAltitude = 12.3456789010m,
                                 LocationLatitude = 23.192488583m
@@ -102,7 +100,8 @@ public class DbCommand : Command
                                 Address = IPAddress.Parse("1.2.3.5"),
                                 Port = 12000,
                                 Sector = sectorA,
-                                LastKnownStatus = DeviceStatus.LowPower,
+                                LastDeviceStatus = DeviceStatus.LowPower,
+                                LastFireStatus = FireStatus.Suspected,
                                 LastKnownTemperature = 5.2m,
                                 LocationAltitude = 12.235687879543m,
                                 LocationLatitude = 23.19292929292m
@@ -114,7 +113,8 @@ public class DbCommand : Command
                                 Address = IPAddress.Parse("1.2.3.6"),
                                 Port = 12000,
                                 Sector = sectorC,
-                                LastKnownStatus = DeviceStatus.Unresponsive,
+                                LastDeviceStatus = DeviceStatus.Unresponsive,
+                                LastFireStatus = FireStatus.OK,
                                 LastKnownTemperature = 1526.2m,
                                 LocationAltitude = 12.2345646646666m,
                                 LocationLatitude = 23.1234444111234m

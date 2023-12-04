@@ -78,6 +78,27 @@ public class HostDevice
         DataCorrupted = 202
     }
 
+    /// <summary>
+    /// Obecny stan pożarowy
+    /// </summary>
+    public enum FireStatus
+    {
+        /// <summary>
+        /// Nie wykryto żadnego pożaru.
+        /// </summary>
+        OK = 0,
+
+        /// <summary>
+        /// Istnieje podejrzenie o możliwym pożarze.
+        /// </summary>
+        Suspected = 1,
+
+        /// <summary>
+        /// Istnienie pożaru potwierdzone.
+        /// </summary>
+        Confirmed = 2,
+    }
+
     //Fields for both Users and Cameras
     /// <summary>
     /// Klucz podstawowy. Lepiej tego nie edytować manualnie.
@@ -117,7 +138,12 @@ public class HostDevice
     /// Właściwość tylko dla kamer. <b>Tą właściwość serwer będzie próbował odczytać.</b><br/>
     /// Ostatni znany status kamery.
     /// </summary>
-    public DeviceStatus? LastKnownStatus { get; set; }
+    public DeviceStatus? LastDeviceStatus { get; set; }
+    /// <summary>
+    /// Właściwość tylko dla kamer.<br/>
+    /// Ostatni znany stan pożarowy w danym sektorze.
+    /// </summary>
+    public FireStatus? LastFireStatus { get; set; }
     /// <summary>
     /// Właściwość tylko dla kamer. <b>Tą właściwość serwer będzie próbował odczytać.</b><br/>
     /// Ostatnia znana najwyższa wykryta temperatura.
@@ -133,6 +159,11 @@ public class HostDevice
     /// Szerokość geograficza.
     /// </summary>
     public decimal LocationLatitude { get; set; }
+    /// <summary>
+    /// Właściwość tylko dla kamer.<br/>
+    /// Szczegółowy opis miejsca zamontowania kamery.
+    /// </summary>
+    public string? LocationDescription { get; set; }
     /// <summary>
     /// Właściwość tylko dla kamer. <b>Tą właściwość serwer będzie próbował odczytać.</b><br/>
     /// EF Core nie może przechowywać <see cref="Image"/> jako kolumny. Użyj <see cref="ToImage(byte[]?)"/> i <see cref="ToByteArray(Image?, ImageFormat)"/> aby konwertować obraz na ciąg bitów i vice versa.
@@ -168,10 +199,12 @@ public class HostDevice
         builder.Append(nameof(Type) + $": {Type} | ");
         builder.Append(nameof(Address) + $": {Address} | ");
         builder.Append(nameof(SectorId) + $": {SectorId} | ");
-        builder.Append(nameof(LastKnownStatus) + $": {LastKnownStatus} | ");
+        builder.Append(nameof(LastDeviceStatus) + $": {LastDeviceStatus} | ");
+        builder.Append(nameof(LastFireStatus) + $": {LastFireStatus} | ");
         builder.Append(nameof(LastKnownTemperature) + $": {LastKnownTemperature} | ");
         builder.Append(nameof(LocationAltitude) + $": {LocationAltitude} | ");
         builder.Append(nameof(LocationLatitude) + $": {LocationLatitude} | ");
+        builder.Append(nameof(LocationDescription) + $": {LocationDescription} | ");
         builder.Append(nameof(LastImage) + $": {(LastImage is null ? 0 : LastImage.Length)} byte(s) ");
         builder.Append(')');
         return builder.ToString();

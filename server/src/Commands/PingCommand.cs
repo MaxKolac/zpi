@@ -42,12 +42,14 @@ public class PingCommand : Command
                 if (SecondArg is null || ThirdArg is null)
                     break;
 
+#pragma warning disable CA1416
                 var testMessage = new CameraDataMessage()
                 {
                     LargestTemperature = 123_456_789.123m,
                     Status = HostDevice.DeviceStatus.OK,
                     Image = HostDevice.ToByteArray(Image.FromFile("Commands\\PingCdmImage.png"), ImageFormat.Png) ?? Array.Empty<byte>()
                 };
+#pragma warning restore CA1416
                 var json = JsonConvert.SerializeObject(testMessage);
                 var payload = ZPIEncoding.GetBytes(json);
                 var args = new TcpSenderEventArgs(SecondArg, (int)ThirdArg, payload);
