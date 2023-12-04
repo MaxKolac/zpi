@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -39,16 +38,6 @@ public class PythonCameraSimulatorAPI : ICamera
         //Are the received bytes ok to process?
         if (bytes is null || bytes.Length == 0)
             throw new ArgumentException("Received bytes were empty or null");
-
-        //DONE: Migrate DB to acommodate for new property Percentage
-        //DONE: Change CameraDataMessage to acommodate for Percentage (will break ZPIClient)
-        //TODO: Add toggling between simulating Camera and PythonCamera in ZPICameraSimulator
-        //DONE: Make compiler copy the python script and exiftool.exe to this folder
-        //TODO: Add Filip's script to start exiftool to extract the RJPG image (can be run independently)
-
-        //On server startup:
-        //DONE: Check PATH sys variable contains folder pythonScripts whic has the exiftool.exe
-        //DONE: Check all required python scripts are present
 
         //Gather the bytes and save/overwrite them as a raw file next to the script
         using (var writer = File.Create(InputImagePath))
@@ -280,7 +269,7 @@ public class PythonCameraSimulatorAPI : ICamera
         }
 
         //Check if PATH variable contains a folder to it
-        bool sysVarPointsToExecutable = false;
+        bool sysVarPointsToExecutable = Environment.GetEnvironmentVariable("PATH")?.Contains(executablePath) ?? false;
         if (!sysVarPointsToExecutable)
         {
             Environment.SetEnvironmentVariable("PATH", Path.GetFullPath(executablePath));
