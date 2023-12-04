@@ -11,6 +11,8 @@ namespace ZPICameraSimulator;
 
 public class Program
 {
+    private record class CameraDataWithoutImage(HostDevice.DeviceStatus Status, decimal LargestTemperature, decimal DangerPercentage);
+
     static void Main(string[] args)
     {
         if (!OperatingSystem.IsWindows())
@@ -31,51 +33,70 @@ public class Program
             while (selectedMode.Key != ConsoleKey.D1 && selectedMode.Key != ConsoleKey.D2);
 
             //Building the message
-            CameraDataMessage? jsonMessage = null;
-            switch (selectedMode.Key)
+            byte[] message = Array.Empty<byte>();
+            if (selectedMode.Key == ConsoleKey.D1)
             {
-                case ConsoleKey.D1:
-                    jsonMessage = new()
-                    {
-                        Status = HostDevice.DeviceStatus.OK,
-                        Image = HostDevice.ToByteArray(Image.FromFile("imageToSend.png"), ImageFormat.Png) ?? Array.Empty<byte>(),
-                        LargestTemperature = 123.456m,
-                        ImageVisibleDangerPercentage = 0.68m
-                    };
+                //Load the CameraDataWithoutImage JSON file
+                var jsonFile = new CameraDataWithoutImage(HostDevice.DeviceStatus.OK, 123.456m, 0.123m);
+                try
+                {
+                    using var reader = new StreamReader(File.OpenRead("message.json"));
+                    string json = reader.ReadToEnd();
+                    var deserializedMessage = JsonConvert.DeserializeObject<CameraDataWithoutImage>(json);
 
-                    try
-                    {
-                        using var reader = new StreamReader(File.OpenRead("message.json"));
-                        string json = reader.ReadToEnd();
-                        var deserializedMessage = JsonConvert.DeserializeObject<CameraDataMessage>(json);
+                    if (deserializedMessage is not null)
+                        jsonFile = deserializedMessage;
+                }
+                catch (FileNotFoundException)
+                {
+                    Console.WriteLine("Nie odnaleziono wiadomości tekstowej o nazwie 'message.json'.");
+                    using var writer = File.CreateText("message.json");
+                    writer.Write(JsonConvert.SerializeObject(jsonFile));
+                    Console.WriteLine("Utworzono świeży szablon.");
+                }
+                catch (JsonSerializationException)
+                {
+                    Console.WriteLine("Nie udało się deserializować wiadomości tekstowej o nazwie 'message.json'.");
+                    using var writer = File.CreateText("message.json");
+                    writer.Write(JsonConvert.SerializeObject(jsonFile));
+                    Console.WriteLine("Utworzono świeży szablon.");
+                }
 
-                        if (deserializedMessage is not null)
-                            jsonMessage = deserializedMessage;
-                    }
-                    catch (FileNotFoundException)
-                    {
-                        Console.WriteLine("Nie odnaleziono wiadomości tekstowej o nazwie 'message.json'.");
-                        using var writer = File.CreateText("message.json");
-                        writer.Write(JsonConvert.SerializeObject(jsonMessage));
-                        Console.WriteLine("Utworzono świeży szablon.");
-                    }
-                    catch (JsonSerializationException)
-                    {
-                        Console.WriteLine("Nie udało się deserializować wiadomości tekstowej o nazwie 'message.json'.");
-                        using var writer = File.CreateText("message.json");
-                        writer.Write(JsonConvert.SerializeObject(jsonMessage));
-                        Console.WriteLine("Utworzono świeży szablon.");
-                    }
+                //Load the image as byte array
+                byte[] loadedImage = Array.Empty<byte>();
+                try
+                {
+                    loadedImage = HostDevice.ToByteArray(
+                        Image.FromFile(Path.Combine(Environment.CurrentDirectory, "imageToSend.png")),
+                        ImageFormat.Png);
+                }
+                catch (FileNotFoundException)
+                {
+                    Console.WriteLine("Nie odnaleziono obrazu. Dodaj nowy obraz o nazwie 'imageToSend.png'.");
+                }
 
-                    Console.WriteLine("Dane, które symulator spróbuje wysłać na serwer:");
-                    Console.WriteLine($"Status: {jsonMessage.Status}");
-                    Console.WriteLine($"Obraz: {jsonMessage.Image.Length} bajtów");
-                    Console.WriteLine($"Największa temperatura: {jsonMessage.LargestTemperature}");
-                    Console.WriteLine($"Procent obrazu uznany za niebezpieczeństwo: {jsonMessage.ImageVisibleDangerPercentage}");
-                    Console.WriteLine();
-                    break;
-                case ConsoleKey.D2:
-                    break;
+                //Put the image and json together into a CameraDataMessage
+                var cameraData = new CameraDataMessage()
+                {
+                    LargestTemperature = jsonFile.LargestTemperature,
+                    Status = jsonFile.Status,
+                    Image = loadedImage,
+                    ImageVisibleDangerPercentage = jsonFile.DangerPercentage
+                };
+                message = ZPIEncoding.Encode(cameraData);
+
+                Console.WriteLine("Dane, które symulator spróbuje wysłać na serwer:");
+                Console.WriteLine($"Status: {cameraData.Status}");
+                Console.WriteLine($"Obraz: {cameraData.Image.Length} bajtów");
+                Console.WriteLine($"Największa temperatura: {cameraData.LargestTemperature}");
+                Console.WriteLine($"Procent obrazu uznany za niebezpieczeństwo: {cameraData.ImageVisibleDangerPercentage}");
+                Console.WriteLine();
+            }
+            else if (selectedMode.Key == ConsoleKey.D2)
+            {
+                message = OpenThermalImage() ?? Array.Empty<byte>();
+                Console.WriteLine("Dane, które symulator spróbuje wysłać na serwer:");
+                Console.WriteLine($"Zdjęcie termiczne: {message.Length} bajtów");
             }
 
             //Getting target IP - entering empty address will set it to loopback
@@ -111,13 +132,7 @@ public class Program
             try
             {
                 Console.WriteLine($"Próba wysłania wiadomości do {address}:{port}...");
-                byte[]? message = selectedMode.Key switch
-                {
-                    ConsoleKey.D1 => ZPIEncoding.Encode(jsonMessage),
-                    ConsoleKey.D2 => OpenThermalImage(),
-                    _ => null
-                };
-                if (message is not null)
+                if (message.Length != 0)
                 {
                     Send(message, address, port);
                     Console.WriteLine("Wiadomość wysłana bez wyjątku!");
