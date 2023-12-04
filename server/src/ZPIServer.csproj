@@ -8,6 +8,27 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Update="API\CameraLibraries\pythonScripts\communicator.py">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="API\CameraLibraries\pythonScripts\constants.py">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="API\CameraLibraries\pythonScripts\exiftool.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="API\CameraLibraries\pythonScripts\oldParser.py">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="API\CameraLibraries\pythonScripts\show_working_areas.py">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="API\CameraLibraries\pythonScripts\thermalImageParser.py">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="API\CameraLibraries\pythonScripts\utils.py">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="API\CameraLibraries\python\communicator.py">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
