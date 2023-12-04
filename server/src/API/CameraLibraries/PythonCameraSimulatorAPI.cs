@@ -17,6 +17,7 @@ public class PythonCameraSimulatorAPI : ICamera
 
     private static readonly string RelativeScriptsPath = Path.Combine(Environment.CurrentDirectory, "API", "CameraLibraries", "pythonScripts");
     private static readonly string ScriptResultFilename = "output.json";
+    private static readonly string InputImageFilename = "input";
 
     private record ScriptResult(decimal HottestTemperature, decimal Percentage);
 
@@ -49,7 +50,7 @@ public class PythonCameraSimulatorAPI : ICamera
         //DONE: Check all required python scripts are present
 
         //Gather the bytes and save/overwrite them as a raw file next to the script
-        using (var writer = File.Create(Path.Combine(RelativeScriptsPath, "input")))
+        using (var writer = File.Create(Path.Combine(RelativeScriptsPath, InputImageFilename)))
         {
             writer.Write(bytes);
         }
@@ -59,7 +60,7 @@ public class PythonCameraSimulatorAPI : ICamera
         {
             FileName = @"python.exe",
             //Script itself + args
-            Arguments = $"communicator.py --filename //FileToRawFile --save {Path.Combine(RelativeScriptsPath, ScriptResultFilename)}", 
+            Arguments = $"communicator.py --filename {InputImageFilename} --save {ScriptResultFilename}", 
             CreateNoWindow = true,
             UseShellExecute = false,
             RedirectStandardOutput = true,
@@ -127,8 +128,9 @@ public class PythonCameraSimulatorAPI : ICamera
             return;
         }
 
+#pragma warning disable CA1416
         //Extract the plain image using exiftool <- Filip
-        Image? plainImage = pluh();
+        Image? plainImage = ImageExtracter.GetTrueImage(Path.Combine(RelativeScriptsPath, InputImageFilename)).Result;
 
         //Build a CameraDataMessage object out of deserialized results
         _message = new CameraDataMessage()
@@ -138,6 +140,7 @@ public class PythonCameraSimulatorAPI : ICamera
             Image = HostDevice.ToByteArray(plainImage!, ImageFormat.Jpeg),
             Status = HostDevice.DeviceStatus.OK
         };
+#pragma warning restore CA1416
     }
 
     public CameraDataMessage? GetDecodedMessage() => _message;
