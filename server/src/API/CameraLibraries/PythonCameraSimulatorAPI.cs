@@ -1,5 +1,10 @@
-﻿using System.Diagnostics;
+﻿using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using System.Diagnostics;
+using System.Drawing;
+using System.Drawing.Imaging;
 using ZPICommunicationModels.Messages;
+using ZPICommunicationModels.Models;
 using ZPIServer.Commands;
 
 namespace ZPIServer.API.CameraLibraries;
@@ -10,6 +15,9 @@ public class PythonCameraSimulatorAPI : ICamera
     private readonly Logger? _logger;
     private CameraDataMessage? _message;
 
+    private static readonly string RelativeScriptsPath = Path.Combine(Environment.CurrentDirectory, "API", "CameraLibraries", "pythonScripts");
+    private static readonly string ScriptResultFilename = "output.json";
+
     private record ScriptResult(decimal HottestTemperature, decimal Percentage);
 
     public PythonCameraSimulatorAPI(Logger? logger = null)
@@ -19,12 +27,14 @@ public class PythonCameraSimulatorAPI : ICamera
 
     public void DecodeReceivedBytes(byte[]? bytes)
     {
+        //Can the current environment even run this method?
         if (!Settings.CanPythonCameraAPIScriptsRun)
         {
-            _logger?.WriteLine($"Server was started without detecting a Python installation! Ignoring received bytes.", nameof(PythonCameraSimulatorAPI), Logger.MessageType.Warning);
+            _logger?.WriteLine($"During server startup, some required components were not detected! Ignoring received bytes.", nameof(PythonCameraSimulatorAPI), Logger.MessageType.Warning);
             return;
         }
 
+        //Are the received bytes ok to process?
         if (bytes is null || bytes.Length == 0)
             throw new ArgumentException("Received bytes were empty or null");
 
@@ -38,12 +48,96 @@ public class PythonCameraSimulatorAPI : ICamera
         //DONE: Check PATH sys variable contains folder pythonScripts whic has the exiftool.exe
         //DONE: Check all required python scripts are present
 
-        //Decypher the bytes
-        //Save/overwrite the received bytes as raw file photo next to the script <- script from Filip
-        //Run script and await its completion
+        //Gather the bytes and save/overwrite them as a raw file next to the script
+        using (var writer = File.Create(Path.Combine(RelativeScriptsPath, "input")))
+        {
+            writer.Write(bytes);
+        }
+
+        //Run thermalImageParser script and await its completion
+        var startInfo = new ProcessStartInfo()
+        {
+            FileName = @"python.exe",
+            //Script itself + args
+            Arguments = $"communicator.py --filename //FileToRawFile --save {Path.Combine(RelativeScriptsPath, ScriptResultFilename)}", 
+            CreateNoWindow = true,
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true
+        };
+        bool didScriptThrowErrors = false;
+        using (var process = Process.Start(startInfo))
+        {
+            using var standardReader = process!.StandardOutput;
+            using var errorReader = process!.StandardError;
+
+            Task standardOutput = Task.Run(() =>
+            {
+                while (!standardReader.EndOfStream)
+                {
+                    _logger?.WriteLine(standardReader.ReadLine(), PythonPrefix);
+                }
+            });
+            Task errorOutput = Task.Run(() =>
+            {
+                while (!errorReader.EndOfStream)
+                {
+                    _logger?.WriteLine(errorReader.ReadLine(), PythonPrefix, Logger.MessageType.Error);
+                    if (errorReader.BaseStream.Length >= 0)
+                        didScriptThrowErrors = true;
+                }
+            });
+            Task.WaitAll(standardOutput, errorOutput);
+        }
+        if (didScriptThrowErrors)
+        {
+            _logger?.WriteLine($"Script threw an error during execution!", nameof(PythonCameraSimulatorAPI), Logger.MessageType.Error);
+            return;
+        }
+
         //Look for the resulting JSON
+        string json;
+        try
+        {
+            using var stream = File.OpenText(Path.Combine(RelativeScriptsPath, ScriptResultFilename));
+            json = stream.ReadToEnd();
+        }
+        catch (Exception ex) when (ex is FileNotFoundException || ex is DirectoryNotFoundException)
+        {
+            _logger?.WriteLine($"Could not locate the Python script's Json result! {ex.Message}", nameof(PythonCameraSimulatorAPI), Logger.MessageType.Error);
+            return;
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            _logger?.WriteLine($"Could not open the Python script's Json result! Is the file opened in another program? {ex.Message}", nameof(PythonCameraSimulatorAPI), Logger.MessageType.Error);
+            return;
+        }
+
         //Try to deserialize it into ScriptResult
+        ScriptResult? scriptResult;
+        try
+        {
+            scriptResult = JsonConvert.DeserializeObject<ScriptResult>(json);
+            if (scriptResult is null)
+                throw new JsonSerializationException("JsonConverter returned a null.");
+        }
+        catch (JsonSerializationException ex)
+        {
+            _logger?.WriteLine($"Failed to deserialize Python script's Json result! {ex.Message} \nFull JSON: \n{json}", nameof(PythonCameraSimulatorAPI), Logger.MessageType.Error);
+            return;
+        }
+
+        //Extract the plain image using exiftool <- Filip
+        Image? plainImage = pluh();
+
         //Build a CameraDataMessage object out of deserialized results
+        _message = new CameraDataMessage()
+        {
+            LargestTemperature = scriptResult!.HottestTemperature,
+            ImageVisibleDangerPercentage = scriptResult!.Percentage,
+            Image = HostDevice.ToByteArray(plainImage!, ImageFormat.Jpeg),
+            Status = HostDevice.DeviceStatus.OK
+        };
     }
 
     public CameraDataMessage? GetDecodedMessage() => _message;
@@ -155,8 +249,6 @@ public class PythonCameraSimulatorAPI : ICamera
     /// </summary
     private static bool CheckPythonScripts(Logger? logger = null)
     {
-        string relativePath = Path.Combine(Environment.CurrentDirectory, "API", "CameraLibraries", "pythonScripts");
-
         string[] scriptFilenames =
         {
             "communicator.py",
@@ -170,14 +262,14 @@ public class PythonCameraSimulatorAPI : ICamera
         bool areAllScriptsPresent = false;
         foreach (var filename in scriptFilenames)
         {
-            areAllScriptsPresent = Path.Exists(Path.Combine(relativePath, filename));
+            areAllScriptsPresent = Path.Exists(Path.Combine(RelativeScriptsPath, filename));
             if (areAllScriptsPresent)
             {
-                logger?.WriteLine($"Script {filename} is present in {relativePath}.", nameof(PythonCameraSimulatorAPI));
+                logger?.WriteLine($"Script {filename} is present in {RelativeScriptsPath}.", nameof(PythonCameraSimulatorAPI));
             }
             else
             {
-                logger?.WriteLine($"Script {filename} was not found in {relativePath}! {nameof(PythonCameraSimulatorAPI)} will not be able to function properly!", nameof(PythonCameraSimulatorAPI), Logger.MessageType.Error);
+                logger?.WriteLine($"Script {filename} was not found in {RelativeScriptsPath}! {nameof(PythonCameraSimulatorAPI)} will not be able to function properly!", nameof(PythonCameraSimulatorAPI), Logger.MessageType.Error);
                 break;
             }
         }
@@ -190,7 +282,7 @@ public class PythonCameraSimulatorAPI : ICamera
     /// <returns><c>true</c>, jeśli wszystko poszło OK.</returns>
     private static bool CheckExiftool(Logger? logger = null)
     {
-        string executablePath = Path.Combine(Environment.CurrentDirectory, "API", "CameraLibraries", "pythonScripts", "exiftool.exe");
+        string executablePath = Path.Combine(RelativeScriptsPath, "exiftool.exe");
 
         //Check if executable is where its meant to be
         bool executableIsPresent = Path.Exists(executablePath);
@@ -211,7 +303,7 @@ public class PythonCameraSimulatorAPI : ICamera
             Environment.SetEnvironmentVariable("PATH", Path.GetFullPath(executablePath));
             sysVarPointsToExecutable = Environment.GetEnvironmentVariable("PATH")?.Contains(executablePath) ?? false;
         }
-        
+
         if (sysVarPointsToExecutable)
         {
             logger?.WriteLine($"Successfully added exiftool.exe path to PATH environment variable.", nameof(PythonCameraSimulatorAPI));
