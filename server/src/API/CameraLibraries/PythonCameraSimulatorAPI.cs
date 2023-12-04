@@ -10,6 +10,8 @@ public class PythonCameraSimulatorAPI : ICamera
     private readonly Logger? _logger;
     private CameraDataMessage? _message;
 
+    private record ScriptResult(decimal HottestTemperature, decimal Percentage);
+
     public PythonCameraSimulatorAPI(Logger? logger = null)
     {
         _logger = logger;
@@ -26,7 +28,20 @@ public class PythonCameraSimulatorAPI : ICamera
         if (bytes is null || bytes.Length == 0)
             throw new ArgumentException("Received bytes were empty or null");
 
-        //do stuff
+        //TODO: Migrate DB to acommodate for new property Percentage
+        //TODO: Change CameraDataMessage to acommodate for Percentage (will break ZPIClient)
+        //TODO: Add toggling between simulating Camera and PythonCamera in ZPICameraSimulator
+        //TODO: Make compiler copy the python script and exiftool.exe to this folder
+
+        //On server startup:
+        //Check PATH sys variable contains "exiftool"
+
+        //Decypher the bytes to raw/.JPG file
+        //Save/overwrite the received .JPG photo next to the script
+        //Run script and await its completion
+        //Look for the resulting JSON
+        //Try to deserialize it into ScriptResult
+        //Build a CameraDataMessage object out of deserialized results
     }
 
     public CameraDataMessage? GetDecodedMessage() => _message;

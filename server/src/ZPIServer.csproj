@@ -8,6 +8,27 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Update="API\CameraLibraries\python\communicator.py">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="API\CameraLibraries\python\constants.template.py">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="API\CameraLibraries\python\oldParser.py">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="API\CameraLibraries\python\README.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="API\CameraLibraries\python\show_working_areas.py">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="API\CameraLibraries\python\thermalImageParser.py">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="API\CameraLibraries\python\utils.py">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Commands\PingCdmImage.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
