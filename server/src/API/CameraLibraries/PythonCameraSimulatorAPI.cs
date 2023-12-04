@@ -19,7 +19,7 @@ public class PythonCameraSimulatorAPI : ICamera
 
     public void DecodeReceivedBytes(byte[]? bytes)
     {
-        if (!Settings.IsPythonDetected)
+        if (!Settings.CanPythonCameraAPIScriptsRun)
         {
             _logger?.WriteLine($"Server was started without detecting a Python installation! Ignoring received bytes.", nameof(PythonCameraSimulatorAPI), Logger.MessageType.Warning);
             return;
@@ -31,13 +31,15 @@ public class PythonCameraSimulatorAPI : ICamera
         //TODO: Migrate DB to acommodate for new property Percentage
         //TODO: Change CameraDataMessage to acommodate for Percentage (will break ZPIClient)
         //TODO: Add toggling between simulating Camera and PythonCamera in ZPICameraSimulator
-        //TODO: Make compiler copy the python script and exiftool.exe to this folder
+        //DONE: Make compiler copy the python script and exiftool.exe to this folder
+        //TODO: Add Filip's script to start exiftool to extract the RJPG image (can be run independently)
 
         //On server startup:
-        //Check PATH sys variable contains "exiftool"
+        //Check PATH sys variable contains folder pythonScripts whic has the exiftool.exe
+        //Check all required python scripts are present
 
-        //Decypher the bytes to raw/.JPG file
-        //Save/overwrite the received .JPG photo next to the script
+        //Decypher the bytes
+        //Save/overwrite the received bytes as raw file photo next to the script <- script from Filip
         //Run script and await its completion
         //Look for the resulting JSON
         //Try to deserialize it into ScriptResult
@@ -46,13 +48,18 @@ public class PythonCameraSimulatorAPI : ICamera
 
     public CameraDataMessage? GetDecodedMessage() => _message;
 
+    public static bool CheckIfScriptsCanBeRun(Logger? logger = null)
+    {
+        return CheckPythonInstallation(logger) && CheckPythonPackagesInstallation(logger) && CheckPythonScripts(logger) && CheckExiftool(logger);
+    }
+
     /// <summary>
     /// Sprawdza czy obecny system ma zainstalowanego Python'a.
     /// </summary>
     /// <returns>
     /// true, jeśli wykryto instalację Python'a. W przeciwnym wypadku, false.
     /// </returns>
-    public static bool CheckPythonInstallation(Logger? logger = null)
+    private static bool CheckPythonInstallation(Logger? logger = null)
     {
         var startInfo = new ProcessStartInfo
         {
@@ -89,7 +96,7 @@ public class PythonCameraSimulatorAPI : ICamera
     /// Sprawdza obecność tych zależności skryptu w Python'ie. W razie potrzeby, instaluje je.<br/>
     /// Pełna lista zależności wraz z wymaganymi wersjami znajduje się wewnątrz metody, w tabeli <c>dependencies</c>.
     /// </summary>
-    public static void CheckPythonPackagesInstallation(Logger? logger = null)
+    private static bool CheckPythonPackagesInstallation(Logger? logger = null)
     {
         var dependencies = new string[]
         {
@@ -114,11 +121,14 @@ public class PythonCameraSimulatorAPI : ICamera
 
         //Attempt to install them and redirect all the output into ZPIServer's Logger
         logger?.WriteLine("Attempting to install required dependencies.", nameof(PythonCameraSimulatorAPI));
+
+        bool wereAllErrorOutputsEmpty = true;
         foreach (var startInfo in startInfos)
         {
             using var process = Process.Start(startInfo);
             using var standardReader = process!.StandardOutput;
             using var errorReader = process!.StandardError;
+
             Task standardOutput = Task.Run(() =>
             {
                 while (!standardReader.EndOfStream)
@@ -131,9 +141,64 @@ public class PythonCameraSimulatorAPI : ICamera
                 while (!errorReader.EndOfStream)
                 {
                     logger?.WriteLine(errorReader.ReadLine(), PythonPrefix, Logger.MessageType.Error);
+                    if (errorReader.BaseStream.Length >= 0)
+                        wereAllErrorOutputsEmpty = false;
                 }
             });
             Task.WaitAll(standardOutput, errorOutput);
         }
+        return wereAllErrorOutputsEmpty;
+    }
+
+    /// <summary>
+    /// Sprawdza czy serwer posiada wszystkie potrzebne skrypty w języku Python gdyby komuś się zachciało aby jeden usunąć tak dla śmiechu.
+    /// </summary
+    private static bool CheckPythonScripts(Logger? logger = null)
+    {
+        string relativePath = Path.Combine(Environment.CurrentDirectory, "API", "CameraLibraries", "pythonScripts");
+
+        string[] scriptFilenames =
+        {
+            "communicator.py",
+            "constants.py",
+            "oldParser.py",
+            "show_working_areas.py",
+            "thermalImageParser.py",
+            "utils.py"
+        };
+
+        bool areAllScriptsPresent = false;
+        foreach (var filename in scriptFilenames)
+        {
+            areAllScriptsPresent = Path.Exists(Path.Combine(relativePath, filename));
+            if (!areAllScriptsPresent)
+            {
+                logger?.WriteLine($"Script {filename} not found in {relativePath}! {nameof(PythonCameraSimulatorAPI)} will not be able to function properly!", nameof(PythonCameraSimulatorAPI), Logger.MessageType.Error);
+                break;
+            }
+        }
+        return areAllScriptsPresent;
+    }
+
+    /// <summary>
+    /// Sprawdza czy serwer ma dostęp do narzędzia "exiftool.exe" oraz czy folder, w którym się znajduje jest dopisany do zmiennej systemowej "PATH".
+    /// </summary>
+    /// <returns><c>true</c>, jeśli wszystko poszło OK.</returns>
+    private static bool CheckExiftool(Logger? logger = null)
+    {
+        string executablePath = Path.Combine(Environment.CurrentDirectory, "API", "CameraLibraries", "pythonScripts", "exiftool.exe");
+
+        //Check if executable is where its meant to be
+        bool executableIsPresent = Path.Exists(executablePath);
+
+        //Check if PATH variable contains a folder to it
+        bool sysVarPointsToExecutable = false;
+        if (!sysVarPointsToExecutable)
+        {
+            Environment.SetEnvironmentVariable("PATH", Path.GetFullPath(executablePath));
+            sysVarPointsToExecutable = Environment.GetEnvironmentVariable("PATH")?.Contains(executablePath) ?? false;
+        }
+
+        return executableIsPresent && sysVarPointsToExecutable;
     }
 }

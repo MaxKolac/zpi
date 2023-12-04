@@ -17,16 +17,16 @@ public static class Settings
     public static IPAddress ServerAddress { get; set; } = IPAddress.Parse("127.0.0.1");
 
     /// <summary>
-    /// Wskazuje, czy serwer wykrył instalację Python'a potrzebnego do <see cref="API.CameraLibraries.PythonCameraSimulatorAPI"/>.<br/>
-    /// true oznacza, że wykryto instalację Python'a.<br/>
+    /// Wskazuje, czy serwer może uruchamiać <see cref="API.CameraLibraries.PythonCameraSimulatorAPI"/>, a tym samym odbierać dane w formie plików RJPG.<br/>
+    /// true oznacza, że <see cref="API.CameraLibraries.PythonCameraSimulatorAPI.CheckIfScriptsCanBeRun(Commands.Logger?)"/> nie zgłosił żadnych błędów.<br/>
     /// Domyślna wartość to false.
     /// </summary>
-    public static bool IsPythonDetected { get; set; } = false;
+    public static bool CanPythonCameraAPIScriptsRun { get; set; } = false;
 
     public static void ResetToDefault()
     {
         TcpReceiverPorts = new int[] { 25565, 25566, 25567 };
         ServerAddress = IPAddress.Parse("127.0.0.1");
-        IsPythonDetected = false;
+        CanPythonCameraAPIScriptsRun = false;
     }
 }
