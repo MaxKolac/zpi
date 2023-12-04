@@ -70,7 +70,7 @@ public class HelpCommand : Command
     private static string GetAvailableCommands()
     {
         var builder = new StringBuilder();
-        builder.AppendLine($"{Db} [{DbCommand.ListAllArgument}]");
+        builder.AppendLine($"{Db} [{DbCommand.ListAllArgument}/{DbCommand.GetImageArgument}]");
         builder.AppendLine($"{Help} [command]");
         builder.AppendLine($"{Ping} [{PingCommand.IcmpArgument}/{PingCommand.CdmJsonArgument}] [address] [port]");
         builder.AppendLine($"{Shutdown}");
