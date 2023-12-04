@@ -88,7 +88,7 @@ def main():
     if flags['send']:
         send_output_with_request(output, constants.ENDPOINT_URL, constants.API_KEY)
     if flags['save']:
-        save_output_as_file(output, constants.OUPUT_SAVE_FILE)
+        save_output_as_file(output, constants.OUTPUT_SAVE_FILE)
     if not (flags['send'] or flags['save']):
         print(output)
 

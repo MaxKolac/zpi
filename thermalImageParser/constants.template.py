@@ -18,7 +18,7 @@ WORK_AREAS = [
     ((55, 455), (587, 479)),
     ((605, 29), (617, 427))
 ] #Where to look for hot pixels. Work areas should avoid stuff like watermark or palette
-OUPUT_SAVE_FILE = 'output.json'
+OUTPUT_SAVE_FILE = 'output.json'
 ROUNDING = -1 #What decimal place to round the result to. Negative number means no rounding at all
 SHOW_IMAGES = False #If set to true, program will show where danger pixels are. For testing purposes only
 SAVE_IMAGES = None #If given path instead of None, it will create or overwrite an image as above, instead of showing it. For testing purposes only
