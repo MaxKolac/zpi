@@ -169,6 +169,11 @@ public class HostDevice
     /// EF Core nie może przechowywać <see cref="Image"/> jako kolumny. Użyj <see cref="ToImage(byte[]?)"/> i <see cref="ToByteArray(Image?, ImageFormat)"/> aby konwertować obraz na ciąg bitów i vice versa.
     /// </summary>
     public byte[]? LastImage { get; set; }
+    /// <summary>
+    /// Właściwość tylko dla kamer.<br/>
+    /// Wartość procentowa, która mówi o tym jaki procent ostatniego zdjęcia skrypt 'thermalImageParser' uznał za niebezpieczeństwo pożarowe. <b>Zakres od 0 do 1 włącznie.</b>
+    /// </summary>
+    public decimal ImageVisibleDangerPercentage { get; set; }
 
     public static Image? ToImage(byte[]? bytes)
     {

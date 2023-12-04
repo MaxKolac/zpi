@@ -204,9 +204,10 @@ public class SignalTranslator
         else if (request.Request == UserRequest.RequestType.CameraDataAsJson)
             return ZPIEncoding.Encode(new CameraDataMessage()
             {
-                Status = foundHost.LastDeviceStatus ?? DeviceStatus.Unknown,
+                LargestTemperature = foundHost.LastKnownTemperature,
+                ImageVisibleDangerPercentage = foundHost.ImageVisibleDangerPercentage,
                 Image = foundHost.LastImage ?? Array.Empty<byte>(),
-                LargestTemperature = foundHost.LastKnownTemperature
+                Status = foundHost.LastDeviceStatus ?? DeviceStatus.Unknown
             });
         else
         {

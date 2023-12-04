@@ -28,15 +28,15 @@ public class PythonCameraSimulatorAPI : ICamera
         if (bytes is null || bytes.Length == 0)
             throw new ArgumentException("Received bytes were empty or null");
 
-        //TODO: Migrate DB to acommodate for new property Percentage
-        //TODO: Change CameraDataMessage to acommodate for Percentage (will break ZPIClient)
+        //DONE: Migrate DB to acommodate for new property Percentage
+        //DONE: Change CameraDataMessage to acommodate for Percentage (will break ZPIClient)
         //TODO: Add toggling between simulating Camera and PythonCamera in ZPICameraSimulator
         //DONE: Make compiler copy the python script and exiftool.exe to this folder
         //TODO: Add Filip's script to start exiftool to extract the RJPG image (can be run independently)
 
         //On server startup:
-        //Check PATH sys variable contains folder pythonScripts whic has the exiftool.exe
-        //Check all required python scripts are present
+        //DONE: Check PATH sys variable contains folder pythonScripts whic has the exiftool.exe
+        //DONE: Check all required python scripts are present
 
         //Decypher the bytes
         //Save/overwrite the received bytes as raw file photo next to the script <- script from Filip

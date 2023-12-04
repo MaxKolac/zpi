@@ -8,6 +8,7 @@ namespace ZPICommunicationModels.Messages;
 public class CameraDataMessage
 {
     public required decimal LargestTemperature { get; set; }
+    public required decimal ImageVisibleDangerPercentage { get; set; }
     public required byte[] Image { get; set; }
     public required HostDevice.DeviceStatus Status { get; set; }
 
