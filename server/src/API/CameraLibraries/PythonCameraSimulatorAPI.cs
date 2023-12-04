@@ -98,35 +98,15 @@ public class PythonCameraSimulatorAPI : ICamera
 
         //Look for the resulting JSON
         string json;
-        try
+        using (var stream = File.OpenText(Path.Combine(RelativeScriptsPath, ScriptResultFilename)))
         {
-            using var stream = File.OpenText(Path.Combine(RelativeScriptsPath, ScriptResultFilename));
             json = stream.ReadToEnd();
-        }
-        catch (Exception ex) when (ex is FileNotFoundException || ex is DirectoryNotFoundException)
-        {
-            _logger?.WriteLine($"Could not locate the Python script's Json result! {ex.Message}", nameof(PythonCameraSimulatorAPI), Logger.MessageType.Error);
-            return;
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            _logger?.WriteLine($"Could not open the Python script's Json result! Is the file opened in another program? {ex.Message}", nameof(PythonCameraSimulatorAPI), Logger.MessageType.Error);
-            return;
         }
 
         //Try to deserialize it into ScriptResult
-        ScriptResult? scriptResult;
-        try
-        {
-            scriptResult = JsonConvert.DeserializeObject<ScriptResult>(json);
-            if (scriptResult is null)
-                throw new JsonSerializationException("JsonConverter returned a null.");
-        }
-        catch (JsonSerializationException ex)
-        {
-            _logger?.WriteLine($"Failed to deserialize Python script's Json result! {ex.Message} \nFull JSON: \n{json}", nameof(PythonCameraSimulatorAPI), Logger.MessageType.Error);
-            return;
-        }
+        ScriptResult? scriptResult = 
+            JsonConvert.DeserializeObject<ScriptResult>(json) ?? 
+            throw new JsonSerializationException("JsonConverter returned a null.");
 
 #pragma warning disable CA1416
         //Extract the plain image using exiftool <- Filip

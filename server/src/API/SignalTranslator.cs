@@ -113,6 +113,10 @@ public class SignalTranslator
                 {
                     _logger?.WriteLine($"API of {datasender.Type} failed to parse the received JSON string! {ex.Message}", nameof(SignalTranslator), Logger.MessageType.Error);
                 }
+                catch (IOException ex)
+                {
+                    _logger?.WriteLine($"API of {datasender.Type} threw an IOException! {ex.Message}", nameof(SignalTranslator), Logger.MessageType.Error);
+                }
 
                 var decodedMessage = api?.GetDecodedMessage();
                 if (decodedMessage is not null)
