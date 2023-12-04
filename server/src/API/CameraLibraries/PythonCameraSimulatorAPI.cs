@@ -14,6 +14,8 @@ public class PythonCameraSimulatorAPI : ICamera
     private readonly Logger? _logger;
     private CameraDataMessage? _message;
 
+    //TODO: this needs to be dynamic, not hardcoded
+    private static readonly string PythonExecutablePath = @"C:\Users\ja\AppData\Local\Programs\Python\Python312\python.exe";
     private static readonly string RelativeScriptsPath = Path.Combine(Environment.CurrentDirectory, "API", "CameraLibraries", "pythonScripts");
     private static readonly string InputImagePath = Path.Combine(RelativeScriptsPath, "input");
     private static readonly string ScriptPath = Path.Combine(RelativeScriptsPath, "communicator.py");
@@ -48,8 +50,8 @@ public class PythonCameraSimulatorAPI : ICamera
         //Run thermalImageParser script and await its completion
         var startInfo = new ProcessStartInfo()
         {
-            FileName = @"python.exe",
-            Arguments = $"{ScriptPath} --filename {InputImagePath} --save {OutputJsonPath}", 
+            FileName = PythonExecutablePath,
+            Arguments = $"{ScriptPath} --filename {InputImagePath} --save {OutputJsonPath}",
             CreateNoWindow = true,
             UseShellExecute = false,
             RedirectStandardOutput = true,
@@ -73,8 +75,6 @@ public class PythonCameraSimulatorAPI : ICamera
                 while (!errorReader.EndOfStream)
                 {
                     _logger?.WriteLine(errorReader.ReadLine(), PythonPrefix, Logger.MessageType.Error);
-                    if (errorReader.BaseStream.Length >= 0)
-                        didScriptThrowErrors = true;
                 }
             });
             Task.WaitAll(standardOutput, errorOutput);
@@ -268,17 +268,17 @@ public class PythonCameraSimulatorAPI : ICamera
             return false;
         }
 
-        //Check if PATH variable contains a folder to it
-        bool sysVarPointsToExecutable = Environment.GetEnvironmentVariable("PATH")?.Contains(executablePath) ?? false;
+        //Check if PATH variable contains its directory
+        bool sysVarPointsToExecutable = Environment.GetEnvironmentVariable("PATH")?.Contains(RelativeScriptsPath) ?? false;
         if (!sysVarPointsToExecutable)
         {
-            Environment.SetEnvironmentVariable("PATH", Path.GetFullPath(executablePath));
-            sysVarPointsToExecutable = Environment.GetEnvironmentVariable("PATH")?.Contains(executablePath) ?? false;
+            Environment.SetEnvironmentVariable("PATH", Path.GetFullPath(RelativeScriptsPath));
+            sysVarPointsToExecutable = Environment.GetEnvironmentVariable("PATH")?.Contains(RelativeScriptsPath) ?? false;
         }
 
         if (sysVarPointsToExecutable)
         {
-            logger?.WriteLine($"Successfully added exiftool.exe path to PATH environment variable.", nameof(PythonCameraSimulatorAPI));
+            logger?.WriteLine($"Successfully added directory of exiftool.exe to PATH environment variable.", nameof(PythonCameraSimulatorAPI));
         }
         else
         {
