@@ -8,16 +8,16 @@ public static class ImageExtracter
 {
     private static readonly string exiftoolLocation = "exiftool.exe";
 
-    public static Task<Image?> GetTrueImage(string filename)
+    public static Image? GetTrueImage(string filename)
     {
 #pragma warning disable CA1416
         byte[]? imageBytes = GetImageBytes(filename);
         if (imageBytes == null)
         {
-            return Task.FromResult<Image?>(null);
+            return null;
         }
         using var memoryStream = new MemoryStream(imageBytes);
-        return Task.FromResult<Image?>(Image.FromStream(memoryStream));
+        return Image.FromStream(memoryStream);
 #pragma warning restore CA1416
     }
 
