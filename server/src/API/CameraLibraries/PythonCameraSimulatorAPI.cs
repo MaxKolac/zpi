@@ -16,8 +16,9 @@ public class PythonCameraSimulatorAPI : ICamera
     private CameraDataMessage? _message;
 
     private static readonly string RelativeScriptsPath = Path.Combine(Environment.CurrentDirectory, "API", "CameraLibraries", "pythonScripts");
-    private static readonly string ScriptResultFilename = "output.json";
-    private static readonly string InputImageFilename = "input";
+    private static readonly string InputImagePath = Path.Combine(RelativeScriptsPath, "input");
+    private static readonly string ScriptPath = Path.Combine(RelativeScriptsPath, "communicator.py");
+    private static readonly string OutputJsonPath = Path.Combine(RelativeScriptsPath, "output.json");
 
     private record ScriptResult(decimal HottestTemperature, decimal Percentage);
 
@@ -50,7 +51,7 @@ public class PythonCameraSimulatorAPI : ICamera
         //DONE: Check all required python scripts are present
 
         //Gather the bytes and save/overwrite them as a raw file next to the script
-        using (var writer = File.Create(Path.Combine(RelativeScriptsPath, InputImageFilename)))
+        using (var writer = File.Create(InputImagePath))
         {
             writer.Write(bytes);
         }
@@ -59,8 +60,7 @@ public class PythonCameraSimulatorAPI : ICamera
         var startInfo = new ProcessStartInfo()
         {
             FileName = @"python.exe",
-            //Script itself + args
-            Arguments = $"communicator.py --filename {InputImageFilename} --save {ScriptResultFilename}", 
+            Arguments = $"{ScriptPath} --filename {InputImagePath} --save {OutputJsonPath}", 
             CreateNoWindow = true,
             UseShellExecute = false,
             RedirectStandardOutput = true,
@@ -98,7 +98,7 @@ public class PythonCameraSimulatorAPI : ICamera
 
         //Look for the resulting JSON
         string json;
-        using (var stream = File.OpenText(Path.Combine(RelativeScriptsPath, ScriptResultFilename)))
+        using (var stream = File.OpenText(OutputJsonPath))
         {
             json = stream.ReadToEnd();
         }
@@ -110,7 +110,7 @@ public class PythonCameraSimulatorAPI : ICamera
 
 #pragma warning disable CA1416
         //Extract the plain image using exiftool <- Filip
-        Image? plainImage = ImageExtracter.GetTrueImage(Path.Combine(RelativeScriptsPath, InputImageFilename)).Result;
+        Image? plainImage = ImageExtracter.GetTrueImage(InputImagePath).Result;
 
         //Build a CameraDataMessage object out of deserialized results
         _message = new CameraDataMessage()
