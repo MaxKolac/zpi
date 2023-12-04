@@ -183,13 +183,13 @@ public class HostDevice
         return bytes is null ? null : Image.FromStream(new MemoryStream(bytes));
     }
 
-    public static byte[]? ToByteArray(Image? bitmap, ImageFormat format)
+    public static byte[] ToByteArray(Image? bitmap, ImageFormat format)
     {
         if (!OperatingSystem.IsWindows()) //supresses CA1416
-            return null;
+            return Array.Empty<byte>();
 
         if (bitmap is null)
-            return null;
+            return Array.Empty<byte>();
         using var stream = new MemoryStream();
         bitmap.Save(stream, format);
         return stream.ToArray();

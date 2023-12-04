@@ -66,13 +66,13 @@ public class SignalTranslatorTests
 
         //Prepare a message to send
 #pragma warning disable CA1416
-        var bitmap = HostDevice.ToByteArray(new Bitmap(100, 100), ImageFormat.Bmp) ?? Array.Empty<byte>();
+        var bitmap = HostDevice.ToByteArray(new Bitmap(100, 100), ImageFormat.Bmp);
 #pragma warning restore CA1416
         var message = new CameraDataMessage()
         {
             LargestTemperature = 1234.56m,
             ImageVisibleDangerPercentage = 0.25m,
-            Image = bitmap ?? Array.Empty<byte>(),
+            Image = bitmap,
             Status = HostDevice.DeviceStatus.OK
         };
 
