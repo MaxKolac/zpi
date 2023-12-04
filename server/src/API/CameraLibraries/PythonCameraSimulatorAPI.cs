@@ -78,10 +78,8 @@ public class PythonCameraSimulatorAPI : ICamera
     {
         var dependencies = new string[]
         {
-            "Pillow==10.0.0",
+            "Pillow==10.1.0",
             "numpy==1.26.2",
-            "opencv-contrib-python==4.8.1.78", //requires numpy >= 1.21.2
-            "python-dotenv==1.0.0"
         };
 
         //Setup cmd.exe processes which will install those dependencies
