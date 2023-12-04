@@ -162,6 +162,7 @@
             buttonFire.TabIndex = 0;
             buttonFire.Text = "Potwierdź";
             buttonFire.UseVisualStyleBackColor = true;
+            buttonFire.Click += buttonFire_Click;
             // 
             // panelCamera
             // 
@@ -380,7 +381,6 @@
             panelMap.Size = new Size(1017, 650);
             panelMap.TabIndex = 0;
             panelMap.Visible = false;
-            panelMap.MouseMove += panelMap_MouseMove;
             // 
             // tableLayoutPanelSummary
             // 
@@ -553,6 +553,7 @@
             pictureBoxMap.Size = new Size(1018, 651);
             pictureBoxMap.TabIndex = 2;
             pictureBoxMap.TabStop = false;
+            pictureBoxMap.MouseMove += panelMap_MouseMove;
             // 
             // FormMain
             // 

@@ -40,7 +40,7 @@ public class DbCommandTests
     private static DbCommand? PerformExecution(DbCommand commandToExecute, string[]? arguments)
     {
         DbCommand? receivedCommand = null;
-        EventHandler<CommandEventArgs> handler = (sender, e) =>
+        EventHandler<EventArgs> handler = (sender, e) =>
         {
             receivedCommand = sender as DbCommand;
         };
