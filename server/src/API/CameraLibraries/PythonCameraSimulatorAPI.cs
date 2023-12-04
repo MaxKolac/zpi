@@ -16,10 +16,10 @@ public class PythonCameraSimulatorAPI : ICamera
 
     //TODO: this needs to be dynamic, not hardcoded
     private static readonly string PythonExecutablePath = @"C:\Users\ja\AppData\Local\Programs\Python\Python312\python.exe";
-    private static readonly string RelativeScriptsPath = Path.Combine(Environment.CurrentDirectory, "API", "CameraLibraries", "pythonScripts");
-    private static readonly string InputImagePath = Path.Combine(RelativeScriptsPath, "input");
-    private static readonly string ScriptPath = Path.Combine(RelativeScriptsPath, "communicator.py");
-    private static readonly string OutputJsonPath = Path.Combine(RelativeScriptsPath, "output.json");
+    private static readonly string AbsoluteScriptsDirectory = Path.Combine(Environment.CurrentDirectory, "API", "CameraLibraries", "pythonScripts");
+    private static readonly string InputFilename = "input";
+    private static readonly string ScriptFilename = "communicator.py";
+    private static readonly string OutputFilename = "output.json";
 
     private record ScriptResult(decimal HottestTemperature, decimal Percentage);
 
@@ -42,7 +42,7 @@ public class PythonCameraSimulatorAPI : ICamera
             throw new ArgumentException("Received bytes were empty or null");
 
         //Gather the bytes and save/overwrite them as a raw file next to the script
-        using (var writer = File.Create(InputImagePath))
+        using (var writer = File.Create(Path.Combine(AbsoluteScriptsDirectory, InputFilename)))
         {
             writer.Write(bytes);
         }
@@ -51,13 +51,15 @@ public class PythonCameraSimulatorAPI : ICamera
         var startInfo = new ProcessStartInfo()
         {
             FileName = PythonExecutablePath,
-            Arguments = $"{ScriptPath} --filename {InputImagePath} --save {OutputJsonPath}",
+            Arguments = $"{ScriptFilename} --filename {InputFilename} --save {OutputFilename}",
+            WorkingDirectory = AbsoluteScriptsDirectory,
             CreateNoWindow = true,
             UseShellExecute = false,
             RedirectStandardOutput = true,
             RedirectStandardError = true
         };
-        bool didScriptThrowErrors = false;
+        
+        //Start the process and log any errors/events
         using (var process = Process.Start(startInfo))
         {
             using var standardReader = process!.StandardOutput;
@@ -79,15 +81,10 @@ public class PythonCameraSimulatorAPI : ICamera
             });
             Task.WaitAll(standardOutput, errorOutput);
         }
-        if (didScriptThrowErrors)
-        {
-            _logger?.WriteLine($"Script threw an error during execution!", nameof(PythonCameraSimulatorAPI), Logger.MessageType.Error);
-            return;
-        }
 
         //Look for the resulting JSON
         string json;
-        using (var stream = File.OpenText(OutputJsonPath))
+        using (var stream = File.OpenText(Path.Combine(AbsoluteScriptsDirectory, OutputFilename)))
         {
             json = stream.ReadToEnd();
         }
@@ -99,7 +96,7 @@ public class PythonCameraSimulatorAPI : ICamera
 
 #pragma warning disable CA1416
         //Extract the plain image using exiftool <- Filip
-        Image? plainImage = ImageExtracter.GetTrueImage(InputImagePath).Result;
+        Image? plainImage = ImageExtracter.GetTrueImage(Path.Combine(AbsoluteScriptsDirectory, InputFilename));
 
         //Build a CameraDataMessage object out of deserialized results
         _message = new CameraDataMessage()
@@ -234,14 +231,14 @@ public class PythonCameraSimulatorAPI : ICamera
         bool areAllScriptsPresent = false;
         foreach (var filename in scriptFilenames)
         {
-            areAllScriptsPresent = Path.Exists(Path.Combine(RelativeScriptsPath, filename));
+            areAllScriptsPresent = Path.Exists(Path.Combine(AbsoluteScriptsDirectory, filename));
             if (areAllScriptsPresent)
             {
-                logger?.WriteLine($"Script {filename} is present in {RelativeScriptsPath}.", nameof(PythonCameraSimulatorAPI));
+                logger?.WriteLine($"Script {filename} is present in {AbsoluteScriptsDirectory}.", nameof(PythonCameraSimulatorAPI));
             }
             else
             {
-                logger?.WriteLine($"Script {filename} was not found in {RelativeScriptsPath}! {nameof(PythonCameraSimulatorAPI)} will not be able to function properly!", nameof(PythonCameraSimulatorAPI), Logger.MessageType.Error);
+                logger?.WriteLine($"Script {filename} was not found in {AbsoluteScriptsDirectory}! {nameof(PythonCameraSimulatorAPI)} will not be able to function properly!", nameof(PythonCameraSimulatorAPI), Logger.MessageType.Error);
                 break;
             }
         }
@@ -254,7 +251,7 @@ public class PythonCameraSimulatorAPI : ICamera
     /// <returns><c>true</c>, jeśli wszystko poszło OK.</returns>
     private static bool CheckExiftool(Logger? logger = null)
     {
-        string executablePath = Path.Combine(RelativeScriptsPath, "exiftool.exe");
+        string executablePath = Path.Combine(AbsoluteScriptsDirectory, "exiftool.exe");
 
         //Check if executable is where its meant to be
         bool executableIsPresent = Path.Exists(executablePath);
@@ -269,11 +266,11 @@ public class PythonCameraSimulatorAPI : ICamera
         }
 
         //Check if PATH variable contains its directory
-        bool sysVarPointsToExecutable = Environment.GetEnvironmentVariable("PATH")?.Contains(RelativeScriptsPath) ?? false;
+        bool sysVarPointsToExecutable = Environment.GetEnvironmentVariable("PATH")?.Contains(AbsoluteScriptsDirectory) ?? false;
         if (!sysVarPointsToExecutable)
         {
-            Environment.SetEnvironmentVariable("PATH", Path.GetFullPath(RelativeScriptsPath));
-            sysVarPointsToExecutable = Environment.GetEnvironmentVariable("PATH")?.Contains(RelativeScriptsPath) ?? false;
+            Environment.SetEnvironmentVariable("PATH", Path.GetFullPath(AbsoluteScriptsDirectory));
+            sysVarPointsToExecutable = Environment.GetEnvironmentVariable("PATH")?.Contains(AbsoluteScriptsDirectory) ?? false;
         }
 
         if (sysVarPointsToExecutable)
