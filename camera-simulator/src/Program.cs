@@ -26,6 +26,7 @@ public class Program
                 Console.WriteLine("1 - CameraDataMessage (symuluj kamerę zwykłą)");
                 Console.WriteLine("2 - Zdjęcie RJPG (symuluj kamerę Python'ową)");
                 selectedMode = Console.ReadKey();
+                Console.WriteLine();
             }
             while (selectedMode.Key != ConsoleKey.D1 && selectedMode.Key != ConsoleKey.D2);
 
@@ -150,16 +151,23 @@ public class Program
     static byte[]? OpenThermalImage()
     {
         string path = Path.Combine(Environment.CurrentDirectory, "thermalImage.jpg");
-        byte[]? result = null;
         try
         {
-            using var reader = File.Open(path, FileMode.Open);
-            reader.Read(result);
+            var imageAsBytes = new List<byte>();
+            using (var reader = File.Open(path, FileMode.Open))
+            {
+                byte[] tinyBuffer = new byte[1];
+                while (reader.Read(tinyBuffer) != 0)
+                {
+                    imageAsBytes.Add(tinyBuffer[0]);
+                }
+            }
+            return imageAsBytes.ToArray();
         }
         catch (IOException ex)
         {
             Console.WriteLine(ex.Message);
+            return null;
         }
-        return result;
     }
 }

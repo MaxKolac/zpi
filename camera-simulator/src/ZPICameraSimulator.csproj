@@ -33,7 +33,7 @@
     <None Update="ExampleImages\Example_7.jpg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="ExampleImages\Example_8.jpg">
+    <None Update="thermalImage.jpg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="message.json">
