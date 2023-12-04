@@ -42,7 +42,7 @@ public class HelpCommandTests
     private static HelpCommand? PerformExecution(HelpCommand commandToExecute, string[]? arguments)
     {
         HelpCommand? receivedCommand = null;
-        EventHandler<CommandEventArgs> handler = (sender, e) =>
+        EventHandler<EventArgs> handler = (sender, e) =>
         {
             receivedCommand = sender as HelpCommand;
         };

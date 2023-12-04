@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System.Text;
+using ZPICommunicationModels.JsonConverters;
 
 namespace ZPICommunicationModels;
 
@@ -14,8 +15,8 @@ public static class ZPIEncoding
     /// <exception cref="JsonSerializationException"/>
     public static byte[] Encode<T>(T message)
     {
-        string json = JsonConvert.SerializeObject(message);
-        return System.Text.Encoding.UTF8.GetBytes(json);
+        string json = JsonConvert.SerializeObject(message, Formatting.Indented, new IPAddressConverter(), new IPEndPointConverter());
+        return Encoding.UTF8.GetBytes(json);
     }
 
     /// <summary>
@@ -24,8 +25,8 @@ public static class ZPIEncoding
     /// <exception cref="JsonSerializationException"/>
     public static T? Decode<T>(byte[] data)
     {
-        string json = System.Text.Encoding.UTF8.GetString(data);
-        return JsonConvert.DeserializeObject<T>(json);
+        string json = Encoding.UTF8.GetString(data);
+        return JsonConvert.DeserializeObject<T>(json, new IPAddressConverter(), new IPEndPointConverter());
     }
 
     /// <summary>

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ZPIServer;
 
@@ -10,9 +11,11 @@ using ZPIServer;
 namespace ZPIServer.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    partial class DatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20231202114610_MovedFireStatusToHostDeviceFromSector")]
+    partial class MovedFireStatusToHostDeviceFromSector
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "7.0.14");
@@ -42,9 +45,6 @@ namespace ZPIServer.Migrations
                     b.Property<decimal>("LocationAltitude")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("LocationDescription")
-                        .HasColumnType("TEXT");
-
                     b.Property<decimal>("LocationLatitude")
                         .HasColumnType("TEXT");
 
@@ -65,7 +65,7 @@ namespace ZPIServer.Migrations
 
                     b.HasIndex("SectorId");
 
-                    b.ToTable("HostDevices", (string)null);
+                    b.ToTable("HostDevices");
                 });
 
             modelBuilder.Entity("ZPICommunicationModels.Models.Sector", b =>
@@ -83,7 +83,7 @@ namespace ZPIServer.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Sectors", (string)null);
+                    b.ToTable("Sectors");
                 });
 
             modelBuilder.Entity("ZPICommunicationModels.Models.HostDevice", b =>

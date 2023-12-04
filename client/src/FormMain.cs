@@ -1,4 +1,4 @@
-using System;
+Ôªøusing System;
 using System.Windows.Forms;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -9,20 +9,23 @@ using System.Net.Sockets;
 using ZPICommunicationModels;
 using ZPICommunicationModels.Messages;
 using ZPICommunicationModels.Models;
+using System.Net;
+using Windows.ApplicationModel.Background;
 
 namespace ZPIClient
 {
     public partial class FormMain : Form
     {
-        //Path settings
-        private string jsonPath = "../../../sensors/sensorData.json";
+        //Connection settings
         private string ipAddress = "127.0.0.1";
         private int port = 25566;
         private TcpClient tcpClient;
-        private JsonSerializerOptions options = new JsonSerializerOptions();
+        private List<HostDevice> devices;
+        private ClientListener listener = new ClientListener(IPAddress.Parse("127.0.0.1"), 12000);
 
         //Sensor variables
-        private List<Sensor> sensorList = new List<Sensor>();
+        private List<HostDevice> sensorList = new List<HostDevice>();
+        private List<int> sensorTimerList = new List<int>();
         private int currentSensorIndex = -1;
 
         //Timer settings
@@ -45,41 +48,28 @@ namespace ZPIClient
 
         public FormMain()
         {
-            //Initialize
             InitializeComponent();
-            serverRequest(RequestType.Initialize);
-            initializeOptions();
-            initializeSensors();
-            initializeListFormControls();
-            initializeSideScroll();
-            initializeMapStateDisplay();
-            updateAll();
-            timerRefresh.Start();
+            serverRequest(UserRequest.RequestType.AllHostDevicesAsJson);
+            Initialize();
         }
+
         private void updateSensors()
         {
-            List<Sensor> dataSet = readJSON();
-            int i = 0;
-            foreach (var data in dataSet)
+            serverRequest(UserRequest.RequestType.SingleHostDeviceAsJson);
+            foreach (HostDevice device in devices)
             {
-                if (sensorList[i].CurrentSensorState != Sensor.StringToState(data.CurrentSensorStateString) || sensorList[i].SensorTemperature != data.SensorTemperature)
+                if (device.Type == HostDevice.HostType.CameraSimulator || device.Type == HostDevice.HostType.PythonCameraSimulator)
                 {
-                    sensorList[i].Update(Sensor.StringToState(data.CurrentSensorStateString), data.SensorTemperature);
-                    labelSensorStatus[i].Text = "Status: " + data.CurrentSensorStateString;
-                    if(i == currentSensorIndex)
+                    int index = sensorList.FindIndex(a => a.Id == device.Id);
+                    if (sensorList[index].LastFireStatus != device.LastFireStatus || sensorList[index].LastKnownTemperature != device.LastKnownTemperature)
                     {
-                        updateInfoPanel();
+                        sensorList[index] = device;
+                        sensorTimerList[index] = 0;
                     }
                 }
-                i++;
+
             }
             updateAll();
-        }
-        private List<Sensor> readJSON()
-        {
-            using FileStream json = File.OpenRead(jsonPath);
-            List<Sensor> sensors = JsonSerializer.Deserialize<List<Sensor>>(json, options);
-            return sensors;
         }
         #region Timer Functions
         private void timerRefresh_Tick(object sender, EventArgs e)
@@ -96,15 +86,16 @@ namespace ZPIClient
             }
             if (currentSensorIndex != -1)
             {
-                labelLastUpdateInfo.Text = sensorList[currentSensorIndex].SensorLastUpdate.ToString() + " sekund temu";
+                labelLastUpdateInfo.Text = sensorTimerList[currentSensorIndex].ToString() + " sekund temu";
             }
-            labelTimer.Text = "NastÍpna aktualizacja za: " + timerElapsedTime + " sekund";
+            labelTimer.Text = "Nastƒôpna aktualizacja za: " + timerElapsedTime + " sekund";
         }
         private void incrementTimers()
         {
-            foreach (Sensor sensor in sensorList)
+            int count = sensorTimerList.Count;
+            for (int i = 0; i < count; i++)
             {
-                sensor.SensorLastUpdate += 1;
+                sensorTimerList[i] += 1;
             }
         }
         #endregion
@@ -118,7 +109,7 @@ namespace ZPIClient
             }
             else
             {
-                buttonDebug.Text = "Skaner wspÛ≥rzÍdnych aktywny";
+                buttonDebug.Text = "Skaner wsp√≥≈Çrzƒôdnych aktywny";
                 buttonDebug.BackColor = Color.SkyBlue;
             }
             debug = !debug;
@@ -144,22 +135,41 @@ namespace ZPIClient
             }
             Control control = (Control)sender;
             currentSensorIndex = (int)control.Tag;
+            updateInfoPanel();
+        }
+        private void buttonFire_Click(object sender, EventArgs e)
+        {
             if (currentSensorIndex != -1)
             {
-                updateInfoPanel();
+                if (sensorList[currentSensorIndex].LastFireStatus == HostDevice.FireStatus.Suspected)
+                {
+                    sensorList[currentSensorIndex].LastFireStatus = HostDevice.FireStatus.Confirmed;
+                }
+                else
+                {
+                    sensorList[currentSensorIndex].LastFireStatus = HostDevice.FireStatus.Suspected;
+                }
+                serverRequest(UserRequest.RequestType.UpdateFireStatusFromJson);
+                updateAll();
             }
         }
         #endregion
         #region Initialize Functions
-        private void initializeSensors()
+        private void InitializeSensors()
         {
-            List<Sensor> dataSet = readJSON();
-            foreach (var data in dataSet)
+            if (devices != null)
             {
-                sensorList.Add(new Sensor(data.SensorX, data.SensorY, data.SensorName, data.CurrentSensorStateString, data.SensorSegment, data.SensorLocation, data.SensorTemperature, data.SensorDetails, data.SensorLastUpdate));
+                foreach (HostDevice device in devices)
+                {
+                    if (device.Type == HostDevice.HostType.PythonCameraSimulator || device.Type == HostDevice.HostType.CameraSimulator)
+                    {
+                        sensorList.Add(device);
+                        sensorTimerList.Add(0);
+                    }
+                }
             }
         }
-        private void initializeListFormControls()
+        private void InitializeListFormControls()
         {
             int panelX = panelDisplay.Location.X;
             int panelY = panelDisplay.Location.Y;
@@ -180,6 +190,7 @@ namespace ZPIClient
             #endregion
 
             int count = sensorList.Count;
+
 
             panelSensorContainer = new TableLayoutPanel[count];
             labelSensor = new Label[count];
@@ -218,7 +229,7 @@ namespace ZPIClient
                 labelSensor[i].AutoSize = false;
                 labelSensor[i].TextAlign = ContentAlignment.MiddleCenter;
                 labelSensor[i].Dock = DockStyle.Fill;
-                labelSensor[i].Text = sensorList[i].SensorName;
+                labelSensor[i].Text = sensorList[i].Name;
                 labelSensor[i].Tag = i;
                 labelSensor[i].Click += sensorContainer_Click;
                 panelSensorContainer[i].Controls.Add(labelSensor[i]);
@@ -270,7 +281,7 @@ namespace ZPIClient
                 labelSensorSegment[i].Height = panelSensorInformation[i].Height;
                 labelSensorSegment[i].Font = new Font(labelSensorSegment[i].Font.Name, fontSize);
                 labelSensorSegment[i].TextAlign = ContentAlignment.MiddleLeft;
-                labelSensorSegment[i].Text = "Segment: " + sensorList[i].SensorSegment;
+                labelSensorSegment[i].Text = "Segment: " + sensorList[i].SectorId;
                 labelSensorSegment[i].Tag = i;
                 labelSensorSegment[i].Click += sensorContainer_Click;
                 panelSensorInformation[i].Controls.Add(labelSensorSegment[i]);
@@ -279,7 +290,7 @@ namespace ZPIClient
                 #region Map Sensor Panel Container
                 panelMapSensorInformation[i] = new TableLayoutPanel();
                 panelMapSensorInformation[i].Name = "tableLayoutPanelMapInfo" + i;
-                panelMapSensorInformation[i].Location = new Point(sensorList[i].SensorX, sensorList[i].SensorY);
+                panelMapSensorInformation[i].Location = new Point((int)sensorList[i].LocationLatitude, (int)sensorList[i].LocationAltitude);
                 panelMapSensorInformation[i].Width = mapPanelWidth;
                 panelMapSensorInformation[i].Height = mapPanelHeight;
                 panelMapSensorInformation[i].CellBorderStyle = TableLayoutPanelCellBorderStyle.Single;
@@ -314,7 +325,7 @@ namespace ZPIClient
                 labelMapSensor[i].Dock = DockStyle.Fill;
                 labelMapSensor[i].Anchor = AnchorStyles.None;
                 labelMapSensor[i].TextAlign = ContentAlignment.MiddleCenter;
-                labelMapSensor[i].Text = sensorList[i].SensorName;
+                labelMapSensor[i].Text = sensorList[i].Name;
                 labelMapSensor[i].Font = new Font(labelMapSensor[i].Font.Name, fontSize);
                 labelMapSensor[i].Tag = i;
                 labelMapSensor[i].Click += sensorContainer_Click;
@@ -325,19 +336,14 @@ namespace ZPIClient
                 panelY += rowHeight * 2;
             }
         }
-        private void initializeOptions()
-        {
-            options.PropertyNameCaseInsensitive = true;
-            options.AllowTrailingCommas = true;
-        }
-        private void initializeSideScroll()
+        private void InitializeSideScroll()
         {
             panelDisplay.AutoScroll = false;
             panelDisplay.HorizontalScroll.Enabled = false;
             panelDisplay.HorizontalScroll.Visible = false;
             panelDisplay.AutoScroll = true;
         }
-        private void initializeMapStateDisplay()
+        private void InitializeMapStateDisplay()
         {
             pictureBoxMapState1.BackColor = Color.Lime;
             pictureBoxMapState1.Width = pictureBoxMapState1.Height;
@@ -357,6 +363,15 @@ namespace ZPIClient
             pictureBoxMapState4.Width = pictureBoxMapState1.Width;
             pictureBoxMapState4.Height = pictureBoxMapState1.Height;
             roundPictureBox(ref pictureBoxMapState4);
+        }
+        private void Initialize()
+        {
+            InitializeSensors();
+            InitializeListFormControls();
+            InitializeSideScroll();
+            InitializeMapStateDisplay();
+            updateAll();
+            timerRefresh.Start();
         }
         #endregion
         #region Utilities
@@ -382,23 +397,19 @@ namespace ZPIClient
             int stateInactive = 0; //1
             int stateAlert = 0; //2
             int stateFire = 0; //3
-            foreach (Sensor sensor in sensorList)
+            foreach (HostDevice sensor in sensorList)
             {
-                switch (sensor.CurrentSensorState)
+                switch (sensor.LastFireStatus)
                 {
-                    case Sensor.SensorState.Active:
+                    case HostDevice.FireStatus.OK:
                         stateActive++;
                         break;
 
-                    case Sensor.SensorState.Inactive:
-                        stateInactive++;
-                        break;
-
-                    case Sensor.SensorState.Alert:
+                    case HostDevice.FireStatus.Suspected:
                         stateAlert++;
                         break;
 
-                    case Sensor.SensorState.Fire:
+                    case HostDevice.FireStatus.Confirmed:
                         stateFire++;
                         break;
 
@@ -420,67 +431,76 @@ namespace ZPIClient
         }
         private void updateInfoPanel()
         {
-            panelSensorContainer[currentSensorIndex].BackColor = Color.SkyBlue;
-            panelMapSensorInformation[currentSensorIndex].BackColor = Color.SkyBlue;
-            labelSensorName.Text = sensorList[currentSensorIndex].SensorName;
-            labelStateInfo.Text = sensorList[currentSensorIndex].StateToString();
-            labelSegmentInfo.Text = sensorList[currentSensorIndex].SensorSegment;
-            labelLocationInfo.Text = sensorList[currentSensorIndex].SensorLocation;
-            labelTemperatureInfo.Text = sensorList[currentSensorIndex].SensorTemperature.ToString() + "∞C";
-            labelLastUpdateInfo.Text = sensorList[currentSensorIndex].SensorLastUpdate.ToString() + " sekund temu.";
-            try
+            if (currentSensorIndex != -1)
             {
-                Image cameraImage = Image.FromFile("../../../sensors/" + sensorList[currentSensorIndex].SensorDetails);
-                pictureBoxCamera.Image = cameraImage;
-            }
-            catch (FileNotFoundException)
-            {
-                pictureBoxCamera.Image = pictureBoxCamera.ErrorImage;
-            }
-            switch (sensorList[currentSensorIndex].CurrentSensorState)
-            {
-                case Sensor.SensorState.Alert:
-                    buttonFire.BackColor = Color.Red;
-                    buttonFire.ForeColor = Color.White;
-                    buttonFire.Enabled = true;
-                    buttonFire.Text = "Potwierdü poøar";
-                    break;
+                panelSensorContainer[currentSensorIndex].BackColor = Color.SkyBlue;
+                panelMapSensorInformation[currentSensorIndex].BackColor = Color.SkyBlue;
+                labelSensorName.Text = sensorList[currentSensorIndex].Name;
+                labelStateInfo.Text = sensorList[currentSensorIndex].StateToString();
+                labelSegmentInfo.Text = sensorList[currentSensorIndex].SectorId.ToString();
+                labelLocationInfo.Text = sensorList[currentSensorIndex].LocationDescription;
+                labelTemperatureInfo.Text = sensorList[currentSensorIndex].LastKnownTemperature.ToString() + "¬∞C";
+                labelLastUpdateInfo.Text = sensorTimerList[currentSensorIndex].ToString() + " sekund temu.";
+                try
+                {
+                    Image cameraImage = HostDevice.ToImage(sensorList[currentSensorIndex].LastImage);
+                    pictureBoxCamera.Image = cameraImage;
+                    pictureBoxCamera.Refresh();
+                }
+                catch (Exception)
+                {
+                    pictureBoxCamera.Image = pictureBoxCamera.ErrorImage;
+                }
+                switch (sensorList[currentSensorIndex].LastFireStatus)
+                {
+                    case HostDevice.FireStatus.Suspected:
+                        buttonFire.BackColor = Color.Red;
+                        buttonFire.ForeColor = Color.White;
+                        buttonFire.Enabled = true;
+                        buttonFire.Text = "Potwierd≈∫ po≈ºar";
+                        break;
 
-                case Sensor.SensorState.Fire:
-                    buttonFire.BackColor = Color.Red;
-                    buttonFire.ForeColor = Color.White;
-                    buttonFire.Enabled = true;
-                    buttonFire.Text = "Potwierdü zwalczenie poøaru";
-                    break;
+                    case HostDevice.FireStatus.Confirmed:
+                        buttonFire.BackColor = Color.Red;
+                        buttonFire.ForeColor = Color.White;
+                        buttonFire.Enabled = true;
+                        buttonFire.Text = "Potwierd≈∫ zwalczenie po≈ºaru";
+                        break;
 
-                default:
-                    buttonFire.BackColor = SystemColors.Control;
-                    buttonFire.ForeColor = SystemColors.ControlText;
-                    buttonFire.Enabled = false;
-                    buttonFire.Text = "Brak problemÛw";
-                    break;
+                    default:
+                        buttonFire.BackColor = SystemColors.Control;
+                        buttonFire.ForeColor = SystemColors.ControlText;
+                        buttonFire.Enabled = false;
+                        buttonFire.Text = "Brak problem√≥w";
+                        break;
+                }
+            }
+        }
+        private void updateStateList()
+        {
+            int count = sensorList.Count;
+            for (int i = 0; i < count; i++)
+            {
+                labelSensorStatus[i].Text = "Status: " + sensorList[i].StateToString();
             }
         }
         private void updateAll() //Updates all controls to match current data. Does not change data itself.
         {
             updateColors();
             updateStateCounts();
+            updateInfoPanel();
+            updateStateList();
         }
         private void FormMain_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if(tcpClient != null)
+            if (tcpClient != null)
             {
                 tcpClient.Close();
             }
         }
         #endregion
         #region Server Connection
-        private enum RequestType
-        {
-            Initialize,
-            Update,
-        }
-        private void serverRequest(RequestType request)
+        private void serverRequest(UserRequest.RequestType request)
         {
             try
             {
@@ -488,19 +508,72 @@ namespace ZPIClient
                 tcpClient.Connect(ipAddress, port);
                 switch (request)
                 {
-                    case RequestType.Initialize:
+                    case UserRequest.RequestType.AllHostDevicesAsJson:
+                        serverRequestInitialize();
+                        Thread.Sleep(2000); //Program will wait 2 seceonds for server. It it's too slow it won't work. Just like that.
                         break;
 
-                    case RequestType.Update:
+                    case UserRequest.RequestType.SingleHostDeviceAsJson:
+                        serverRequestUpdate();
+                        Thread.Sleep(100); //Program will wait 100 miliseconds for server. It it's too slow it won't work. Just like that.
+                        break;
+
+                    case UserRequest.RequestType.UpdateFireStatusFromJson:
+                        serverRequestStatusChange();
+                        Thread.Sleep(100); //Program will wait 100 miliseconds for server. It it's too slow it won't work. Just like that.
                         break;
                 }
-
-
                 tcpClient.Close();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                MessageBox.Show("Nie uda≥o siÍ nawiπzaÊ po≥πczenia z serwerem ("+ipAddress+": "+port+").", "B≥πd po≥πczenia", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                MessageBox.Show("Nie uda≈Ço siƒô nawiƒÖzaƒá po≈ÇƒÖczenia z serwerem (" + ipAddress + ": " + port + "). " + ex.Message, "B≈ÇƒÖd po≈ÇƒÖczenia", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+            }
+        }
+        private void serverRequestInitialize()
+        {
+            listener.OnSignalReceived += (sender, e) =>
+            {
+                devices = ZPIEncoding.Decode<List<HostDevice>>(e);
+            };
+            var request = new UserRequest()
+            {
+                Request = UserRequest.RequestType.AllHostDevicesAsJson
+            };
+            using (var stream = tcpClient.GetStream())
+            {
+                byte[] buffer = ZPIEncoding.Encode(request);
+                stream.Write(buffer);
+            }
+        }
+        private void serverRequestUpdate()
+        {
+            listener.OnSignalReceived += (sender, e) =>
+            {
+                devices = ZPIEncoding.Decode<List<HostDevice>>(e);
+            };
+            var request = new UserRequest()
+            {
+                Request = UserRequest.RequestType.AllHostDevicesAsJson
+            };
+            using (var stream = tcpClient.GetStream())
+            {
+                byte[] buffer = ZPIEncoding.Encode(request);
+                stream.Write(buffer);
+            }
+        }
+        private void serverRequestStatusChange()
+        {
+            var request = new UserRequest()
+            {
+                Request = UserRequest.RequestType.UpdateFireStatusFromJson,
+                ModelObjectId = sensorList[currentSensorIndex].Id,
+                NewStatus = sensorList[currentSensorIndex].LastFireStatus
+            };
+            using (var stream = tcpClient.GetStream())
+            {
+                byte[] buffer = ZPIEncoding.Encode(request);
+                stream.Write(buffer);
             }
         }
         #endregion

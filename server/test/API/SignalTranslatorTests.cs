@@ -65,11 +65,13 @@ public class SignalTranslatorTests
         translator.BeginTranslating();
 
         //Prepare a message to send
-        var bitmap = HostDevice.ToByteArray(new Bitmap(100, 100), ImageFormat.Bmp);
+#pragma warning disable CA1416
+        var bitmap = HostDevice.ToByteArray(new Bitmap(100, 100), ImageFormat.Bmp) ?? Array.Empty<byte>();
+#pragma warning restore CA1416
         var message = new CameraDataMessage()
         {
             LargestTemperature = 1234.56m,
-            Image = bitmap,
+            Image = bitmap ?? Array.Empty<byte>(),
             Status = HostDevice.DeviceStatus.OK
         };
 
@@ -95,8 +97,9 @@ public class SignalTranslatorTests
             Assert.NotNull(record);
             Assert.Equal(1, invocations);
             Assert.Equal(message.LargestTemperature, record.LastKnownTemperature);
-            Assert.Equal(message.Status, record.LastKnownStatus);
-            Assert.Equal(bitmap.Length, record.LastImage?.Length);
+            Assert.Equal(message.Status, record.LastDeviceStatus);
+            Assert.Equal(bitmap!.Length, record.LastImage?.Length);
+            Assert.NotEmpty(bitmap!);
         }
 
         //Turn things off
@@ -139,7 +142,7 @@ public class SignalTranslatorTests
             Assert.NotNull(record);
             Assert.Equal(1, invocations);
             Assert.Equal(0.0m, record.LastKnownTemperature);
-            Assert.Equal(HostDevice.DeviceStatus.DataCorrupted, record.LastKnownStatus);
+            Assert.Equal(HostDevice.DeviceStatus.DataCorrupted, record.LastDeviceStatus);
             Assert.Null(record.LastImage);
         }
 
@@ -165,7 +168,9 @@ public class SignalTranslatorTests
         var messageWrongEncoding = new CameraDataMessage()
         {
             LargestTemperature = 1234.56m,
-            Image = HostDevice.ToByteArray(new Bitmap(10, 10), ImageFormat.Png),
+#pragma warning disable CA1416
+            Image = HostDevice.ToByteArray(new Bitmap(10, 10), ImageFormat.Png) ?? Array.Empty<byte>(),
+#pragma warning restore CA1416
             Status = HostDevice.DeviceStatus.OK
         };
         yield return new object?[] { Encoding.UTF8.GetString(Encoding.UTF32.GetBytes(JsonConvert.SerializeObject(messageWrongEncoding))) };
