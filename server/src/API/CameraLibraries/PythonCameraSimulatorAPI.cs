@@ -171,9 +171,13 @@ public class PythonCameraSimulatorAPI : ICamera
         foreach (var filename in scriptFilenames)
         {
             areAllScriptsPresent = Path.Exists(Path.Combine(relativePath, filename));
-            if (!areAllScriptsPresent)
+            if (areAllScriptsPresent)
             {
-                logger?.WriteLine($"Script {filename} not found in {relativePath}! {nameof(PythonCameraSimulatorAPI)} will not be able to function properly!", nameof(PythonCameraSimulatorAPI), Logger.MessageType.Error);
+                logger?.WriteLine($"Script {filename} is present in {relativePath}.", nameof(PythonCameraSimulatorAPI));
+            }
+            else
+            {
+                logger?.WriteLine($"Script {filename} was not found in {relativePath}! {nameof(PythonCameraSimulatorAPI)} will not be able to function properly!", nameof(PythonCameraSimulatorAPI), Logger.MessageType.Error);
                 break;
             }
         }
@@ -190,6 +194,15 @@ public class PythonCameraSimulatorAPI : ICamera
 
         //Check if executable is where its meant to be
         bool executableIsPresent = Path.Exists(executablePath);
+        if (executableIsPresent)
+        {
+            logger?.WriteLine($"exiftool.exe found at {executablePath}.", nameof(PythonCameraSimulatorAPI));
+        }
+        else
+        {
+            logger?.WriteLine($"exiftool.exe could not be located at {executablePath}!", nameof(PythonCameraSimulatorAPI), Logger.MessageType.Error);
+            return false;
+        }
 
         //Check if PATH variable contains a folder to it
         bool sysVarPointsToExecutable = false;
@@ -197,6 +210,15 @@ public class PythonCameraSimulatorAPI : ICamera
         {
             Environment.SetEnvironmentVariable("PATH", Path.GetFullPath(executablePath));
             sysVarPointsToExecutable = Environment.GetEnvironmentVariable("PATH")?.Contains(executablePath) ?? false;
+        }
+        
+        if (sysVarPointsToExecutable)
+        {
+            logger?.WriteLine($"Successfully added exiftool.exe path to PATH environment variable.", nameof(PythonCameraSimulatorAPI));
+        }
+        else
+        {
+            logger?.WriteLine($"Failed to add exiftool.exe path to PATH environment variable.", nameof(PythonCameraSimulatorAPI), Logger.MessageType.Error);
         }
 
         return executableIsPresent && sysVarPointsToExecutable;
