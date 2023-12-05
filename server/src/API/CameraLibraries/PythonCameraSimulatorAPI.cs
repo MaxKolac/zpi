@@ -17,7 +17,7 @@ public class PythonCameraSimulatorAPI : ICamera
     //TODO: this needs to be dynamic, not hardcoded
     private static readonly string PythonExecutablePath = @"C:\Users\ja\AppData\Local\Programs\Python\Python312\python.exe";
     private static readonly string AbsoluteScriptsDirectory = Path.Combine(Environment.CurrentDirectory, "API", "CameraLibraries", "pythonScripts");
-    private static readonly string InputFilename = "input";
+    private static readonly string InputFilename = "input.jpg";
     private static readonly string ScriptFilename = "communicator.py";
     private static readonly string OutputFilename = "output.json";
 
@@ -28,6 +28,7 @@ public class PythonCameraSimulatorAPI : ICamera
         _logger = logger;
     }
 
+#pragma warning disable CA1416
     public void DecodeReceivedBytes(byte[]? bytes)
     {
         //Can the current environment even run this method?
@@ -103,11 +104,12 @@ public class PythonCameraSimulatorAPI : ICamera
         {
             LargestTemperature = scriptResult!.HottestTemperature,
             ImageVisibleDangerPercentage = scriptResult!.Percentage,
-            Image = HostDevice.ToByteArray(plainImage!, ImageFormat.Jpeg),
+            Image = HostDevice.ToByteArray(embeddedImage, ImageFormat.Jpeg),
             Status = HostDevice.DeviceStatus.OK
         };
 #pragma warning restore CA1416
     }
+#pragma warning restore CA1416
 
     public CameraDataMessage? GetDecodedMessage() => _message;
 
@@ -163,8 +165,9 @@ public class PythonCameraSimulatorAPI : ICamera
     {
         var dependencies = new string[]
         {
+            "requests",
             "Pillow==10.1.0",
-            "numpy==1.26.2",
+            "numpy==1.26.2"
         };
 
         //Setup cmd.exe processes which will install those dependencies
@@ -257,31 +260,13 @@ public class PythonCameraSimulatorAPI : ICamera
         bool executableIsPresent = Path.Exists(executablePath);
         if (executableIsPresent)
         {
-            logger?.WriteLine($"exiftool.exe found at {executablePath}.", nameof(PythonCameraSimulatorAPI));
+            logger?.WriteLine($"exiftool.exe is present at {executablePath}.", nameof(PythonCameraSimulatorAPI));
         }
         else
         {
             logger?.WriteLine($"exiftool.exe could not be located at {executablePath}!", nameof(PythonCameraSimulatorAPI), Logger.MessageType.Error);
             return false;
         }
-
-        //Check if PATH variable contains its directory
-        bool sysVarPointsToExecutable = Environment.GetEnvironmentVariable("PATH")?.Contains(AbsoluteScriptsDirectory) ?? false;
-        if (!sysVarPointsToExecutable)
-        {
-            Environment.SetEnvironmentVariable("PATH", Path.GetFullPath(AbsoluteScriptsDirectory));
-            sysVarPointsToExecutable = Environment.GetEnvironmentVariable("PATH")?.Contains(AbsoluteScriptsDirectory) ?? false;
-        }
-
-        if (sysVarPointsToExecutable)
-        {
-            logger?.WriteLine($"Successfully added directory of exiftool.exe to PATH environment variable.", nameof(PythonCameraSimulatorAPI));
-        }
-        else
-        {
-            logger?.WriteLine($"Failed to add exiftool.exe path to PATH environment variable.", nameof(PythonCameraSimulatorAPI), Logger.MessageType.Error);
-        }
-
-        return executableIsPresent && sysVarPointsToExecutable;
+        return executableIsPresent;
     }
 }
