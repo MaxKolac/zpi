@@ -153,7 +153,7 @@ public class TcpReceiverTests
 
             byte[] message = Encoding.UTF8.GetBytes(messageToSend + mockPort);
             using var stream = mock.GetStream();
-            stream.Write(message, 0, message.Length);
+            stream.Write(message);
             await Task.Delay(100);
         }
 

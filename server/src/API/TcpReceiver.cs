@@ -207,7 +207,7 @@ public class TcpReceiver
 
             //Log that shit
             _logger?.WriteLine($"Received {fullMessage.Count} bytes ({emptyBytesStartPosition + 1} after trimming) from {clientAddress}:{clientPort} on port {listener.GetLocalPort()}.", nameof(TcpReceiver));
-            OnSignalReceived?.Invoke(this, new TcpReceiverEventArgs(clientAddress, clientPort, fullMessage.ToArray()[..emptyBytesStartPosition]));
+            OnSignalReceived?.Invoke(this, new TcpReceiverEventArgs(clientAddress, clientPort, fullMessage.ToArray()[..(emptyBytesStartPosition + 1)]));
 
             await _semaphore.WaitAsync();
             _connectionsHandled++;
