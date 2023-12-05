@@ -120,13 +120,23 @@ public class Program
             while (!conversionSuccessful);
 
             //Getting target port
-            int port;
+            int port = 25565;
+            conversionSuccessful = false;
             do
             {
-                Console.Write("Podaj port serwera, na który wysłać wiadomość. Domyślnie, serwer nasłuchuje na portach 25565, 25566 i 25567: ");
-                input = Console.ReadLine();
+                Console.Write("Podaj port serwera, na który wysłać wiadomość. Domyślnie, serwer nasłuchuje na portach 25565, 25566 i 25567. Wprowadzenie pustej wartości wyśle wiadomość na port 25565: ");
+                try
+                {
+                    input = Console.ReadLine();
+                    port = string.IsNullOrEmpty(input) ? 25565 : int.Parse(input);
+                    conversionSuccessful = true;
+                }
+                catch (FormatException)
+                {
+                    Console.WriteLine("Nieprawidłowy port.");
+                }
             }
-            while (!int.TryParse(input, out port));
+            while (!conversionSuccessful);
 
             //Attempt to send the message and log any exceptions
             try

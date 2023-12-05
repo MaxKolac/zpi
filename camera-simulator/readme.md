@@ -11,7 +11,7 @@
 
   Dla wiadomości z "kamery Python" użyte będzie tylko zdjęcie `thermalImage.jpg`.
 
-  3. Uruchom program i podaj mu na jaki adres i port wysłać tak skonstruowaną wiadomość. Podanie pustego adresu IP ustawi adres na 127.0.0.1.
+  3. Uruchom program i podaj mu na jaki adres i port wysłać tak skonstruowaną wiadomość. Podanie pustego adresu IP ustawi adres na 127.0.0.1. Podanie pustego portu ustawi go na 25565.
 
   Jeśli `message.json` nie istnieje lub nie udało się go zdeserializować do obiektu `CameraDataWithoutImage`, nowy plik JSON zostanie wygenerowany. Jeśli zdjęcia `imageToSend.png` nie odnaleziono, wysłana wiadomość nie będzie miała zdjęcia. 
 
