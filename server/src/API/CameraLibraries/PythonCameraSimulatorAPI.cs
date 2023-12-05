@@ -43,10 +43,15 @@ public class PythonCameraSimulatorAPI : ICamera
             throw new ArgumentException("Received bytes were empty or null");
 
         //Gather the bytes and save/overwrite them as a raw file next to the script
-        using (var writer = File.Create(Path.Combine(AbsoluteScriptsDirectory, InputFilename)))
-        {
-            writer.Write(bytes);
-        }
+        //using (var writer = File.Create(Path.Combine(AbsoluteScriptsDirectory, InputFilename)))
+        //{
+        //    writer.Write(bytes);
+        //}
+
+        //Try to extract the embedded image // Move this down 
+        var embeddedImage =
+            ImageExtracter.GetEmbeddedImage(AbsoluteScriptsDirectory, InputFilename, _logger) ??
+            throw new NullReferenceException("Failed to extract embedded image!");
 
         //Run thermalImageParser script and await its completion
         var startInfo = new ProcessStartInfo()
@@ -95,9 +100,6 @@ public class PythonCameraSimulatorAPI : ICamera
             JsonConvert.DeserializeObject<ScriptResult>(json) ?? 
             throw new JsonSerializationException("JsonConverter returned a null.");
 
-#pragma warning disable CA1416
-        //Extract the plain image using exiftool <- Filip
-        Image? plainImage = ImageExtracter.GetTrueImage(Path.Combine(AbsoluteScriptsDirectory, InputFilename));
 
         //Build a CameraDataMessage object out of deserialized results
         _message = new CameraDataMessage()
@@ -107,7 +109,6 @@ public class PythonCameraSimulatorAPI : ICamera
             Image = HostDevice.ToByteArray(embeddedImage, ImageFormat.Jpeg),
             Status = HostDevice.DeviceStatus.OK
         };
-#pragma warning restore CA1416
     }
 #pragma warning restore CA1416
 
