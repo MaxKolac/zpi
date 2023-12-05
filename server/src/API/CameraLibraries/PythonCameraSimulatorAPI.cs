@@ -43,10 +43,10 @@ public class PythonCameraSimulatorAPI : ICamera
             throw new ArgumentException("Received bytes were empty or null");
 
         //Gather the bytes and save/overwrite them as a raw file next to the script
-        //using (var writer = File.Create(Path.Combine(AbsoluteScriptsDirectory, InputFilename)))
-        //{
-        //    writer.Write(bytes);
-        //}
+        using (var writer = File.Create(Path.Combine(AbsoluteScriptsDirectory, InputFilename)))
+        {
+            writer.Write(bytes);
+        }
 
         //Try to extract the embedded image // Move this down 
         var embeddedImage =
