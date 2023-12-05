@@ -187,26 +187,27 @@ public class TcpReceiver
             //If that amount reaches 0, it means the connection was closed
             while ((receivedBytesCount = stream.Read(buffer, 0, bufferLength)) != 0)
             {
-                //Trim excessive unfilled buffer bites
-                int i = bufferLength - 1;
-                List<byte> sanitizedBuffer = buffer.ToList();
-                while (i >= 0 && buffer[i] == 0)
-                {
-                    sanitizedBuffer.RemoveAt(i);
-                    i--;
-                }
-
-                //Add trimmed buffer to the full message
-                fullMessage.AddRange(sanitizedBuffer);
-
+                fullMessage.AddRange(buffer);
                 //Clear buffer so no duplicated bytes make it through
                 buffer = new byte[bufferLength];
-
-                //Log that shit
-                _logger?.WriteLine($"Received {sanitizedBuffer.Count} bytes from {clientAddress}:{clientPort} on port {listener.GetLocalPort()}.", nameof(TcpReceiver));
             }
             _logger?.WriteLine($"Closed the connection from {clientAddress}:{clientPort}.", nameof(TcpReceiver));
-            OnSignalReceived?.Invoke(this, new TcpReceiverEventArgs(clientAddress, clientPort, fullMessage.ToArray()));
+
+            //Trim excessive unfilled buffer bites AFTER receiving the full message
+            //Note to self: You absolute cretin. You bumbling idiot. Fuck you. - @MaxKolac.
+            int emptyBytesStartPosition = 0;
+            for (int i = fullMessage.Count - 1; i >= 0; i--)
+            {
+                if (fullMessage[i] != 0)
+                {
+                    emptyBytesStartPosition = i;
+                    break;
+                }
+            }
+
+            //Log that shit
+            _logger?.WriteLine($"Received {fullMessage.Count} bytes ({emptyBytesStartPosition + 1} after trimming) from {clientAddress}:{clientPort} on port {listener.GetLocalPort()}.", nameof(TcpReceiver));
+            OnSignalReceived?.Invoke(this, new TcpReceiverEventArgs(clientAddress, clientPort, fullMessage.ToArray()[..(emptyBytesStartPosition + 1)]));
 
             await _semaphore.WaitAsync();
             _connectionsHandled++;

@@ -27,6 +27,9 @@ namespace ZPIServer.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<decimal>("ImageVisibleDangerPercentage")
+                        .HasColumnType("TEXT");
+
                     b.Property<int?>("LastDeviceStatus")
                         .HasColumnType("INTEGER");
 
@@ -65,7 +68,7 @@ namespace ZPIServer.Migrations
 
                     b.HasIndex("SectorId");
 
-                    b.ToTable("HostDevices", (string)null);
+                    b.ToTable("HostDevices");
                 });
 
             modelBuilder.Entity("ZPICommunicationModels.Models.Sector", b =>
@@ -83,7 +86,7 @@ namespace ZPIServer.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Sectors", (string)null);
+                    b.ToTable("Sectors");
                 });
 
             modelBuilder.Entity("ZPICommunicationModels.Models.HostDevice", b =>

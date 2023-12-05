@@ -113,6 +113,14 @@ public class SignalTranslator
                 {
                     _logger?.WriteLine($"API of {datasender.Type} failed to parse the received JSON string! {ex.Message}", nameof(SignalTranslator), Logger.MessageType.Error);
                 }
+                catch (IOException ex)
+                {
+                    _logger?.WriteLine($"API of {datasender.Type} threw an IOException! {ex.Message}", nameof(SignalTranslator), Logger.MessageType.Error);
+                }
+                catch (Exception ex)
+                {
+                    _logger?.WriteLine($"API of {datasender.Type} threw an unhandled exception! {ex.Message}", nameof(SignalTranslator), Logger.MessageType.Error);
+                }
 
                 var decodedMessage = api?.GetDecodedMessage();
                 if (decodedMessage is not null)
@@ -204,9 +212,10 @@ public class SignalTranslator
         else if (request.Request == UserRequest.RequestType.CameraDataAsJson)
             return ZPIEncoding.Encode(new CameraDataMessage()
             {
-                Status = foundHost.LastDeviceStatus ?? DeviceStatus.Unknown,
+                LargestTemperature = foundHost.LastKnownTemperature,
+                ImageVisibleDangerPercentage = foundHost.ImageVisibleDangerPercentage,
                 Image = foundHost.LastImage ?? Array.Empty<byte>(),
-                LargestTemperature = foundHost.LastKnownTemperature
+                Status = foundHost.LastDeviceStatus ?? DeviceStatus.Unknown
             });
         else
         {
@@ -248,7 +257,7 @@ public class SignalTranslator
             _logger?.WriteLine($"Found {allDevices} record(s) in {nameof(DatabaseContext.HostDevices)} table.");
         return ZPIEncoding.Encode(allDevices ?? new List<HostDevice>());
     }
-    
+
     /// <summary>
     /// Handling for <see cref="UserRequest.RequestType.AllSectorsAsJson"/>.
     /// </summary>
@@ -280,7 +289,7 @@ public class SignalTranslator
 
         using (var context = new DatabaseContext())
         {
-            var foundDevice = context.HostDevices.Where((device) => device.Id == request.ModelObjectId).FirstOrDefault(); 
+            var foundDevice = context.HostDevices.Where((device) => device.Id == request.ModelObjectId).FirstOrDefault();
             if (foundDevice is null)
             {
                 _logger?.WriteLine($"User requested {request.Request} of a {nameof(HostDevice)} with ID = {request.ModelObjectId} which was not found in the database! Discarding request.", nameof(SignalTranslator), Logger.MessageType.Error);

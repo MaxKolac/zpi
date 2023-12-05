@@ -11,9 +11,11 @@ public class DbCommand : Command
 {
     public const string ListAllArgument = "listall";
     public const string TestArgument = "test"; //not listed in help messages
+    public const string GetImageArgument = "getimage";
 
     public string? FirstArg { get; private set; }
     public string? SecondArg { get; private set; }
+    public int? RecordId { get; private set; }
 
     public DbCommand(Logger? logger = null) : base(logger)
     {
@@ -52,6 +54,38 @@ public class DbCommand : Command
                 catch (SqliteException ex)
                 {
                     _logger?.WriteLine($"ERROR! Something went wrong with the database file: {ex.Message}", messageType: Logger.MessageType.Error);
+                }
+                break;
+            case GetImageArgument:
+                try
+                {
+                    using var context = new DatabaseContext();
+                    if (RecordId is null)
+                        break;
+                    var hostDevice = context.HostDevices.Where((device) => device.Id == RecordId).FirstOrDefault();
+                    if (hostDevice is null)
+                    {
+                        _logger?.WriteLine($"Could not find a {nameof(HostDevice)} with ID = {RecordId}.", messageType: Logger.MessageType.Warning);
+                        break;
+                    }
+                    if (hostDevice.LastImage is null || hostDevice.LastImage.Length == 0)
+                    {
+                        _logger?.WriteLine($"Found a {nameof(HostDevice)} with ID = {RecordId}, but its {nameof(HostDevice.LastImage)} is empty/null!", messageType: Logger.MessageType.Warning);
+                        break;
+                    }
+
+                    string extension = hostDevice.Type == HostType.PythonCameraSimulator ? ".jpeg" : ".png";
+                    using var stream = File.Create(Path.Combine(Environment.CurrentDirectory, "lastImage" + extension));
+                    stream.Write(hostDevice.LastImage);
+                    _logger?.WriteLine($"Wrote {hostDevice.LastImage.Length} byte(s) to {stream.Name}.");
+                }
+                catch (SqliteException ex)
+                {
+                    _logger?.WriteLine($"ERROR! Something went wrong with the database file: {ex.Message}", messageType: Logger.MessageType.Error);
+                }
+                catch (IOException ex)
+                {
+                    _logger?.WriteLine($"ERROR! Something went wrong when creating an image file: {ex.Message}", messageType: Logger.MessageType.Error);
                 }
                 break;
             case TestArgument:
@@ -263,9 +297,12 @@ public class DbCommand : Command
         builder.AppendLine("Command for interacting with the server's database. Available arguments:");
         builder.AppendLine($"\t- {ListAllArgument}");
         builder.AppendLine("\tShows all records from all tables.");
+        builder.AppendLine($"\t- {GetImageArgument} (ID)");
+        builder.AppendLine("\tExtracts the LastImage property of the specified record to server's working directory (the same where executable file is placed).");
 
         builder.AppendLine("Examples:");
         builder.AppendLine($"\t{Db} {ListAllArgument}");
+        builder.AppendLine($"\t{Db} {GetImageArgument} 2");
         return builder.ToString();
     }
 
@@ -281,7 +318,17 @@ public class DbCommand : Command
         else if (arguments.Length == 2)
         {
             FirstArg = arguments[0];
-            SecondArg = arguments[1];
+            if (arguments[0] == GetImageArgument)
+            {
+                if (!int.TryParse(arguments[1], out int result))
+                    _logger?.WriteLine($"For '{GetImageArgument}' argument, the second argument needs to be an integer.");
+                else
+                    RecordId = result;
+            }
+            else
+            {
+                SecondArg = arguments[1];
+            }
         }
         else
         {

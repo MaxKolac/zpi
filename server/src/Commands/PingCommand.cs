@@ -46,8 +46,9 @@ public class PingCommand : Command
                 var testMessage = new CameraDataMessage()
                 {
                     LargestTemperature = 123_456_789.123m,
+                    ImageVisibleDangerPercentage = 0.25m,
                     Status = HostDevice.DeviceStatus.OK,
-                    Image = HostDevice.ToByteArray(Image.FromFile("Commands\\PingCdmImage.png"), ImageFormat.Png) ?? Array.Empty<byte>()
+                    Image = HostDevice.ToByteArray(Image.FromFile("Commands\\PingCdmImage.png"), ImageFormat.Png)
                 };
 #pragma warning restore CA1416
                 var json = JsonConvert.SerializeObject(testMessage);

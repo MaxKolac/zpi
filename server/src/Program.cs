@@ -58,15 +58,14 @@ namespace ZPIServer
             }
 
             //Getting Python and dependencies for PythonCameraSimulatorApi
-            Settings.IsPythonDetected = PythonCameraSimulatorAPI.CheckPythonInstallation(logger);
-            if (Settings.IsPythonDetected)
+            Settings.CanPythonCameraAPIScriptsRun = PythonCameraSimulatorAPI.CheckIfScriptsCanBeRun(logger);
+            if (Settings.CanPythonCameraAPIScriptsRun)
             {
-                logger.WriteLine($"Python installation detected. Checking that neccesary dependencies are also present.", ServerPrefix);
-                PythonCameraSimulatorAPI.CheckPythonPackagesInstallation(logger);
+                logger.WriteLine($"{nameof(PythonCameraSimulatorAPI)} did not report any missing dependent components - server will enable it.", ServerPrefix);
             }
             else
             {
-                logger.WriteLine($"Until Python is properly installed and server restarted, server will ignore messages from {HostDevice.HostType.PythonCameraSimulator} devices!", ServerPrefix, Logger.MessageType.Warning);
+                logger.WriteLine($"Until all necessary components are properly installed and server is restarted, server will ignore messages from {HostDevice.HostType.PythonCameraSimulator} devices!", ServerPrefix, Logger.MessageType.Warning);
             }
 
             using (var context = new DatabaseContext())

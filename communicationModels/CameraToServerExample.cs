@@ -22,7 +22,8 @@ internal class CameraToServerExample
         CameraDataMessage message = new()
         {
             LargestTemperature = -69.6969m,
-            Image = HostDevice.ToByteArray(Image.FromFile("ścieżkaBezSpacjiDoZdjęcia.png"), ImageFormat.Png)!,
+            ImageVisibleDangerPercentage = 0.25m,
+            Image = HostDevice.ToByteArray(Image.FromFile("ścieżkaBezSpacjiDoZdjęcia.png"), ImageFormat.Png),
             Status = HostDevice.DeviceStatus.OK
         };
 

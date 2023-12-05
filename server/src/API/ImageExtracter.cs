@@ -1,93 +1,84 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
 using System.Drawing;
+using System.Text;
+using ZPIServer.Commands;
 
 namespace ZPIServer.API;
-internal class ImageExtracter
+
+public static class ImageExtracter
 {
-    static String exiftoolLocation = "exiftool.exe";
-    public static Task<Image?> getTrueImage(String filename)
+    public static Image? GetEmbeddedImage(string workingDirectory, string inputFile, Logger? logger = null)
     {
-        byte[]? ImageBytes = getImageBytes(filename);
-        if (ImageBytes == null)
+        //Build the command string
+        string[] flags =
         {
-            return Task.FromResult<Image?>(null);
-        }
-        using (MemoryStream ms = new MemoryStream(ImageBytes))
-        {
-            return Task.FromResult<Image?>(Image.FromStream(ms));
-        }
-    }
-    public static byte[]? getImageBytes(String filename)
-    {
-        String errData;
-        StreamReader outData;
-        String[] flags = {
             "s3",
             "b",
             "EmbeddedImage"
         };
-        (outData, errData) = RunExiftool(flags, filename);
-        if (IsError(errData))
-        {
-            return null;
-        }
-        byte[] imageBytes;
-        FileStream? baseStream = outData.BaseStream as FileStream;
-        if (baseStream is null)
-        {
-            return null;
-        }
-        int lastRead;
-        using (MemoryStream ms = new MemoryStream())
-        {
-            byte[] buffer = new byte[4096];
-            do
-            {
-                lastRead = baseStream.Read(buffer, 0, buffer.Length);
-                ms.Write(buffer, 0, lastRead);
-            } while (lastRead > 0);
-            imageBytes = ms.ToArray();
-        }
-        return imageBytes;
-    }
-
-    static bool IsError(string errData)
-    {
-        String[] lines = errData.Split('\n');
-        foreach (String line in lines)
-        {
-            if (!line.StartsWith("Warning: ") && !(line.Length == 0))
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    static (StreamReader, string) RunExiftool(String[] flags, String filename)
-    {
-        Process cmd = new Process();
-        StringBuilder errData = new StringBuilder();
-        String command = exiftoolLocation;
-        foreach (String flag in flags)
+        string command = Path.Combine(workingDirectory, "exiftool.exe");
+        foreach (string flag in flags)
         {
             command += " -" + flag;
         }
-        command += " " + filename;
-        cmd.StartInfo.FileName = "cmd.exe";
-        cmd.StartInfo.Arguments = "/C " + command;
-        cmd.StartInfo.CreateNoWindow = true;
-        cmd.StartInfo.UseShellExecute = false;
-        cmd.StartInfo.RedirectStandardOutput = true;
-        cmd.StartInfo.RedirectStandardError = true;
-        cmd.ErrorDataReceived += (sender, args) => errData.Append(args.Data ?? String.Empty);
-        cmd.Start();
-        cmd.BeginErrorReadLine();
-        return (cmd.StandardOutput, errData.ToString());
+        command += " " + Path.Combine(workingDirectory, inputFile);
+
+        //Build process info
+        var startInfo = new ProcessStartInfo()
+        {
+            FileName = @"cmd.exe",
+            Arguments = "/C " + command,
+            CreateNoWindow = true,
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+        };
+
+        //Start exiftool
+        //The EmbeddedImage will be streamed into the standardOutput as bytes
+        using var process = Process.Start(startInfo);
+        using var standardReader = process!.StandardOutput;
+        using var errorReader = process!.StandardError;
+
+        var builder = new StringBuilder();
+        Task<byte[]> standardOutput = Task.Run(() =>
+        {
+            //Collect, sanitize and assemble bytes from exiftool.exe
+            using var memoryStream = new MemoryStream();
+            List<byte> imageBytes = new();
+            byte[] buffer = new byte[4096];
+            while (standardReader.BaseStream.Read(buffer, 0, buffer.Length) != 0)
+            {
+                memoryStream.Write(buffer, 0, buffer.Length);
+                imageBytes.AddRange(buffer);
+                buffer = new byte[4096];
+            }
+
+            //Przy ostatniej iteracji pętli while, buffer na 99% będzie miał jakieś zerowe bajty na końcu.
+            //Trzeba je wyciąć.
+            int emptyBytesPosition = 0;
+            for (int i = imageBytes.Count - 1; i >= 0; i--)
+            {
+                if (imageBytes[i] != 0)
+                {
+                    emptyBytesPosition = i;
+                    break;
+                }
+            }
+
+            return imageBytes.ToArray()[0..emptyBytesPosition];
+        });
+        Task errorOutput = Task.Run(() =>
+        {
+            while (!errorReader.EndOfStream)
+            {
+                logger?.WriteLine(errorReader.ReadLine());
+            }
+        });
+        Task.WaitAll(standardOutput, errorOutput);
+
+#pragma warning disable CA1416
+        return Image.FromStream(new MemoryStream(standardOutput.Result));
+#pragma warning restore CA1416
     }
 }
