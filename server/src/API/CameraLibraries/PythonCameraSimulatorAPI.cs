@@ -1,6 +1,5 @@
 ﻿using Newtonsoft.Json;
 using System.Diagnostics;
-using System.Drawing;
 using System.Drawing.Imaging;
 using ZPICommunicationModels.Messages;
 using ZPICommunicationModels.Models;
@@ -62,7 +61,7 @@ public class PythonCameraSimulatorAPI : ICamera
             RedirectStandardOutput = true,
             RedirectStandardError = true
         };
-        
+
         //Start the process and log any errors/events
         using (var process = Process.Start(startInfo))
         {
@@ -94,8 +93,8 @@ public class PythonCameraSimulatorAPI : ICamera
         }
 
         //Try to deserialize it into ScriptResult
-        ScriptResult? scriptResult = 
-            JsonConvert.DeserializeObject<ScriptResult>(json) ?? 
+        ScriptResult? scriptResult =
+            JsonConvert.DeserializeObject<ScriptResult>(json) ??
             throw new JsonSerializationException("JsonConverter returned a null.");
 
         //Build a CameraDataMessage object out of deserialized results

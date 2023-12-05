@@ -257,7 +257,7 @@ public class SignalTranslator
             _logger?.WriteLine($"Found {allDevices} record(s) in {nameof(DatabaseContext.HostDevices)} table.");
         return ZPIEncoding.Encode(allDevices ?? new List<HostDevice>());
     }
-    
+
     /// <summary>
     /// Handling for <see cref="UserRequest.RequestType.AllSectorsAsJson"/>.
     /// </summary>
@@ -289,7 +289,7 @@ public class SignalTranslator
 
         using (var context = new DatabaseContext())
         {
-            var foundDevice = context.HostDevices.Where((device) => device.Id == request.ModelObjectId).FirstOrDefault(); 
+            var foundDevice = context.HostDevices.Where((device) => device.Id == request.ModelObjectId).FirstOrDefault();
             if (foundDevice is null)
             {
                 _logger?.WriteLine($"User requested {request.Request} of a {nameof(HostDevice)} with ID = {request.ModelObjectId} which was not found in the database! Discarding request.", nameof(SignalTranslator), Logger.MessageType.Error);
