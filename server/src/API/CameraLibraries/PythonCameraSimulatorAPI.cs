@@ -14,8 +14,6 @@ public class PythonCameraSimulatorAPI : ICamera
     private readonly Logger? _logger;
     private CameraDataMessage? _message;
 
-    //TODO: this needs to be dynamic, not hardcoded
-    private static readonly string PythonExecutablePath = @"C:\Users\ja\AppData\Local\Programs\Python\Python312\python.exe";
     private static readonly string AbsoluteScriptsDirectory = Path.Combine(Environment.CurrentDirectory, "API", "CameraLibraries", "pythonScripts");
     private static readonly string InputFilename = "input.jpg";
     private static readonly string ScriptFilename = "communicator.py";
@@ -56,8 +54,8 @@ public class PythonCameraSimulatorAPI : ICamera
         //Run thermalImageParser script and await its completion
         var startInfo = new ProcessStartInfo()
         {
-            FileName = PythonExecutablePath,
-            Arguments = $"{ScriptFilename} --filename {InputFilename} --save {OutputFilename}",
+            FileName = Path.Combine(Environment.SystemDirectory, "cmd.exe"),
+            Arguments = $"/C python {ScriptFilename} --filename {InputFilename} --save {OutputFilename}",
             WorkingDirectory = AbsoluteScriptsDirectory,
             CreateNoWindow = true,
             UseShellExecute = false,
