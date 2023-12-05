@@ -92,14 +92,13 @@ public class PythonCameraSimulatorAPI : ICamera
         string json;
         using (var stream = File.OpenText(Path.Combine(AbsoluteScriptsDirectory, OutputFilename)))
         {
-            json = stream.ReadToEnd();
+            json = stream.ReadToEnd().Replace(" ", string.Empty);
         }
 
         //Try to deserialize it into ScriptResult
         ScriptResult? scriptResult = 
             JsonConvert.DeserializeObject<ScriptResult>(json) ?? 
             throw new JsonSerializationException("JsonConverter returned a null.");
-
 
         //Build a CameraDataMessage object out of deserialized results
         _message = new CameraDataMessage()
