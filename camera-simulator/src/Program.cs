@@ -181,13 +181,24 @@ public class Program
             var imageAsBytes = new List<byte>();
             using (var reader = File.Open(path, FileMode.Open))
             {
-                byte[] tinyBuffer = new byte[1];
-                while (reader.Read(tinyBuffer) != 0)
+                byte[] buffer = new byte[4096];
+                while (reader.Read(buffer) != 0)
                 {
-                    imageAsBytes.Add(tinyBuffer[0]);
+                    imageAsBytes.AddRange(buffer);
+                    buffer = new byte[4096];
                 }
             }
-            return imageAsBytes.ToArray();
+
+            int emptyBytesPosition = 0;
+            for (int i = imageAsBytes.Count - 1; i >= 0; i--)
+            {
+                if (imageAsBytes[i] != 0)
+                {
+                    emptyBytesPosition = i;
+                    break;
+                }
+            }
+            return imageAsBytes.ToArray()[..emptyBytesPosition];
         }
         catch (IOException ex)
         {
