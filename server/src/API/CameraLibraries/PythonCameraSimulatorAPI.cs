@@ -1,6 +1,5 @@
 ﻿using Newtonsoft.Json;
 using System.Diagnostics;
-using System.Drawing.Imaging;
 using ZPICommunicationModels.Messages;
 using ZPICommunicationModels.Models;
 using ZPIServer.Commands;
@@ -112,7 +111,7 @@ public class PythonCameraSimulatorAPI : ICamera
 
     public static bool CheckIfScriptsCanBeRun(Logger? logger = null)
     {
-        return CheckPythonInstallation(logger) && CheckPythonPackagesInstallation(logger) && CheckPythonScripts(logger) && CheckExiftool(logger);
+        return CheckPythonInstallation(logger) && CheckPythonPackagesInstallation(logger) && CheckPythonScripts(logger);// && CheckExiftool(logger);
     }
 
     /// <summary>
@@ -250,6 +249,7 @@ public class PythonCameraSimulatorAPI : ICamera
     /// Sprawdza czy serwer ma dostęp do narzędzia "exiftool.exe" oraz czy folder, w którym się znajduje jest dopisany do zmiennej systemowej "PATH".
     /// </summary>
     /// <returns><c>true</c>, jeśli wszystko poszło OK.</returns>
+    [Obsolete]
     private static bool CheckExiftool(Logger? logger = null)
     {
         string executablePath = Path.Combine(AbsoluteScriptsDirectory, "exiftool.exe");
