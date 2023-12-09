@@ -28,6 +28,10 @@ namespace ZPIClient
         private List<int> sensorTimerList = new List<int>();
         private int currentSensorIndex = -1;
 
+        //Thermal image display
+        private Image thermalImageCache;
+        private bool isThermal = true;
+
         //Timer settings
         private int timerInterval = 30, timerElapsedTime = 30;
 
@@ -124,7 +128,19 @@ namespace ZPIClient
         }
         private void buttonOverview_Click(object sender, EventArgs e)
         {
-
+            if (isThermal)
+            {
+                buttonOverview.Text = "Włącz podgląd termiczny";
+            }
+            else
+            {
+                buttonOverview.Text = "Włącz podgląd zwykły";
+            }
+            if(currentSensorIndex != -1)
+            {
+                convertCurrentImage();
+            }
+            isThermal = !isThermal;
         }
         private void sensorContainer_Click(object sender, EventArgs e)
         {
@@ -445,6 +461,10 @@ namespace ZPIClient
                 {
                     Image cameraImage = HostDevice.ToImage(sensorList[currentSensorIndex].LastImage);
                     pictureBoxCamera.Image = cameraImage;
+                    if (!isThermal) 
+                    {
+                        convertCurrentImage();
+                    }
                     pictureBoxCamera.Refresh();
                 }
                 catch (Exception)
@@ -490,6 +510,41 @@ namespace ZPIClient
             updateStateCounts();
             updateInfoPanel();
             updateStateList();
+        }
+        private void convertCurrentImage()
+        {
+            if (isThermal)
+            {
+                pictureBoxCamera.Image = convertThermalImage(HostDevice.ToImage(sensorList[currentSensorIndex].LastImage));
+            }
+            else
+            {
+                pictureBoxCamera.Image = HostDevice.ToImage(sensorList[currentSensorIndex].LastImage);
+            }
+        }
+        private Image convertThermalImage(Image image)
+        {
+            string path = tryGetSolutionDirectoryInfo();
+            path += "\\communicationModels";
+
+            string file = path + "\\tempFile.png";
+            image.Save(file, System.Drawing.Imaging.ImageFormat.Png);
+
+            image = ImageExtracter.GetEmbeddedImage(path, file);
+            File.Delete(file);
+
+            return image;
+        }
+
+        private string tryGetSolutionDirectoryInfo(string currentPath = null)
+        {
+            var directory = new DirectoryInfo(
+                currentPath ?? Directory.GetCurrentDirectory());
+            while (directory != null && !directory.GetFiles("*.sln").Any())
+            {
+                directory = directory.Parent;
+            }
+            return directory.ToString();
         }
         private void FormMain_FormClosing(object sender, FormClosingEventArgs e)
         {
