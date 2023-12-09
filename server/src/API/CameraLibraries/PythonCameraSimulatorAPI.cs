@@ -24,7 +24,6 @@ public class PythonCameraSimulatorAPI : ICamera
         _logger = logger;
     }
 
-#pragma warning disable CA1416
     public void DecodeReceivedBytes(byte[]? bytes)
     {
         //Can the current environment even run this method?
@@ -105,7 +104,6 @@ public class PythonCameraSimulatorAPI : ICamera
             Status = HostDevice.DeviceStatus.OK
         };
     }
-#pragma warning restore CA1416
 
     public CameraDataMessage? GetDecodedMessage() => _message;
 
