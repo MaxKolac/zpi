@@ -45,10 +45,10 @@ public class PythonCameraSimulatorAPI : ICamera
             writer.Write(bytes);
         }
 
-        //Try to extract the embedded image // Move this down 
-        var embeddedImage =
-            ImageExtracter.GetEmbeddedImage(AbsoluteScriptsDirectory, InputFilename, _logger) ??
-            throw new NullReferenceException("Failed to extract embedded image!");
+        //Try to extract the embedded image - obsolete
+        //var embeddedImage =
+        //    ImageExtracter.GetEmbeddedImage(AbsoluteScriptsDirectory, InputFilename, _logger) ??
+        //    throw new NullReferenceException("Failed to extract embedded image!");
 
         //Run thermalImageParser script and await its completion
         var startInfo = new ProcessStartInfo()
@@ -102,7 +102,7 @@ public class PythonCameraSimulatorAPI : ICamera
         {
             LargestTemperature = scriptResult!.HottestTemperature,
             ImageVisibleDangerPercentage = scriptResult!.Percentage,
-            Image = HostDevice.ToByteArray(embeddedImage, ImageFormat.Jpeg),
+            Image = bytes,
             Status = HostDevice.DeviceStatus.OK
         };
     }
