@@ -524,8 +524,9 @@ namespace ZPIClient
         }
         private Image convertThermalImage(Image image)
         {
-            string path = tryGetSolutionDirectoryInfo();
-            path += "\\communicationModels";
+            string path = tryGetDirectory();
+
+            MessageBox.Show(path);
 
             string file = path + "\\tempFile.png";
             image.Save(file, System.Drawing.Imaging.ImageFormat.Png);
@@ -536,15 +537,13 @@ namespace ZPIClient
             return image;
         }
 
-        private string tryGetSolutionDirectoryInfo(string currentPath = null)
+        private string tryGetDirectory()
         {
-            var directory = new DirectoryInfo(
-                currentPath ?? Directory.GetCurrentDirectory());
-            while (directory != null && !directory.GetFiles("*.sln").Any())
-            {
-                directory = directory.Parent;
-            }
-            return directory.ToString();
+            string currentDirectory = Environment.CurrentDirectory;
+            string communicationModelsPath = Path.Combine(currentDirectory,"..", "..", "..", "..", "..", "communicationModels");
+            string fullPath = Path.GetFullPath(communicationModelsPath);
+
+            return fullPath;
         }
         private void FormMain_FormClosing(object sender, FormClosingEventArgs e)
         {
