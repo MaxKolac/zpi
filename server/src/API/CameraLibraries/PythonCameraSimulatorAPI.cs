@@ -1,6 +1,5 @@
 ﻿using Newtonsoft.Json;
 using System.Diagnostics;
-using System.Drawing.Imaging;
 using ZPICommunicationModels.Messages;
 using ZPICommunicationModels.Models;
 using ZPIServer.Commands;
@@ -25,7 +24,6 @@ public class PythonCameraSimulatorAPI : ICamera
         _logger = logger;
     }
 
-#pragma warning disable CA1416
     public void DecodeReceivedBytes(byte[]? bytes)
     {
         //Can the current environment even run this method?
@@ -45,10 +43,10 @@ public class PythonCameraSimulatorAPI : ICamera
             writer.Write(bytes);
         }
 
-        //Try to extract the embedded image // Move this down 
-        var embeddedImage =
-            ImageExtracter.GetEmbeddedImage(AbsoluteScriptsDirectory, InputFilename, _logger) ??
-            throw new NullReferenceException("Failed to extract embedded image!");
+        //Try to extract the embedded image - obsolete
+        //var embeddedImage =
+        //    ImageExtracter.GetEmbeddedImage(AbsoluteScriptsDirectory, InputFilename, _logger) ??
+        //    throw new NullReferenceException("Failed to extract embedded image!");
 
         //Run thermalImageParser script and await its completion
         var startInfo = new ProcessStartInfo()
@@ -102,17 +100,16 @@ public class PythonCameraSimulatorAPI : ICamera
         {
             LargestTemperature = scriptResult!.HottestTemperature,
             ImageVisibleDangerPercentage = scriptResult!.Percentage,
-            Image = HostDevice.ToByteArray(embeddedImage, ImageFormat.Jpeg),
+            Image = bytes,
             Status = HostDevice.DeviceStatus.OK
         };
     }
-#pragma warning restore CA1416
 
     public CameraDataMessage? GetDecodedMessage() => _message;
 
     public static bool CheckIfScriptsCanBeRun(Logger? logger = null)
     {
-        return CheckPythonInstallation(logger) && CheckPythonPackagesInstallation(logger) && CheckPythonScripts(logger) && CheckExiftool(logger);
+        return CheckPythonInstallation(logger) && CheckPythonPackagesInstallation(logger) && CheckPythonScripts(logger);// && CheckExiftool(logger);
     }
 
     /// <summary>
@@ -250,6 +247,7 @@ public class PythonCameraSimulatorAPI : ICamera
     /// Sprawdza czy serwer ma dostęp do narzędzia "exiftool.exe" oraz czy folder, w którym się znajduje jest dopisany do zmiennej systemowej "PATH".
     /// </summary>
     /// <returns><c>true</c>, jeśli wszystko poszło OK.</returns>
+    [Obsolete]
     private static bool CheckExiftool(Logger? logger = null)
     {
         string executablePath = Path.Combine(AbsoluteScriptsDirectory, "exiftool.exe");
