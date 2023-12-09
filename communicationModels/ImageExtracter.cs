@@ -7,7 +7,8 @@ namespace ZPICommunicationModels;
 public static class ImageExtracter
 {
     /// <summary>
-    /// Wyciąga zwykłe zdjęcie ze zdjęcia termicznego. Wymaga programu 'exiftool.exe'. Program 'exiftool.exe' i samo zdjęcie muszą znajdować się w tym samym katalogu.
+    /// Wyciąga zwykłe zdjęcie ze zdjęcia termicznego. Wymaga programu 'exiftool.exe'. Program 'exiftool.exe' i samo zdjęcie muszą znajdować się w tym samym katalogu.<br/>
+    /// Autor: Genocider7 (Filip)
     /// </summary>
     /// <param name="workingDirectory">Ściezka do folderu, w którym znajduje się 'exiftool.exe'. Użyj kombinacji <c>Path.Combine(Environment.CurrentDirectory, "podfolder1", "podfolder2", ...);</c>.</param>
     /// <param name="inputFile"></param>
