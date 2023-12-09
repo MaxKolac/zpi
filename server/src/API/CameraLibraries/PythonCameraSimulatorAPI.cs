@@ -203,8 +203,9 @@ public class PythonCameraSimulatorAPI : ICamera
             {
                 while (!errorReader.EndOfStream)
                 {
-                    logger?.WriteLine(errorReader.ReadLine(), PythonPrefix, Logger.MessageType.Error);
-                    if (errorReader.BaseStream.Length >= 0)
+                    string? error = errorReader.ReadLine();
+                    logger?.WriteLine(error, PythonPrefix, Logger.MessageType.Error);
+                    if (!string.IsNullOrEmpty(error))
                         wereAllErrorOutputsEmpty = false;
                 }
             });
