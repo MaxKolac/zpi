@@ -109,17 +109,21 @@ public class SignalTranslator
                 {
                     _logger?.WriteLine($"API of {datasender.Type} received invalid argument! {ex.Message}", nameof(SignalTranslator), Logger.MessageType.Error);
                 }
-                catch (JsonException ex)
+                catch (PythonCameraSimulatorAPI.PythonApiException ex)
                 {
-                    _logger?.WriteLine($"API of {datasender.Type} failed to parse the received JSON string! {ex.Message}", nameof(SignalTranslator), Logger.MessageType.Error);
-                }
-                catch (IOException ex)
-                {
-                    _logger?.WriteLine($"API of {datasender.Type} threw an IOException! {ex.Message}", nameof(SignalTranslator), Logger.MessageType.Error);
+                    _logger?.WriteLine(
+                        $"{nameof(PythonCameraSimulatorAPI)} threw an exception! {ex.Message}" + (
+                            ex.InnerException is not null ? 
+                            $"\nInner exception: {ex.InnerException}" :
+                            ""
+                            ),
+                        nameof(SignalTranslator),
+                        Logger.MessageType.Error
+                        );
                 }
                 catch (Exception ex)
                 {
-                    _logger?.WriteLine($"API of {datasender.Type} threw an unhandled exception! {ex.Message}", nameof(SignalTranslator), Logger.MessageType.Error);
+                    _logger?.WriteLine($"API of {datasender.Type} threw an unhandled exception! This is REALLY bad! {ex.Message}", nameof(SignalTranslator), Logger.MessageType.Error);
                 }
 
                 var decodedMessage = api?.GetDecodedMessage();
