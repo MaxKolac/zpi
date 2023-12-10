@@ -24,6 +24,7 @@ namespace ZPIClient
         private TcpClient tcpClient;
         private List<HostDevice> devices;
         private ClientListener listener = new ClientListener(IPAddress.Parse("127.0.0.1"), 12000);
+        private TaskCompletionSource<bool> signalReceivedTaskCompletionSource;
 
         //Sensor variables
         private List<HostDevice> sensorList = new List<HostDevice>();
@@ -31,7 +32,6 @@ namespace ZPIClient
         private int currentSensorIndex = -1;
 
         //Thermal image display
-        private Image thermalImageCache;
         private bool isThermal = true;
 
         //Timer settings
@@ -41,44 +41,25 @@ namespace ZPIClient
         private bool debug = false;
 
         //Dynamic objects
-        TableLayoutPanel[] panelSensorContainer;
+        TableLayoutPanel[] panelSensorContainer; //List
         Label[] labelSensor;
         Panel[] panelSensorInformation;
         PictureBox[] pictureBoxSensorStatus;
         Label[] labelSensorStatus;
         Label[] labelSensorSegment;
 
-        TableLayoutPanel[] panelMapSensorInformation;
+        TableLayoutPanel[] panelMapSensorInformation; //Map
         Label[] labelMapSensor;
         PictureBox[] pictureBoxMapSensorStatus;
 
         public FormMain()
         {
             InitializeComponent();
-            serverRequest(UserRequest.RequestType.AllHostDevicesAsJson);
             Initialize();
         }
 
-        private void updateSensors()
-        {
-            serverRequest(UserRequest.RequestType.SingleHostDeviceAsJson);
-            foreach (HostDevice device in devices)
-            {
-                if (device.Type == HostDevice.HostType.CameraSimulator || device.Type == HostDevice.HostType.PythonCameraSimulator)
-                {
-                    int index = sensorList.FindIndex(a => a.Id == device.Id);
-                    if (sensorList[index].LastFireStatus != device.LastFireStatus || sensorList[index].LastKnownTemperature != device.LastKnownTemperature)
-                    {
-                        sensorList[index] = device;
-                        sensorTimerList[index] = 0;
-                    }
-                }
-
-            }
-            updateAll();
-        }
         #region Timer Functions
-        private void timerRefresh_Tick(object sender, EventArgs e)
+        private void timerRefresh_Tick(object sender, EventArgs e) //Funkcja wywoływana co każdy "tick" (1 sekundę) zegara. Zwiększa wartość każdego widocznego zegara, oraz wywołuje updateSensors co 30 sekund
         {
             incrementTimers();
             if (timerElapsedTime > 0)
@@ -96,7 +77,7 @@ namespace ZPIClient
             }
             labelTimer.Text = "Następna aktualizacja za: " + timerElapsedTime + " sekund";
         }
-        private void incrementTimers()
+        private void incrementTimers() //Zwiększa wartość zegara wszystkich czujników. Niezbędne do wyświetlenia komórki "Ostatnia aktualizacja"
         {
             int count = sensorTimerList.Count;
             for (int i = 0; i < count; i++)
@@ -104,9 +85,27 @@ namespace ZPIClient
                 sensorTimerList[i] += 1;
             }
         }
+        private void updateSensors() //Funkcja wywoływana co 30 sekund. Pobiera nowe dane od serwera oraz (jeśli się zmieniły) je aktualizuje
+        {
+            serverRequest(UserRequest.RequestType.SingleHostDeviceAsJson);
+            foreach (HostDevice device in devices)
+            {
+                if (device.Type == HostDevice.HostType.CameraSimulator || device.Type == HostDevice.HostType.PythonCameraSimulator)
+                {
+                    int index = sensorList.FindIndex(a => a.Id == device.Id);
+                    if (sensorList[index].LastFireStatus != device.LastFireStatus || sensorList[index].LastKnownTemperature != device.LastKnownTemperature)
+                    {
+                        sensorList[index] = device;
+                        sensorTimerList[index] = 0;
+                    }
+                }
+
+            }
+            updateAll();
+        }
         #endregion
         #region Buttons
-        private void buttonDebug_Click(object sender, EventArgs e)
+        private void buttonDebug_Click(object sender, EventArgs e) //Przycisk włącza pokyzwanie współrzędnych kursora na mapie (debug) przez panelMap_MouseMove
         {
             if (debug)
             {
@@ -121,14 +120,14 @@ namespace ZPIClient
             debug = !debug;
 
         }
-        private void buttonSwitch_Click(object sender, EventArgs e)
+        private void buttonSwitch_Click(object sender, EventArgs e) //Przycisk przełącza widoczność między mapą a listą
         {
             panelDisplay.Visible = !panelDisplay.Visible;
             panelDisplay.Enabled = !panelDisplay.Enabled;
             panelMap.Visible = !panelMap.Visible;
             panelMap.Enabled = !panelMap.Enabled;
         }
-        private async void buttonOverview_Click(object sender, EventArgs e)
+        private async void buttonOverview_Click(object sender, EventArgs e) //Przycisk przełącza tryb wyświetlania zdjęć między termicznymi a zwykłymi
         {
             isThermal = !isThermal;
             buttonOverview.Text = new string("Tryb termiczny: " + isThermal.ToString());
@@ -137,7 +136,7 @@ namespace ZPIClient
                 updateCurrentImage();
             }
         }
-        private void sensorContainer_Click(object sender, EventArgs e)
+        private void sensorContainer_Click(object sender, EventArgs e) //Zawartość tej funkcji jest przypięta do każdego obiektu widoku listy. Pełni rolę przycisku
         {
             if (currentSensorIndex != -1)
             {
@@ -147,8 +146,8 @@ namespace ZPIClient
             Control control = (Control)sender;
             currentSensorIndex = (int)control.Tag;
             updateInfoPanel();
-        }
-        private void buttonFire_Click(object sender, EventArgs e)
+        } 
+        private void buttonFire_Click(object sender, EventArgs e) //Funkcja potwierdza wystąpienie/zwalczenie pożaru dla danej kamery oraz wysyła zapytanie o zmianę stanu do serwera
         {
             if (currentSensorIndex != -1)
             {
@@ -166,7 +165,7 @@ namespace ZPIClient
         }
         #endregion
         #region Initialize Functions
-        private void InitializeSensors()
+        private void InitializeSensors() //Inicjalizacja listy czujników z danych od serwera (wewnątrz zmiennej)
         {
             if (devices != null)
             {
@@ -180,7 +179,7 @@ namespace ZPIClient
                 }
             }
         }
-        private void InitializeListFormControls()
+        private void InitializeListFormControls() //Generowanie klilalnej listy czujników z utworzonej wcześniej listy
         {
             int panelX = panelDisplay.Location.X;
             int panelY = panelDisplay.Location.Y;
@@ -347,14 +346,14 @@ namespace ZPIClient
                 panelY += rowHeight * 2;
             }
         }
-        private void InitializeSideScroll()
+        private void InitializeSideScroll() //Modyfikacja parametrów panelu listy aby odpowiadała specyfikacji
         {
             panelDisplay.AutoScroll = false;
             panelDisplay.HorizontalScroll.Enabled = false;
             panelDisplay.HorizontalScroll.Visible = false;
             panelDisplay.AutoScroll = true;
         }
-        private void InitializeMapStateDisplay()
+        private void InitializeMapStateDisplay() //Inicjalizacja panelu stanów (widok mapy)
         {
             pictureBoxMapState1.BackColor = Color.Lime;
             pictureBoxMapState1.Width = pictureBoxMapState1.Height;
@@ -375,8 +374,9 @@ namespace ZPIClient
             pictureBoxMapState4.Height = pictureBoxMapState1.Height;
             roundPictureBox(ref pictureBoxMapState4);
         }
-        private void Initialize()
+        private async void Initialize() //Połączenie wszystkich funkcji initialize w jedną całość. Funkcja uruchamia również timer
         {
+            await serverRequest(UserRequest.RequestType.AllHostDevicesAsJson);
             InitializeSensors();
             InitializeListFormControls();
             InitializeSideScroll();
@@ -386,7 +386,7 @@ namespace ZPIClient
         }
         #endregion
         #region Utilities
-        private void updateColors()
+        private void updateColors() //Aktualizacja kolorów dla wszystkich "diod" przy czujnikach
         {
             int count = sensorList.Count;
             for (int i = 0; i < count; i++)
@@ -395,14 +395,7 @@ namespace ZPIClient
                 pictureBoxMapSensorStatus[i].BackColor = sensorList[i].StateToColor();
             }
         }
-        private void roundPictureBox(ref PictureBox pb)
-        {
-            System.Drawing.Drawing2D.GraphicsPath gp = new System.Drawing.Drawing2D.GraphicsPath();
-            gp.AddEllipse(0, 0, pb.Width - 3, pb.Height - 3);
-            Region rg = new Region(gp);
-            pb.Region = rg;
-        }
-        private int[] getStateCounts()
+        private int[] getStateCounts() //Funkcja pomocnicza. Tworzy listę aktualnych stanów czujników
         {
             int stateActive = 0; //0
             int stateInactive = 0; //1
@@ -431,16 +424,15 @@ namespace ZPIClient
             }
             return new int[] { stateActive, stateInactive, stateAlert, stateFire };
         }
-        private void updateStateCounts()
+        private void updateStateCounts() //Aktualizacja tekstu panelu stanów (widok mapy)
         {
             int[] stateCounts = getStateCounts();
             labelMapStateCount1.Text = stateCounts[0].ToString();
             labelMapStateCount2.Text = stateCounts[1].ToString();
             labelMapStateCount3.Text = stateCounts[2].ToString();
             labelMapStateCount4.Text = stateCounts[3].ToString();
-
         }
-        private void updateInfoPanel()
+        private void updateInfoPanel() //Aktualizacja wszystkich danych wewnątrz panelu bocznego. Wywoływana co każdą aktualizację oraz kliknięcie na czujnik
         {
             if (currentSensorIndex != -1)
             {
@@ -485,7 +477,7 @@ namespace ZPIClient
                 }
             }
         }
-        private void updateStateList()
+        private void updateStateList() //Aktualizacja tekstu przy statusie każdego czujnika (widok listy) 
         {
             int count = sensorList.Count;
             for (int i = 0; i < count; i++)
@@ -493,14 +485,14 @@ namespace ZPIClient
                 labelSensorStatus[i].Text = "Status: " + sensorList[i].StateToString();
             }
         }
-        private void updateAll() //Updates all controls to match current data. Does not change data itself.
+        private void updateAll() //Połączenie wszystkich funkcji update w jedną całość.
         {
             updateColors();
             updateStateCounts();
             updateInfoPanel();
             updateStateList();
         }
-        private async void updateCurrentImage()
+        private async void updateCurrentImage() //Aktualizacja obecnego obrazka widoku kamery (tryb termiczny/zwykły)
         {
             buttonOverview.Enabled = false; //Failsafe
 
@@ -522,7 +514,7 @@ namespace ZPIClient
 
             buttonOverview.Enabled = true;
         }
-        private async Task<Image> convertThermalImage(byte[] imageBytes)
+        private async Task<Image> convertThermalImage(byte[] imageBytes) //Funkcja pomocnicza konwertująca obrazek termiczny wybranego czujnika w obrazek zwykły
         {
             string path = Environment.CurrentDirectory;
             string filename = "temp.jpg";
@@ -536,7 +528,14 @@ namespace ZPIClient
 
             return realImage;
         }
-        private void FormMain_FormClosing(object sender, FormClosingEventArgs e)
+        private void roundPictureBox(ref PictureBox pb) //Funkcja pomocnicza. Zmienia kwadratowy picture box w kółko. Odpowiada za wygląd "diód" przy czujnikach.
+        {
+            System.Drawing.Drawing2D.GraphicsPath gp = new System.Drawing.Drawing2D.GraphicsPath();
+            gp.AddEllipse(0, 0, pb.Width - 3, pb.Height - 3);
+            Region rg = new Region(gp);
+            pb.Region = rg;
+        }
+        private void FormMain_FormClosing(object sender, FormClosingEventArgs e) //Funkcja wywoływana przy zamknięciu programu. Upewnia się, że połączenie tcp z serwerem zostało zamknięte
         {
             if (tcpClient != null)
             {
@@ -545,7 +544,7 @@ namespace ZPIClient
         }
         #endregion
         #region Server Connection
-        private void serverRequest(UserRequest.RequestType request)
+        private async Task serverRequest(UserRequest.RequestType request)
         {
             try
             {
@@ -554,20 +553,18 @@ namespace ZPIClient
                 switch (request)
                 {
                     case UserRequest.RequestType.AllHostDevicesAsJson:
-                        serverRequestInitialize();
-                        Thread.Sleep(2000); //Program will wait 2 seceonds for server. It it's too slow it won't work. Just like that.
+                        await serverRequestInitialize();
                         break;
 
                     case UserRequest.RequestType.SingleHostDeviceAsJson:
-                        serverRequestUpdate();
-                        Thread.Sleep(100); //Program will wait 100 miliseconds for server. It it's too slow it won't work. Just like that.
+                        await serverRequestUpdate();
                         break;
 
                     case UserRequest.RequestType.UpdateFireStatusFromJson:
-                        serverRequestStatusChange();
-                        Thread.Sleep(100); //Program will wait 100 miliseconds for server. It it's too slow it won't work. Just like that.
+                        await serverRequestStatusChange();
                         break;
                 }
+                await signalReceivedTaskCompletionSource.Task;
                 tcpClient.Close();
             }
             catch (Exception ex)
@@ -575,55 +572,66 @@ namespace ZPIClient
                 MessageBox.Show("Nie udało się nawiązać połączenia z serwerem (" + ipAddress + ": " + port + "). " + ex.Message, "Błąd połączenia", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
             }
         }
-        private void serverRequestInitialize()
+        private async Task serverRequestInitialize()
         {
+            signalReceivedTaskCompletionSource = new TaskCompletionSource<bool>();
             listener.OnSignalReceived += (sender, e) =>
             {
                 devices = ZPIEncoding.Decode<List<HostDevice>>(e);
+                signalReceivedTaskCompletionSource.TrySetResult(true);
             };
+
             var request = new UserRequest()
             {
                 Request = UserRequest.RequestType.AllHostDevicesAsJson
             };
+
             using (var stream = tcpClient.GetStream())
             {
                 byte[] buffer = ZPIEncoding.Encode(request);
-                stream.Write(buffer);
+                await stream.WriteAsync(buffer, 0, buffer.Length);
             }
         }
-        private void serverRequestUpdate()
+        private async Task serverRequestUpdate()
         {
+            signalReceivedTaskCompletionSource = new TaskCompletionSource<bool>();
             listener.OnSignalReceived += (sender, e) =>
             {
                 devices = ZPIEncoding.Decode<List<HostDevice>>(e);
+                signalReceivedTaskCompletionSource.TrySetResult(true);
             };
+
             var request = new UserRequest()
             {
                 Request = UserRequest.RequestType.AllHostDevicesAsJson
             };
+
             using (var stream = tcpClient.GetStream())
             {
                 byte[] buffer = ZPIEncoding.Encode(request);
-                stream.Write(buffer);
+                await stream.WriteAsync(buffer, 0, buffer.Length);
             }
         }
-        private void serverRequestStatusChange()
+        private async Task serverRequestStatusChange()
         {
+            signalReceivedTaskCompletionSource = new TaskCompletionSource<bool>();
             var request = new UserRequest()
             {
                 Request = UserRequest.RequestType.UpdateFireStatusFromJson,
                 ModelObjectId = sensorList[currentSensorIndex].Id,
                 NewStatus = sensorList[currentSensorIndex].LastFireStatus
             };
+
             using (var stream = tcpClient.GetStream())
             {
                 byte[] buffer = ZPIEncoding.Encode(request);
-                stream.Write(buffer);
+                await stream.WriteAsync(buffer, 0, buffer.Length);
             }
+            signalReceivedTaskCompletionSource.TrySetResult(true);
         }
         #endregion
         #region Debug
-        private void panelMap_MouseMove(object sender, MouseEventArgs e)
+        private void panelMap_MouseMove(object sender, MouseEventArgs e) //Funkcja pomocnicza trybu debug. Pokazuje aktualne współrzędne kursora dla trybu mapy
         {
             if (debug)
             {
