@@ -258,7 +258,7 @@ public class SignalTranslator
         if (allDevices is null || allDevices.Count == 0)
             _logger?.WriteLine($"User requested {request.Request} while database has no records in this table. Response will be empty!", nameof(SignalTranslator), Logger.MessageType.Warning);
         else
-            _logger?.WriteLine($"Found {allDevices} record(s) in {nameof(DatabaseContext.HostDevices)} table.");
+            _logger?.WriteLine($"Found {allDevices.Count} record(s) requested by user in {nameof(DatabaseContext.HostDevices)} table.");
         return ZPIEncoding.Encode(allDevices ?? new List<HostDevice>());
     }
 
@@ -271,7 +271,7 @@ public class SignalTranslator
         if (allSectors is null || allSectors.Count == 0)
             _logger?.WriteLine($"User requested {request.Request} while database has no records in this table. Response will be empty!", nameof(SignalTranslator), Logger.MessageType.Warning);
         else
-            _logger?.WriteLine($"Found {allSectors} record(s) in {nameof(DatabaseContext.HostDevices)} table.");
+            _logger?.WriteLine($"Found {allSectors.Count} record(s) requested by user in {nameof(DatabaseContext.Sectors)} table.");
         return ZPIEncoding.Encode(allSectors ?? new List<Sector>());
     }
 
