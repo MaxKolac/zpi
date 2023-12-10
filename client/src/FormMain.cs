@@ -128,21 +128,14 @@ namespace ZPIClient
             panelMap.Visible = !panelMap.Visible;
             panelMap.Enabled = !panelMap.Enabled;
         }
-        private void buttonOverview_Click(object sender, EventArgs e)
+        private async void buttonOverview_Click(object sender, EventArgs e)
         {
-            if (isThermal)
-            {
-                buttonOverview.Text = "Włącz podgląd termiczny";
-            }
-            else
-            {
-                buttonOverview.Text = "Włącz podgląd zwykły";
-            }
-            if(currentSensorIndex != -1)
-            {
-                convertCurrentImage();
-            }
             isThermal = !isThermal;
+            buttonOverview.Text = new string("Tryb termiczny: " + isThermal.ToString());
+            if (currentSensorIndex != -1)
+            {
+                updateCurrentImage();
+            }
         }
         private void sensorContainer_Click(object sender, EventArgs e)
         {
@@ -461,13 +454,7 @@ namespace ZPIClient
                 labelLastUpdateInfo.Text = sensorTimerList[currentSensorIndex].ToString() + " sekund temu.";
                 try
                 {
-                    Image cameraImage = HostDevice.ToImage(sensorList[currentSensorIndex].LastImage);
-                    pictureBoxCamera.Image = cameraImage;
-                    if (!isThermal) 
-                    {
-                        convertCurrentImage();
-                    }
-                    pictureBoxCamera.Refresh();
+                    updateCurrentImage();
                 }
                 catch (Exception)
                 {
@@ -513,23 +500,32 @@ namespace ZPIClient
             updateInfoPanel();
             updateStateList();
         }
-        private void convertCurrentImage()
+        private async void updateCurrentImage()
         {
-            if (isThermal)
+            buttonOverview.Enabled = false; //Failsafe
+
+            Image image = null;
+            while (image == null)
             {
-                pictureBoxCamera.Image = convertThermalImage(sensorList[currentSensorIndex].LastImage);
+                if (!isThermal)
+                {
+                    image = await convertThermalImage(sensorList[currentSensorIndex].LastImage);
+                }
+                else
+                {
+                    image = HostDevice.ToImage(sensorList[currentSensorIndex].LastImage);
+                }
+                await Task.Delay(100);
             }
-            else
-            {
-                pictureBoxCamera.Image = HostDevice.ToImage(sensorList[currentSensorIndex].LastImage);
-            }
+            pictureBoxCamera.Image = image;
+            pictureBoxCamera.Refresh();
+
+            buttonOverview.Enabled = true;
         }
-        private Image convertThermalImage(byte[] imageBytes)
+        private async Task<Image> convertThermalImage(byte[] imageBytes)
         {
             string path = Environment.CurrentDirectory;
             string filename = "temp.jpg";
-
-            MessageBox.Show(path);
 
             using (var stream = File.Create(Path.Combine(path, filename)))
             {
@@ -540,7 +536,6 @@ namespace ZPIClient
 
             return realImage;
         }
-
         private void FormMain_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (tcpClient != null)
