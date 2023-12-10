@@ -544,7 +544,7 @@ namespace ZPIClient
         }
         #endregion
         #region Server Connection
-        private async Task serverRequest(UserRequest.RequestType request)
+        private async Task serverRequest(UserRequest.RequestType request) //Funkcja tworzy połączenie z serwerem, a następnie wysyła jedno z dostępnych zapytań
         {
             try
             {
@@ -564,15 +564,15 @@ namespace ZPIClient
                         await serverRequestStatusChange();
                         break;
                 }
-                await signalReceivedTaskCompletionSource.Task;
+                await signalReceivedTaskCompletionSource.Task; //Client będzie czekał na odpowiedź od serwera
                 tcpClient.Close();
             }
-            catch (Exception ex)
+            catch (Exception ex) //Jeżeli serverRequest nie połączy się z serwerem, zostanie wyświetlone okienko z kodem błędu
             {
                 MessageBox.Show("Nie udało się nawiązać połączenia z serwerem (" + ipAddress + ": " + port + "). " + ex.Message, "Błąd połączenia", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
             }
         }
-        private async Task serverRequestInitialize()
+        private async Task serverRequestInitialize() //Zapytanie "populuje" listę czujników na których będzie operował client
         {
             signalReceivedTaskCompletionSource = new TaskCompletionSource<bool>();
             listener.OnSignalReceived += (sender, e) =>
@@ -592,7 +592,7 @@ namespace ZPIClient
                 await stream.WriteAsync(buffer, 0, buffer.Length);
             }
         }
-        private async Task serverRequestUpdate()
+        private async Task serverRequestUpdate() //Zapytanie pobiera dane czujników, które zostały pobrane podczas inicjalizacji
         {
             signalReceivedTaskCompletionSource = new TaskCompletionSource<bool>();
             listener.OnSignalReceived += (sender, e) =>
@@ -612,7 +612,7 @@ namespace ZPIClient
                 await stream.WriteAsync(buffer, 0, buffer.Length);
             }
         }
-        private async Task serverRequestStatusChange()
+        private async Task serverRequestStatusChange() //Zapytanie zmienia stan czujnika o wskazanym indeksie w bazie danych
         {
             signalReceivedTaskCompletionSource = new TaskCompletionSource<bool>();
             var request = new UserRequest()
