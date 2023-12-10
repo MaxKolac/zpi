@@ -107,8 +107,8 @@ public class Logger
         //Move cursor back at the beginning of user's input
         cursorPosition = Console.GetCursorPosition();
         Console.SetCursorPosition(
-            Math.Clamp(cursorOffset, 0, Console.BufferWidth),
-            Math.Clamp(cursorPosition.Top + 1, 0, Console.BufferHeight)
+            Math.Clamp(cursorOffset, 0, Console.BufferWidth - 1),
+            Math.Clamp(cursorPosition.Top + 1, 0, Console.BufferHeight - 1)
             );
 
         Console.ForegroundColor = ConsoleColor.White;
