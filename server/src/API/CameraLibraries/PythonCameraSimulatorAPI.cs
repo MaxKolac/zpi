@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System.Diagnostics;
+using System.Linq.Expressions;
 using ZPICommunicationModels.Messages;
 using ZPICommunicationModels.Models;
 using ZPIServer.Commands;
@@ -19,6 +20,17 @@ public class PythonCameraSimulatorAPI : ICamera
 
     private record ScriptResult(decimal HottestTemperature, decimal Percentage);
 
+    public class PythonApiException : Exception
+    {
+        public PythonApiException(string message) : this(message, null)
+        {
+        }
+
+        public PythonApiException(string? message, Exception? innerException) : base(message, innerException)
+        {
+        }
+    }
+
     public PythonCameraSimulatorAPI(Logger? logger = null)
     {
         _logger = logger;
@@ -35,7 +47,7 @@ public class PythonCameraSimulatorAPI : ICamera
 
         //Are the received bytes ok to process?
         if (bytes is null || bytes.Length == 0)
-            throw new ArgumentException("Received bytes were empty or null");
+            throw new PythonApiException("Received bytes were empty or null");
 
         //Gather the bytes and save/overwrite them as a raw file next to the script
         using (var writer = File.Create(Path.Combine(AbsoluteScriptsDirectory, InputFilename)))
@@ -61,6 +73,7 @@ public class PythonCameraSimulatorAPI : ICamera
         };
 
         //Start the process and log any errors/events
+        //If things go wrong, throw
         using (var process = Process.Start(startInfo))
         {
             using var standardReader = process!.StandardOutput;
@@ -73,27 +86,48 @@ public class PythonCameraSimulatorAPI : ICamera
                     _logger?.WriteLine(standardReader.ReadLine(), PythonPrefix);
                 }
             });
-            Task errorOutput = Task.Run(() =>
+            Task<bool> errorOutput = Task.Run(() =>
             {
+                bool wereAllErrorOutputsEmpty = true;
                 while (!errorReader.EndOfStream)
                 {
-                    _logger?.WriteLine(errorReader.ReadLine(), PythonPrefix, Logger.MessageType.Error);
+                    string? error = errorReader.ReadLine();
+                    _logger?.WriteLine(error, PythonPrefix, Logger.MessageType.Error);
+                    if (!string.IsNullOrEmpty(error))
+                        wereAllErrorOutputsEmpty = false;
                 }
+                return wereAllErrorOutputsEmpty;
             });
             Task.WaitAll(standardOutput, errorOutput);
+            if (!errorOutput.Result)
+                throw new PythonApiException("Python script failed to extract data from provided message.");
         }
 
         //Look for the resulting JSON
         string json;
-        using (var stream = File.OpenText(Path.Combine(AbsoluteScriptsDirectory, OutputFilename)))
+        try 
         {
+            using var stream = File.OpenText(Path.Combine(AbsoluteScriptsDirectory, OutputFilename));
             json = stream.ReadToEnd().Replace(" ", string.Empty);
         }
+        catch (IOException ex)
+        {
+            throw new PythonApiException("Could not locate the output Json file.", ex);
+        }
+
 
         //Try to deserialize it into ScriptResult
-        ScriptResult? scriptResult =
-            JsonConvert.DeserializeObject<ScriptResult>(json) ??
-            throw new JsonSerializationException("JsonConverter returned a null.");
+        ScriptResult? scriptResult;
+        try 
+        {
+            scriptResult =
+                JsonConvert.DeserializeObject<ScriptResult>(json) ??
+                throw new NullReferenceException("JsonConvert returned a null object.");
+        }
+        catch (Exception ex) when (ex is JsonSerializationException || ex is NullReferenceException)
+        {
+            throw new PythonApiException($"Failed to deserialize the resulting output into a {nameof(ScriptResult)} object.", ex);
+        }
 
         //Build a CameraDataMessage object out of deserialized results
         _message = new CameraDataMessage()

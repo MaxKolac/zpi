@@ -114,7 +114,7 @@
             buttonOverview.Name = "buttonOverview";
             buttonOverview.Size = new Size(324, 59);
             buttonOverview.TabIndex = 3;
-            buttonOverview.Text = "Podgląd zgłoszeń";
+            buttonOverview.Text = "Włącz podgląd zwykły";
             buttonOverview.UseVisualStyleBackColor = true;
             buttonOverview.Click += buttonOverview_Click;
             // 

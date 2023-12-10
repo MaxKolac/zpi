@@ -11,6 +11,8 @@ using ZPICommunicationModels.Messages;
 using ZPICommunicationModels.Models;
 using System.Net;
 using Windows.ApplicationModel.Background;
+using System.Runtime;
+using System.Drawing.Imaging;
 
 namespace ZPIClient
 {
@@ -27,6 +29,10 @@ namespace ZPIClient
         private List<HostDevice> sensorList = new List<HostDevice>();
         private List<int> sensorTimerList = new List<int>();
         private int currentSensorIndex = -1;
+
+        //Thermal image display
+        private Image thermalImageCache;
+        private bool isThermal = true;
 
         //Timer settings
         private int timerInterval = 30, timerElapsedTime = 30;
@@ -124,7 +130,19 @@ namespace ZPIClient
         }
         private void buttonOverview_Click(object sender, EventArgs e)
         {
-
+            if (isThermal)
+            {
+                buttonOverview.Text = "Włącz podgląd termiczny";
+            }
+            else
+            {
+                buttonOverview.Text = "Włącz podgląd zwykły";
+            }
+            if(currentSensorIndex != -1)
+            {
+                convertCurrentImage();
+            }
+            isThermal = !isThermal;
         }
         private void sensorContainer_Click(object sender, EventArgs e)
         {
@@ -445,6 +463,10 @@ namespace ZPIClient
                 {
                     Image cameraImage = HostDevice.ToImage(sensorList[currentSensorIndex].LastImage);
                     pictureBoxCamera.Image = cameraImage;
+                    if (!isThermal) 
+                    {
+                        convertCurrentImage();
+                    }
                     pictureBoxCamera.Refresh();
                 }
                 catch (Exception)
@@ -491,6 +513,34 @@ namespace ZPIClient
             updateInfoPanel();
             updateStateList();
         }
+        private void convertCurrentImage()
+        {
+            if (isThermal)
+            {
+                pictureBoxCamera.Image = convertThermalImage(sensorList[currentSensorIndex].LastImage);
+            }
+            else
+            {
+                pictureBoxCamera.Image = HostDevice.ToImage(sensorList[currentSensorIndex].LastImage);
+            }
+        }
+        private Image convertThermalImage(byte[] imageBytes)
+        {
+            string path = Environment.CurrentDirectory;
+            string filename = "temp.jpg";
+
+            MessageBox.Show(path);
+
+            using (var stream = File.Create(Path.Combine(path, filename)))
+            {
+                stream.Write(imageBytes);
+            };
+            var realImage = ImageExtracter.GetEmbeddedImage(path, filename);
+            File.Delete(Path.Combine(path, filename));
+
+            return realImage;
+        }
+
         private void FormMain_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (tcpClient != null)
