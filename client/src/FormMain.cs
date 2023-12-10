@@ -11,6 +11,8 @@ using ZPICommunicationModels.Messages;
 using ZPICommunicationModels.Models;
 using System.Net;
 using Windows.ApplicationModel.Background;
+using System.Runtime;
+using System.Drawing.Imaging;
 
 namespace ZPIClient
 {
@@ -515,36 +517,30 @@ namespace ZPIClient
         {
             if (isThermal)
             {
-                pictureBoxCamera.Image = convertThermalImage(HostDevice.ToImage(sensorList[currentSensorIndex].LastImage));
+                pictureBoxCamera.Image = convertThermalImage(sensorList[currentSensorIndex].LastImage);
             }
             else
             {
                 pictureBoxCamera.Image = HostDevice.ToImage(sensorList[currentSensorIndex].LastImage);
             }
         }
-        private Image convertThermalImage(Image image)
+        private Image convertThermalImage(byte[] imageBytes)
         {
-            string path = tryGetDirectory();
+            string path = Environment.CurrentDirectory;
+            string filename = "temp.jpg";
 
             MessageBox.Show(path);
 
-            string file = path + "\\tempFile.png";
-            image.Save(file, System.Drawing.Imaging.ImageFormat.Png);
+            using (var stream = File.Create(Path.Combine(path, filename)))
+            {
+                stream.Write(imageBytes);
+            };
+            var realImage = ImageExtracter.GetEmbeddedImage(path, filename);
+            File.Delete(Path.Combine(path, filename));
 
-            image = ImageExtracter.GetEmbeddedImage(path, file);
-            File.Delete(file);
-
-            return image;
+            return realImage;
         }
 
-        private string tryGetDirectory()
-        {
-            string currentDirectory = Environment.CurrentDirectory;
-            string communicationModelsPath = Path.Combine(currentDirectory,"..", "..", "..", "..", "..", "communicationModels");
-            string fullPath = Path.GetFullPath(communicationModelsPath);
-
-            return fullPath;
-        }
         private void FormMain_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (tcpClient != null)

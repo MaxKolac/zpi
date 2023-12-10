@@ -95,7 +95,6 @@ public class PythonCameraSimulatorAPI : ICamera
                     _logger?.WriteLine(error, PythonPrefix, Logger.MessageType.Error);
                     if (!string.IsNullOrEmpty(error))
                         wereAllErrorOutputsEmpty = false;
-                    _logger?.WriteLine(errorReader.ReadLine(), PythonPrefix, Logger.MessageType.Error);
                 }
                 return wereAllErrorOutputsEmpty;
             });

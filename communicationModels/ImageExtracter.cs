@@ -16,18 +16,23 @@ public static class ImageExtracter
     public static Image? GetEmbeddedImage(string workingDirectory, string inputFile)
     {
         //Build the command string
+        //When passing paths to files/folders as args for CMD with /C, both whole argument list needs to be in quotation marks
+        //and each individual path, so like this:
+        /*
+         * cmd.exe /C ""D:\\GitHub Projects\\zpi\\client\\src\\bin\\Debug\\net7.0-windows10.0.17763.0\\exiftool.exe" -s3 -b -EmbeddedImage "D:\\GitHub Projects\\zpi\\client\\src\\bin\\Debug\\net7.0-windows10.0.17763.0\\temp.jpg"" 
+         */
         string[] flags =
         {
             "s3",
             "b",
             "EmbeddedImage"
         };
-        string command = Path.Combine(workingDirectory, "exiftool.exe");
+        string command = "\"\"" + Path.Combine(workingDirectory, "exiftool.exe") + "\"";
         foreach (string flag in flags)
         {
             command += " -" + flag;
         }
-        command += " " + Path.Combine(workingDirectory, inputFile);
+        command += " \"" + Path.Combine(workingDirectory, inputFile) + "\"\"";
 
         //Build process info
         var startInfo = new ProcessStartInfo()
@@ -62,23 +67,20 @@ public static class ImageExtracter
 
             //Przy ostatniej iteracji pętli while, buffer na 99% będzie miał jakieś zerowe bajty na końcu.
             //Trzeba je wyciąć.
-            int emptyBytesPosition = 0;
-            for (int i = imageBytes.Count - 1; i >= 0; i--)
-            {
-                if (imageBytes[i] != 0)
-                {
-                    emptyBytesPosition = i;
-                    break;
-                }
+            int lastNonZeroBytePosition = imageBytes.Count - 1;
+            while (lastNonZeroBytePosition >= 0 && imageBytes[lastNonZeroBytePosition] == 0)
+            {               
+                lastNonZeroBytePosition--;
             }
 
-            return imageBytes.ToArray()[0..emptyBytesPosition];
+            return imageBytes.ToArray()[0..(lastNonZeroBytePosition + 1)];
         });
         Task errorOutput = Task.Run(() =>
         {
             while (!errorReader.EndOfStream)
             {
-                Console.WriteLine(errorReader.ReadLine());
+                string? s = errorReader.ReadLine();
+                Console.WriteLine(s);
             }
         });
         Task.WaitAll(standardOutput, errorOutput);
