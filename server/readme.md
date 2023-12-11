@@ -12,17 +12,17 @@ Cały proces otrzymywania, odczytywania i odpowiadania na połączenia zawarty j
 
 ![serwer-api-diagram](https://github.com/MaxKolac/zpi/assets/108830795/0d762aa3-c34e-4946-8a26-d61b79ac7931)
 
- - Na pierwszej linii w komunikacji między urządzeniami, a serwerem stoi klasa `TcpReceiver`. Jej zadaniem jest otrzymanie ciągu surowych bitów od nadawcy. Kiedy cała wiadomość zostanie otrzymana, `TcpReceiver` tworzy pakiet informacji `TcpReceiverEventArgs`. Tak utworzony pakiet jest przekazywany dalej poprzez inwokację zdarzenia `OnSignalReceived`. Klasa `TcpReceiverEventArgs` zawiera:
+ - Na pierwszej linii w komunikacji między urządzeniami, a serwerem stoi klasa `TcpReceiver`. Jej zadaniem jest otrzymanie ciągu surowych bajtów od nadawcy. Kiedy cała wiadomość zostanie otrzymana, `TcpReceiver` tworzy pakiet informacji `TcpReceiverEventArgs`. Tak utworzony pakiet jest przekazywany dalej poprzez inwokację zdarzenia `OnSignalReceived`. Klasa `TcpReceiverEventArgs` zawiera:
    - Adres IP nadawcy
    - Port, z którego nadawca wysłał wiadomość
-   - Pełną otrzymana wiadomość jako ciąg bitów
+   - Pełną otrzymana wiadomość jako ciąg bajtów
  - Inwokacji zdarzenia `OnSignalReceived` nasłuchuje `SignalTranslator`. Zadaniem klasy `SignalTranslator` jest rozpoznanie nadawcy i przekazanie otrzymanej wiadomości do odpowiedniego „tłumacza”. Kiedy otrzyma z tego zdarzenia pakiet informacji, pyta bazę danych o rekord z tabeli `HostDevices`, który posiada adres IP pasujący do adresu nadawcy. Z tego samego rekordu, odczytuje wartość kolumny `Type`. Na podstawie tej wartości `SignalTranslator` wie, gdzie otrzymane dane przekazać dalej. 
    - Jeśli nadawca został rozpoznany jako `HostType.User`, czyli użytkownik front-end, klasa `SignalTranslator` bierze na siebie odpowiedzialność przetłumaczenia jego żądania jako obiekt klasy `UserRequest`.
  - W zależności od tego jakie urządzenie `SignalTranslator` rozpoznał, otrzymana wiadomość jest przekazywana do odpowiedniej <b>biblioteki CameraAPI</b>. Każdy model czy symulator kamery posiada własną bibliotekę, która tłumaczy różne formaty wiadomości na jeden wspólny format obiektu klasy `CameraDataMessage`. Wspólnym interfejsem, który każda biblioteka musi dziedziczyć jest `ICamera`.
- - Każdy komponent w serwerze może wysłać wiadomość zwrotną na podany adres IP i port poprzez klasę `TcpSender`. Jej zadaniem jest konwersja wiadomości na ciąg bitów i transmitowanie ich do podanego adresata. Nasłuchuje ona inwokacji zdarzeń w innych klasach. Te zdarzenia muszą przekazywać pakiet informacji w postaci klasy `TcpSenderEventArgs`. Ta klasa z kolei składa się z:
+ - Każdy komponent w serwerze może wysłać wiadomość zwrotną na podany adres IP i port poprzez klasę `TcpSender`. Jej zadaniem jest konwersja wiadomości na ciąg bajtów i transmitowanie ich do podanego adresata. Nasłuchuje ona inwokacji zdarzeń w innych klasach. Te zdarzenia muszą przekazywać pakiet informacji w postaci klasy `TcpSenderEventArgs`. Ta klasa z kolei składa się z:
    - Adres IP adresata
    - Port adresata, na który wysłana będzie wiadomość
-   - Pełna wiadomość zakodowana jako ciąg bitów
+   - Pełna wiadomość zakodowana jako ciąg bajtów
 
 ## ZPICommunicationModels - Komunikacja serwer - front-end
 
@@ -89,6 +89,7 @@ Tabela wszystkich urządzeń, które mogą połączyć się z serwerem. Dla wszy
  - `Address` oraz `Port` - Jaki adres IP ma dane urządzenie. W połączeniu z kolumną `Port`, serwer wie na jaki adres i port ma wysłać informację zwrotną, tak aby została faktycznie odebrana.
 
 Pozostałe kolumny są opcjonalne. Dla rekordów reprezentujących kamery termowizyjne, zaleca się aby te kolumny nie były puste:
+ - `LastImage`, `ImageVisibleDangerPercentage` oraz `LastKnownTemperature` - Po kolei, zdjęcie termiczne z metadanymi jako ciąg bajtów, procent zdjęcia jaki został wizualnie uznany za pożar oraz najwyższa odnotowana temperatura na zdjęciu. W celu eksportu zwykłego zdjęcia, zobacz klasę `ImageExtracter` w projekcie ZPICommunicationModels.
  - `LocationAltitude`, `LocationLatitude` oraz `LocationDescription` – Po kolei szerokość i wysokość geograficzna oraz zwięzły opis gdzie dane urządzenie zostało zamontowane (na drzewie, na słupie itd.).
  - `SectorId` - Klucz obcy do tabeli Sectors, określa do którego z sektorów dane urządzenie jest przypisane.
  - `LastDeviceStatus` - Ostatni znany stan urządzenia. Wartością jest typ wyliczalny `HostDevice.DeviceStatus`. Ten typ wyliczalny ma wartości podzielone na trzy grupy, w zależności od tego czy urządzenie jest sprawne (0-99), wymaga uwagi (100-199) czy (200-299) niesprawne:
