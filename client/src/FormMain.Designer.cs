@@ -114,7 +114,7 @@
             buttonOverview.Name = "buttonOverview";
             buttonOverview.Size = new Size(324, 59);
             buttonOverview.TabIndex = 3;
-            buttonOverview.Text = "Włącz podgląd zwykły";
+            buttonOverview.Text = "Tryb termiczny: True";
             buttonOverview.UseVisualStyleBackColor = true;
             buttonOverview.Click += buttonOverview_Click;
             // 
