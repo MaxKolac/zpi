@@ -136,6 +136,11 @@ public class SignalTranslator
                         _logger?.WriteLine($"The received {nameof(CameraDataMessage.ImageVisibleDangerPercentage)} was above the warning limit! Server suspects a fire!", nameof(SignalTranslator), Logger.MessageType.Warning);
                         datasender.LastFireStatus = FireStatus.Suspected;
                     }
+                    else if (decodedMessage.ImageVisibleDangerPercentage < Settings.ImagePercentageWarning && datasender.LastFireStatus == FireStatus.Suspected)
+                    {
+                        _logger?.WriteLine($"The received {nameof(CameraDataMessage.ImageVisibleDangerPercentage)} was below the warning limit! Server resets {nameof(HostDevice.LastFireStatus)} to {nameof(FireStatus.OK)}.", nameof(SignalTranslator), Logger.MessageType.Warning);
+                        datasender.LastFireStatus = FireStatus.OK;
+                    }
                     datasender.LastKnownTemperature = decodedMessage.LargestTemperature;
                     datasender.LastImage = decodedMessage.Image;
                     datasender.LastDeviceStatus = decodedMessage.Status;
