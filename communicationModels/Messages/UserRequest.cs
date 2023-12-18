@@ -36,7 +36,7 @@ public class UserRequest
         AllSectorsAsJson,
         /// <summary>
         /// Klient prosi o aktualizację rekordu <see cref="HostDevice"/> o danym ID <see cref="ModelObjectId"/> o nową wartość <see cref="HostDevice.LastFireStatus"/>.
-        /// TODO: Co serwer ma wysłać jako odpowiedź?
+        /// Serwer wyśle odpowiedź w formie listy List&lt;<see cref="HostDevice"/>&gt; zserializowanej w formacie Json.
         /// </summary>
         UpdateFireStatusFromJson
     }

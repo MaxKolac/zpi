@@ -179,11 +179,11 @@ public class TcpReceiver
 
             using var stream = incomingClient.GetStream();
             int receivedBytesCount = 0;
-            int singleByte;
             const int bufferLength = 2048;
             List<byte> fullMessage = new();
             byte[] buffer = new byte[bufferLength];
-
+          
+            int singleByte;
             //Read each byte individually. If its -1, end of stream was reached
             while ((singleByte = stream.ReadByte()) != -1)
             {

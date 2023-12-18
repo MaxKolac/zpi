@@ -19,7 +19,8 @@ namespace ZPIClient
     public partial class FormMain : Form
     {
         //Connection settings
-        private string ipAddress;
+        private string serverIP;
+        private string clientIP;
         private int port = 25566;
         private TcpClient tcpClient;
         private List<HostDevice> devices;
@@ -35,7 +36,7 @@ namespace ZPIClient
         private bool isThermal = true;
 
         //Timer settings
-        private int timerInterval = 30, timerElapsedTime = 30;
+        private int timerInterval = 15, timerElapsedTime = 15;
 
         //Debug
         private bool debug = false;
@@ -94,9 +95,10 @@ namespace ZPIClient
                 if (device.Type == HostDevice.HostType.CameraSimulator || device.Type == HostDevice.HostType.PythonCameraSimulator)
                 {
                     int index = sensorList.FindIndex(a => a.Id == device.Id);
-                    if (sensorList[index].LastFireStatus != device.LastFireStatus || sensorList[index].LastKnownTemperature != device.LastKnownTemperature)
+                    if (sensorList[index].LastFireStatus != device.LastFireStatus || sensorList[index].LastKnownTemperature != device.LastKnownTemperature || sensorList[index].LastImage != device.LastImage)
                     {
                         sensorList[index] = device;
+                        sensorList[index].LastKnownTemperature = Math.Round(sensorList[index].LastKnownTemperature, 2);
                         sensorTimerList[index] = 0;
                     }
                 }
@@ -110,7 +112,7 @@ namespace ZPIClient
             if (debug)
             {
                 buttonDebug.BackColor = SystemColors.Control;
-                buttonDebug.Text = "Debug";
+                buttonDebug.Text = "Współrzędne";
             }
             else
             {
@@ -146,7 +148,7 @@ namespace ZPIClient
             Control control = (Control)sender;
             currentSensorIndex = (int)control.Tag;
             updateInfoPanel();
-        } 
+        }
         private void buttonFire_Click(object sender, EventArgs e) //Funkcja potwierdza wystąpienie/zwalczenie pożaru dla danej kamery oraz wysyła zapytanie o zmianę stanu do serwera
         {
             if (currentSensorIndex != -1)
@@ -169,21 +171,24 @@ namespace ZPIClient
         {
             try
             {
-                string result = Prompt.ShowDialog("Wprowadź adres IP komputera", "Nawiązywanie połączenia");
-                ipAddress = result;
-                listener = new ClientListener(IPAddress.Parse(result), 12000);
-            }catch(Exception ex)
+                var result = Prompt.ShowDialog("Wprowadź adres IP komputera", "Wprowadź adres IP serwera", "Nawiązywanie połączenia");
+                clientIP = result.Item1;
+                serverIP = result.Item2;
+                listener = new ClientListener(IPAddress.Parse(clientIP), 12000);
+            }
+            catch (Exception ex)
             {
-                MessageBox.Show("Wprowadzono nieprawidłowy adres IP (" + ipAddress + ": " + port + "). " + ex.Message, "Błąd połączenia", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                ipAddress = "127.0.0.1";
+                MessageBox.Show("Wprowadzono nieprawidłowy adres IP (" + serverIP + ": " + port + "). " + ex.Message, "Błąd połączenia", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                serverIP = "127.0.0.1";
                 try
                 {
+                    clientIP = "127.0.0.1";
                     listener = new ClientListener(IPAddress.Parse("127.0.0.1"), 12000);
-                }catch(Exception exc)
+                }
+                catch (Exception exc)
                 {
                     MessageBox.Show(exc.Message, "Błąd połączenia", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 }
-
             }
         }
         private void InitializeSensors() //Inicjalizacja listy czujników z danych od serwera (wewnątrz zmiennej)
@@ -516,23 +521,24 @@ namespace ZPIClient
         private async void updateCurrentImage() //Aktualizacja obecnego obrazka widoku kamery (tryb termiczny/zwykły)
         {
             buttonOverview.Enabled = false; //Failsafe
-
             Image image = null;
-            while (image == null)
+            if (sensorList[currentSensorIndex].LastImage != null)
             {
-                if (!isThermal)
+                while (image == null)
                 {
-                    image = await convertThermalImage(sensorList[currentSensorIndex].LastImage);
+                    if (!isThermal)
+                    {
+                        image = await convertThermalImage(sensorList[currentSensorIndex].LastImage);
+                    }
+                    else
+                    {
+                        image = HostDevice.ToImage(sensorList[currentSensorIndex].LastImage);
+                    }
+                    await Task.Delay(100);
                 }
-                else
-                {
-                    image = HostDevice.ToImage(sensorList[currentSensorIndex].LastImage);
-                }
-                await Task.Delay(100);
             }
             pictureBoxCamera.Image = image;
             pictureBoxCamera.Refresh();
-
             buttonOverview.Enabled = true;
         }
         private async Task<Image> convertThermalImage(byte[] imageBytes) //Funkcja pomocnicza konwertująca obrazek termiczny wybranego czujnika w obrazek zwykły
@@ -570,7 +576,7 @@ namespace ZPIClient
             try
             {
                 tcpClient = new TcpClient();
-                tcpClient.Connect(ipAddress, port);
+                tcpClient.Connect(serverIP, port);
                 switch (request)
                 {
                     case UserRequest.RequestType.AllHostDevicesAsJson:
@@ -590,7 +596,7 @@ namespace ZPIClient
             }
             catch (Exception ex) //Jeżeli serverRequest nie połączy się z serwerem, zostanie wyświetlone okienko z kodem błędu
             {
-                MessageBox.Show("Nie udało się nawiązać połączenia z serwerem (" + ipAddress + ": " + port + "). " + ex.Message, "Błąd połączenia", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                MessageBox.Show("Nie udało się nawiązać połączenia z serwerem (" + clientIP + ": " + port + "). " + ex.Message, "Błąd połączenia", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
             }
         }
         private async Task serverRequestInitialize() //Zapytanie "populuje" listę czujników na których będzie operował client
