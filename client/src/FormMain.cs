@@ -101,7 +101,6 @@ namespace ZPIClient
                         sensorTimerList[index] = 0;
                     }
                 }
-
             }
             updateAll();
         }
