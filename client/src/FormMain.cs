@@ -19,8 +19,8 @@ namespace ZPIClient
     public partial class FormMain : Form
     {
         //Connection settings
-        private string clientIP;
         private string serverIP;
+        private string clientIP;
         private int port = 25566;
         private TcpClient tcpClient;
         private List<HostDevice> devices;
@@ -173,14 +173,14 @@ namespace ZPIClient
                 var result = Prompt.ShowDialog("Wprowadź adres IP komputera", "Wprowadź adres IP serwera", "Nawiązywanie połączenia");
                 clientIP = result.Item1;
                 serverIP = result.Item2;
-                listener = new ClientListener(IPAddress.Parse(serverIP), 12000);
+                listener = new ClientListener(IPAddress.Parse(clientIP), 12000);
             }catch(Exception ex)
             {
-                MessageBox.Show("Wprowadzono nieprawidłowy adres IP (" + clientIP + ": " + port + "). " + ex.Message, "Błąd połączenia", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                clientIP = "127.0.0.1";
+                MessageBox.Show("Wprowadzono nieprawidłowy adres IP (" + serverIP + ": " + port + "). " + ex.Message, "Błąd połączenia", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                serverIP = "127.0.0.1";
                 try
                 {
-                    serverIP = "127.0.0.1";
+                    clientIP = "127.0.0.1";
                     listener = new ClientListener(IPAddress.Parse("127.0.0.1"), 12000);
                 }catch(Exception exc)
                 {
@@ -573,7 +573,7 @@ namespace ZPIClient
             try
             {
                 tcpClient = new TcpClient();
-                tcpClient.Connect(clientIP, port);
+                tcpClient.Connect(serverIP, port);
                 switch (request)
                 {
                     case UserRequest.RequestType.AllHostDevicesAsJson:
@@ -593,7 +593,7 @@ namespace ZPIClient
             }
             catch (Exception ex) //Jeżeli serverRequest nie połączy się z serwerem, zostanie wyświetlone okienko z kodem błędu
             {
-                MessageBox.Show("Nie udało się nawiązać połączenia z serwerem (" + serverIP + ": " + port + "). " + ex.Message, "Błąd połączenia", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                MessageBox.Show("Nie udało się nawiązać połączenia z serwerem (" + clientIP + ": " + port + "). " + ex.Message, "Błąd połączenia", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
             }
         }
         private async Task serverRequestInitialize() //Zapytanie "populuje" listę czujników na których będzie operował client
