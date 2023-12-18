@@ -182,10 +182,9 @@ public class TcpReceiver
             const int bufferLength = 2048;
             List<byte> fullMessage = new();
             byte[] buffer = new byte[bufferLength];
-
-            //NewtorkStream.Read populates the buffer with received raw bytes and returns their amount
-            //If that amount reaches 0, it means the connection was closed
+          
             int singleByte;
+            //Read each byte individually. If its -1, end of stream was reached
             while ((singleByte = stream.ReadByte()) != -1)
             {
                 fullMessage.Add((byte)singleByte);
