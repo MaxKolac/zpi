@@ -36,7 +36,7 @@ namespace ZPIClient
         private bool isThermal = true;
 
         //Timer settings
-        private int timerInterval = 30, timerElapsedTime = 30;
+        private int timerInterval = 15, timerElapsedTime = 15;
 
         //Debug
         private bool debug = false;
