@@ -98,6 +98,7 @@ namespace ZPIClient
                     if (sensorList[index].LastFireStatus != device.LastFireStatus || sensorList[index].LastKnownTemperature != device.LastKnownTemperature)
                     {
                         sensorList[index] = device;
+                        sensorList[index].LastKnownTemperature = Math.Round(sensorList[index].LastKnownTemperature, 2);
                         sensorTimerList[index] = 0;
                     }
                 }
