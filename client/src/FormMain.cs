@@ -19,7 +19,8 @@ namespace ZPIClient
     public partial class FormMain : Form
     {
         //Connection settings
-        private string ipAddress;
+        private string clientIP;
+        private string serverIP;
         private int port = 25566;
         private TcpClient tcpClient;
         private List<HostDevice> devices;
@@ -170,15 +171,17 @@ namespace ZPIClient
         {
             try
             {
-                string result = Prompt.ShowDialog("Wprowadź adres IP komputera", "Nawiązywanie połączenia");
-                ipAddress = result;
-                listener = new ClientListener(IPAddress.Parse(result), 12000);
+                var result = Prompt.ShowDialog("Wprowadź adres IP komputera", "Wprowadź adres IP serwera", "Nawiązywanie połączenia");
+                clientIP = result.Item1;
+                serverIP = result.Item2;
+                listener = new ClientListener(IPAddress.Parse(serverIP), 12000);
             }catch(Exception ex)
             {
-                MessageBox.Show("Wprowadzono nieprawidłowy adres IP (" + ipAddress + ": " + port + "). " + ex.Message, "Błąd połączenia", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                ipAddress = "127.0.0.1";
+                MessageBox.Show("Wprowadzono nieprawidłowy adres IP (" + clientIP + ": " + port + "). " + ex.Message, "Błąd połączenia", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                clientIP = "127.0.0.1";
                 try
                 {
+                    serverIP = "127.0.0.1";
                     listener = new ClientListener(IPAddress.Parse("127.0.0.1"), 12000);
                 }catch(Exception exc)
                 {
@@ -571,7 +574,7 @@ namespace ZPIClient
             try
             {
                 tcpClient = new TcpClient();
-                tcpClient.Connect(ipAddress, port);
+                tcpClient.Connect(clientIP, port);
                 switch (request)
                 {
                     case UserRequest.RequestType.AllHostDevicesAsJson:
@@ -591,7 +594,7 @@ namespace ZPIClient
             }
             catch (Exception ex) //Jeżeli serverRequest nie połączy się z serwerem, zostanie wyświetlone okienko z kodem błędu
             {
-                MessageBox.Show("Nie udało się nawiązać połączenia z serwerem (" + ipAddress + ": " + port + "). " + ex.Message, "Błąd połączenia", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                MessageBox.Show("Nie udało się nawiązać połączenia z serwerem (" + serverIP + ": " + port + "). " + ex.Message, "Błąd połączenia", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
             }
         }
         private async Task serverRequestInitialize() //Zapytanie "populuje" listę czujników na których będzie operował client
