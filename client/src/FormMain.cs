@@ -19,11 +19,11 @@ namespace ZPIClient
     public partial class FormMain : Form
     {
         //Connection settings
-        private string ipAddress = "192.168.192.1";
+        private string ipAddress;
         private int port = 25566;
         private TcpClient tcpClient;
         private List<HostDevice> devices;
-        private ClientListener listener = new ClientListener(IPAddress.Parse("192.168.192.1"), 12000);
+        private ClientListener listener;
         private TaskCompletionSource<bool> signalReceivedTaskCompletionSource;
 
         //Sensor variables
@@ -54,6 +54,7 @@ namespace ZPIClient
 
         public FormMain()
         {
+            InitializeIP();
             InitializeComponent();
             Initialize();
         }
@@ -164,6 +165,27 @@ namespace ZPIClient
         }
         #endregion
         #region Initialize Functions
+        private void InitializeIP() //Inicjalizacja adresu IP z okna dialogowego
+        {
+            try
+            {
+                string result = Prompt.ShowDialog("Wprowadź adres IP komputera", "Nawiązywanie połączenia");
+                ipAddress = result;
+                listener = new ClientListener(IPAddress.Parse(result), 12000);
+            }catch(Exception ex)
+            {
+                MessageBox.Show("Wprowadzono nieprawidłowy adres IP (" + ipAddress + ": " + port + "). " + ex.Message, "Błąd połączenia", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                ipAddress = "127.0.0.1";
+                try
+                {
+                    listener = new ClientListener(IPAddress.Parse("127.0.0.1"), 12000);
+                }catch(Exception exc)
+                {
+                    MessageBox.Show(exc.Message, "Błąd połączenia", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                }
+
+            }
+        }
         private void InitializeSensors() //Inicjalizacja listy czujników z danych od serwera (wewnątrz zmiennej)
         {
             if (devices != null)
