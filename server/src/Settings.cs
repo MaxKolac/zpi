@@ -29,7 +29,7 @@ public static class Settings
     /// Jeśli zdjęcie/wiadomość odebrane z kamery będzie posiadać tą lub wyższą wartość <see cref="CameraDataMessage.ImageVisibleDangerPercentage"/>, serwer zmieni wartość <see cref="HostDevice.LastFireStatus"/> na <see cref="HostDevice.FireStatus.Suspected"/>.<br/>
     /// Wartość domyślna do 5%.
     /// </summary>
-    public static decimal ImagePercentageWarning { get; set; } = 0.05m;
+    public static decimal ImagePercentageWarning { get; set; } = 5.00m;
 
     public static void ResetToDefault()
     {
