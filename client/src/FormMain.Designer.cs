@@ -125,7 +125,7 @@
             buttonDebug.Name = "buttonDebug";
             buttonDebug.Size = new Size(324, 59);
             buttonDebug.TabIndex = 1;
-            buttonDebug.Text = "Debug";
+            buttonDebug.Text = "Współrzędne";
             buttonDebug.UseVisualStyleBackColor = true;
             buttonDebug.Click += buttonDebug_Click;
             // 

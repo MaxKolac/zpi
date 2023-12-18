@@ -111,7 +111,7 @@ namespace ZPIClient
             if (debug)
             {
                 buttonDebug.BackColor = SystemColors.Control;
-                buttonDebug.Text = "Debug";
+                buttonDebug.Text = "Współrzędne";
             }
             else
             {
@@ -147,7 +147,7 @@ namespace ZPIClient
             Control control = (Control)sender;
             currentSensorIndex = (int)control.Tag;
             updateInfoPanel();
-        } 
+        }
         private void buttonFire_Click(object sender, EventArgs e) //Funkcja potwierdza wystąpienie/zwalczenie pożaru dla danej kamery oraz wysyła zapytanie o zmianę stanu do serwera
         {
             if (currentSensorIndex != -1)
@@ -174,7 +174,8 @@ namespace ZPIClient
                 clientIP = result.Item1;
                 serverIP = result.Item2;
                 listener = new ClientListener(IPAddress.Parse(clientIP), 12000);
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 MessageBox.Show("Wprowadzono nieprawidłowy adres IP (" + serverIP + ": " + port + "). " + ex.Message, "Błąd połączenia", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 serverIP = "127.0.0.1";
@@ -182,7 +183,8 @@ namespace ZPIClient
                 {
                     clientIP = "127.0.0.1";
                     listener = new ClientListener(IPAddress.Parse("127.0.0.1"), 12000);
-                }catch(Exception exc)
+                }
+                catch (Exception exc)
                 {
                     MessageBox.Show(exc.Message, "Błąd połączenia", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 }

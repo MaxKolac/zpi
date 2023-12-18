@@ -12,7 +12,7 @@ public static class Prompt
         Form prompt = new Form()
         {
             Width = 500,
-            Height = 200,
+            Height = 225,
             FormBorderStyle = FormBorderStyle.FixedDialog,
             Text = caption,
             StartPosition = FormStartPosition.CenterScreen
