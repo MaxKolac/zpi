@@ -130,6 +130,12 @@ public class SignalTranslator
                 if (decodedMessage is not null)
                 {
                     //Apply received changes if they were succesfully decoded
+                    datasender.ImageVisibleDangerPercentage = decodedMessage.ImageVisibleDangerPercentage;
+                    if (decodedMessage.ImageVisibleDangerPercentage >= Settings.ImagePercentageWarning && datasender.LastFireStatus == FireStatus.OK)
+                    {
+                        _logger?.WriteLine($"The received {nameof(CameraDataMessage.ImageVisibleDangerPercentage)} was above the warning limit! Server suspects a fire!", nameof(SignalTranslator), Logger.MessageType.Warning);
+                        datasender.LastFireStatus = FireStatus.Suspected;
+                    }
                     datasender.LastKnownTemperature = decodedMessage.LargestTemperature;
                     datasender.LastImage = decodedMessage.Image;
                     datasender.LastDeviceStatus = decodedMessage.Status;

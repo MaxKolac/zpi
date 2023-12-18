@@ -1,4 +1,6 @@
 ﻿using System.Net;
+using ZPICommunicationModels.Models;
+using ZPICommunicationModels.Messages;
 
 namespace ZPIServer;
 
@@ -23,10 +25,17 @@ public static class Settings
     /// </summary>
     public static bool CanPythonCameraAPIScriptsRun { get; set; } = false;
 
+    /// <summary>
+    /// Jeśli zdjęcie/wiadomość odebrane z kamery będzie posiadać tą lub wyższą wartość <see cref="CameraDataMessage.ImageVisibleDangerPercentage"/>, serwer zmieni wartość <see cref="HostDevice.LastFireStatus"/> na <see cref="HostDevice.FireStatus.Suspected"/>.<br/>
+    /// Wartość domyślna do 5%.
+    /// </summary>
+    public static decimal ImagePercentageWarning { get; set; } = 0.05m;
+
     public static void ResetToDefault()
     {
         TcpReceiverPorts = new int[] { 25565, 25566, 25567 };
         ServerAddress = IPAddress.Parse("127.0.0.1");
         CanPythonCameraAPIScriptsRun = false;
+        ImagePercentageWarning = 0.05m;
     }
 }
