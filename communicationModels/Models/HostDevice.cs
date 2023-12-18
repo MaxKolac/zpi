@@ -207,6 +207,7 @@ public class HostDevice
         builder.Append(nameof(LastDeviceStatus) + $": {LastDeviceStatus} | ");
         builder.Append(nameof(LastFireStatus) + $": {LastFireStatus} | ");
         builder.Append(nameof(LastKnownTemperature) + $": {LastKnownTemperature} | ");
+        builder.Append(nameof(ImageVisibleDangerPercentage) + $": {ImageVisibleDangerPercentage} | ");
         builder.Append(nameof(LocationAltitude) + $": {LocationAltitude} | ");
         builder.Append(nameof(LocationLatitude) + $": {LocationLatitude} | ");
         builder.Append(nameof(LocationDescription) + $": {LocationDescription} | ");
