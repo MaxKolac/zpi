@@ -19,11 +19,11 @@ namespace ZPIClient
     public partial class FormMain : Form
     {
         //Connection settings
-        private string ipAddress = "127.0.0.1";
+        private string ipAddress = "192.168.192.1";
         private int port = 25566;
         private TcpClient tcpClient;
         private List<HostDevice> devices;
-        private ClientListener listener = new ClientListener(IPAddress.Parse("127.0.0.1"), 12000);
+        private ClientListener listener = new ClientListener(IPAddress.Parse("192.168.192.1"), 12000);
         private TaskCompletionSource<bool> signalReceivedTaskCompletionSource;
 
         //Sensor variables
@@ -99,7 +99,6 @@ namespace ZPIClient
                         sensorTimerList[index] = 0;
                     }
                 }
-
             }
             updateAll();
         }
