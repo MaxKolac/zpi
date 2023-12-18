@@ -95,7 +95,7 @@ namespace ZPIClient
                 if (device.Type == HostDevice.HostType.CameraSimulator || device.Type == HostDevice.HostType.PythonCameraSimulator)
                 {
                     int index = sensorList.FindIndex(a => a.Id == device.Id);
-                    if (sensorList[index].LastFireStatus != device.LastFireStatus || sensorList[index].LastKnownTemperature != device.LastKnownTemperature)
+                    if (sensorList[index].LastFireStatus != device.LastFireStatus || sensorList[index].LastKnownTemperature != device.LastKnownTemperature || sensorList[index].LastImage != device.LastImage)
                     {
                         sensorList[index] = device;
                         sensorList[index].LastKnownTemperature = Math.Round(sensorList[index].LastKnownTemperature, 2);
