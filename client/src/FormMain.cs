@@ -518,9 +518,9 @@ namespace ZPIClient
         private async void updateCurrentImage() //Aktualizacja obecnego obrazka widoku kamery (tryb termiczny/zwykły)
         {
             buttonOverview.Enabled = false; //Failsafe
+            Image image = null;
             if (sensorList[currentSensorIndex].LastImage != null)
             {
-                Image image = null;
                 while (image == null)
                 {
                     if (!isThermal)
@@ -533,9 +533,9 @@ namespace ZPIClient
                     }
                     await Task.Delay(100);
                 }
-                pictureBoxCamera.Image = image;
-                pictureBoxCamera.Refresh();
             }
+            pictureBoxCamera.Image = image;
+            pictureBoxCamera.Refresh();
             buttonOverview.Enabled = true;
         }
         private async Task<Image> convertThermalImage(byte[] imageBytes) //Funkcja pomocnicza konwertująca obrazek termiczny wybranego czujnika w obrazek zwykły
