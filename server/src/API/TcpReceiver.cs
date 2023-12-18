@@ -178,18 +178,17 @@ public class TcpReceiver
             _semaphore.Release();
 
             using var stream = incomingClient.GetStream();
-            int receivedBytesCount;
+            int receivedBytesCount = 0;
+            int singleByte;
             const int bufferLength = 2048;
             List<byte> fullMessage = new();
             byte[] buffer = new byte[bufferLength];
 
-            //NewtorkStream.Read populates the buffer with received raw bytes and returns their amount
-            //If that amount reaches 0, it means the connection was closed
-            while ((receivedBytesCount = stream.Read(buffer, 0, bufferLength)) != 0)
+            //Read each byte individually. If its -1, end of stream was reached
+            while ((singleByte = stream.ReadByte()) != -1)
             {
-                fullMessage.AddRange(buffer);
-                //Clear buffer so no duplicated bytes make it through
-                buffer = new byte[bufferLength];
+                fullMessage.Add((byte)singleByte);
+                receivedBytesCount++;
             }
             _logger?.WriteLine($"Closed the connection from {clientAddress}:{clientPort}.", nameof(TcpReceiver));
 
