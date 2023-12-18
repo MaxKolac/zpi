@@ -113,7 +113,7 @@ public class SignalTranslator
                 {
                     _logger?.WriteLine(
                         $"{nameof(PythonCameraSimulatorAPI)} threw an exception! {ex.Message}" + (
-                            ex.InnerException is not null ? 
+                            ex.InnerException is not null ?
                             $"\nInner exception: {ex.InnerException}" :
                             ""
                             ),
@@ -287,7 +287,7 @@ public class SignalTranslator
     }
 
     /// <summary>
-    /// Handling for <see cref="UserRequest.RequestType.AllSectorsAsJson"/>.
+    /// Handling for <see cref="UserRequest.RequestType.UpdateFireStatusFromJson"/>.
     /// </summary>
     private byte[] HandleUpdateFireStatusRequest(UserRequest request)
     {
@@ -302,21 +302,19 @@ public class SignalTranslator
             return Array.Empty<byte>();
         }
 
-        using (var context = new DatabaseContext())
+        using var context = new DatabaseContext();
+        var foundDevice = context.HostDevices.Where((device) => device.Id == request.ModelObjectId).FirstOrDefault();
+        if (foundDevice is null)
         {
-            var foundDevice = context.HostDevices.Where((device) => device.Id == request.ModelObjectId).FirstOrDefault();
-            if (foundDevice is null)
-            {
-                _logger?.WriteLine($"User requested {request.Request} of a {nameof(HostDevice)} with ID = {request.ModelObjectId} which was not found in the database! Discarding request.", nameof(SignalTranslator), Logger.MessageType.Error);
-                return Array.Empty<byte>();
-            }
-            _logger?.WriteLine($"Found {nameof(HostDevice)} with ID = {request.ModelObjectId} to update, as per user's request.", nameof(SignalTranslator));
-            foundDevice.LastFireStatus = request.NewStatus;
-            context.SaveChanges();
-            _logger?.WriteLine($"Changed {nameof(HostDevice)}.{nameof(HostDevice.LastFireStatus)} with ID = {request.ModelObjectId} to {foundDevice.LastFireStatus}.", nameof(SignalTranslator));
+            _logger?.WriteLine($"User requested {request.Request} of a {nameof(HostDevice)} with ID = {request.ModelObjectId} which was not found in the database! Discarding request.", nameof(SignalTranslator), Logger.MessageType.Error);
+            return Array.Empty<byte>();
         }
+        _logger?.WriteLine($"Found {nameof(HostDevice)} with ID = {request.ModelObjectId} to update, as per user's request.", nameof(SignalTranslator));
+        foundDevice.LastFireStatus = request.NewStatus;
+        context.SaveChanges();
+        _logger?.WriteLine($"Changed {nameof(HostDevice)}.{nameof(HostDevice.LastFireStatus)} with ID = {request.ModelObjectId} to {foundDevice.LastFireStatus}.", nameof(SignalTranslator));
 
-        return Array.Empty<byte>();
+        return ZPIEncoding.Encode(context.HostDevices.ToList() ?? new List<HostDevice>());
     }
     #endregion
 
