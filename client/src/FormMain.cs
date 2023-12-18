@@ -186,7 +186,6 @@ namespace ZPIClient
                 {
                     MessageBox.Show(exc.Message, "Błąd połączenia", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 }
-
             }
         }
         private void InitializeSensors() //Inicjalizacja listy czujników z danych od serwera (wewnątrz zmiennej)
@@ -519,23 +518,24 @@ namespace ZPIClient
         private async void updateCurrentImage() //Aktualizacja obecnego obrazka widoku kamery (tryb termiczny/zwykły)
         {
             buttonOverview.Enabled = false; //Failsafe
-
-            Image image = null;
-            while (image == null)
+            if (sensorList[currentSensorIndex].LastImage != null)
             {
-                if (!isThermal)
+                Image image = null;
+                while (image == null)
                 {
-                    image = await convertThermalImage(sensorList[currentSensorIndex].LastImage);
+                    if (!isThermal)
+                    {
+                        image = await convertThermalImage(sensorList[currentSensorIndex].LastImage);
+                    }
+                    else
+                    {
+                        image = HostDevice.ToImage(sensorList[currentSensorIndex].LastImage);
+                    }
+                    await Task.Delay(100);
                 }
-                else
-                {
-                    image = HostDevice.ToImage(sensorList[currentSensorIndex].LastImage);
-                }
-                await Task.Delay(100);
+                pictureBoxCamera.Image = image;
+                pictureBoxCamera.Refresh();
             }
-            pictureBoxCamera.Image = image;
-            pictureBoxCamera.Refresh();
-
             buttonOverview.Enabled = true;
         }
         private async Task<Image> convertThermalImage(byte[] imageBytes) //Funkcja pomocnicza konwertująca obrazek termiczny wybranego czujnika w obrazek zwykły
